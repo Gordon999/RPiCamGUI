@@ -325,7 +325,7 @@ def Camera_Version():
     max_vformat = max_vf_1
   elif Pi_Cam == 4:               # Pi HQ
     max_vformat = max_vf_4a
-    if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi_Cam == 4:
+    if (os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') or os.path.exists('usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json')) and Pi_Cam == 4:
         scientif = 1
     else:
         scientif = 0
@@ -612,7 +612,10 @@ def preview():
     if Pi_Cam == 3 and v3_hdr == 1:
         rpistr += " --hdr"
     if Pi_Cam == 4 and scientific == 1:
-        rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+        if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json'):
+            rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+        if os.path.exists('usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'):
+            rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
     if zoom > 1 and zoom < 5:
         zxo = ((1920-zwidths[4 - zoom])/2)/1920
         zyo = ((1440-zheights[4 - zoom])/2)/1440
@@ -622,7 +625,7 @@ def preview():
         zyo = ((igh/2)-(preview_height/2))/igh
         rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
     p = subprocess.Popen(rpistr, shell=True, preexec_fn=os.setsid)
-    print (rpistr)
+    #print (rpistr)
     restart = 0
     time.sleep(0.2)
     if Pi_Cam == 3 and rotate == 0:
