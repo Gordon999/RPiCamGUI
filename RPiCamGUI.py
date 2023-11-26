@@ -31,7 +31,7 @@ import numpy as np
 import math
 from gpiozero import Button
 
-version  = 4.66
+version  = 4.67
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -2718,7 +2718,8 @@ while True:
                                 rpistr += " --codec " + codecs[codec]
                             else:
                                 prof = h264profiles[profile].split(" ")
-                                rpistr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
+                                #rpistr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
+                                rpistr += " --level " + str(prof[1])
                         else:
                             rpistr = "rpicam-raw --camera " + str(camera) + " -t " + str(vlen * 1000) + " -o " + vname + " --framerate " + str(fps)
                         if vpreview == 0:
@@ -2859,7 +2860,8 @@ while True:
                             speed7 = max(speed7,int((1/fps)*1000000))
                             rpistr += " --framerate " + str(int((1/speed7)*1000000))
                         prof = h264profiles[profile].split(" ")
-                        rpistr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
+                        #rpistr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
+                        rpistr += " --level " + str(prof[1])
                         if vpreview == 0:
                             rpistr += " -n "
                         rpistr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
