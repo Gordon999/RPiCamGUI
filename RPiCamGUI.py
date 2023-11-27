@@ -30,8 +30,9 @@ from datetime import timedelta
 import numpy as np
 import math
 from gpiozero import Button
+import random
 
-version  = 4.67
+version = 4.70
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -44,12 +45,15 @@ frame          = 1   # set to 0 for NO frame (i.e. if using Pi 7" touchscreen)
 FUP            = 21  # Pi v3 camera Focus UP GPIO button
 FDN            = 16  # Pi v3 camera Focus DN GPIO button
 
+# if using Arducams version of libcamera set use_ard == 1
+use_ard = 0
+
 # set sq_dis = 1 for a square display, 0 for normal
 sq_dis = 0
 
 # set default values (see limits below)
 rotate      = 0      # rotate preview ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
-camera      = 0       # choose camera to use
+camera      = 1       # choose camera to use
 stream_port = 5000    # set video streaming port number
 mode        = 1       # set camera mode ['manual','normal','sport'] 
 speed       = 16      # position in shutters list (16 = 1/125th)
@@ -104,7 +108,13 @@ max_64mp    = 435
 max_gs      = 15
 
 # inital parameters
+focus       = 2000
 foc_man     = 0
+fcount      = 0
+fstep       = 10
+max_fcount  = 30
+old_foc     = 0
+ran         = 0
 prev_fps    = 10 
 focus_fps   = 25 
 focus_mode  = 0
@@ -115,6 +125,7 @@ scientific  = 0
 scientif    = 0
 zx          = int(preview_width/2)
 zy          = int(preview_height/2)
+fxz         = 1
 zoom        = 0
 igw         = 2592
 igh         = 1944
@@ -556,7 +567,7 @@ def preview():
     speed2 = sspeed
     speed2 = min(speed2,2000000)
     rpistr = "rpicam-vid --camera " + str(camera) + " -n --codec mjpeg -t 0 --segment 1"
-    if (Pi_Cam == 5 or Pi_Cam == 6) and focus_mode == 1:
+    if (Pi_Cam == 5 or Pi_Cam == 6) and (focus_mode == 1 or zoom > 0):
         rpistr += " --width 3280 --height 2464 -o /run/shm/test%d.jpg "
     elif Pi_Cam == 7 :
         rpistr += " --width 1456 --height 1088 -o /run/shm/test%d.jpg "
@@ -597,9 +608,9 @@ def preview():
     rpistr += " --sharpness "  + str(sharpness/10)
     rpistr += " --denoise "    + denoises[denoise]
     rpistr += " --quality " + str(quality)
-    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0:
+    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
         rpistr += " --autofocus "
-    if Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0:
+    if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
         rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
         if v3_f_mode == 1:
             rpistr += " --lens-position " + str(v3_focus/100)
@@ -663,7 +674,7 @@ button(1,14,0,5)
 button(0,14,0,5)
 
 def Menu():
-  global Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus
+  global Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz
   if Pi_Cam == 6 and mode == 0:
     text(0,0,1,1,1,"STILL    2x2",ft,7)
   else:
@@ -674,6 +685,7 @@ def Menu():
     text(1,9,1,1,1,"Timelapse",ft,7)
   if (Pi_Cam == 5 or Pi_Cam == 6):
     text(1,7,3,1,1,"auto",fv,7)
+  draw_Vbar(1,3,lpurColor,'vformat',vformat)
   if Pi_Cam == 3:
     button(0,15,0,5)
     button(1,15,0,5)
@@ -695,6 +707,9 @@ def Menu():
         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
     draw_bar(0,15,greyColor,'v3_f_speed',v3_f_speed)
     draw_Vbar(1,15,greyColor,'v3_f_range',v3_f_range)
+    if fxz != 1:
+        text(1,7,3,1,1,"Spot",fv,7)
+    
   else:
     button(0,15,0,5)
     button(1,15,0,5)
@@ -893,6 +908,22 @@ old_histarea = histarea
 if rotate == 0:
     text(0,0,6,2,1,"Please Wait for preview...",int(fv*1.7),1)
 preview()
+foc_sub = -1
+for x in range(0,10):
+    if os.path.exists("ctrls.txt"):
+        os.remove("ctrls.txt")
+    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(x) + " --list-ctrls >> ctrls.txt")
+    time.sleep(0.25)
+    ctrlstxt = []
+    with open("ctrls.txt", "r") as file:
+        line = file.readline()
+        while line:
+            ctrlstxt.append(line.strip())
+            line = file.readline()
+    for a in range(0,len(ctrlstxt)):
+        if ctrlstxt[a][0:14] == "focus_absolute":
+            print(x)
+            foc_sub = x
 
 # main loop
 while True:
@@ -905,8 +936,31 @@ while True:
         v3_focus += 1
         v3_focus = min(v3_focus,v3_pmax)
         draw_Vbar(1,7,dgryColor,'focus',v3_focus * 4)
-        os.system("v4l2-ctl -d /dev/v4l-subdev1 -c focus_absolute=" + str(v3_focus))
+        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
         text(1,7,3,0,1,'<<< ' + str(v3_focus) + ' >>>',fv,0)
+        time.sleep(0.25)
+
+    # Arducam FOCUS UP/DOWN
+    if (Pi_Cam == 5 or Pi_Cam == 6) and (buttonFUP.is_pressed or buttonFDN.is_pressed):
+        if foc_man == 0:
+            for f in range(0,len(video_limits)-1,3):
+                if video_limits[f] == 'focus':
+                    pmin = video_limits[f+1]
+                    pmax = video_limits[f+2]
+            focus_mode = 1
+            foc_man = 1 # manual focus
+            zoom = 0
+            button(1,7,1,9)
+        if buttonFDN.is_pressed:
+            focus -= 10
+        if buttonFUP.is_pressed:
+            focus += 10
+        focus = max(pmin,focus)
+        focus = min(pmax,focus)
+        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
+        text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
+        draw_Vbar(1,7,dgryColor,'focus',focus)
+        text(1,7,3,1,1,"manual",fv,0)
         time.sleep(0.25)
 
     # focus DOWN
@@ -917,7 +971,7 @@ while True:
         v3_focus -= 1
         v3_focus = max(v3_focus,v3_pmin)
         draw_Vbar(1,7,dgryColor,'focus',v3_focus * 4)
-        os.system("v4l2-ctl -d /dev/v4l-subdev1 -c focus_absolute=" + str(v3_focus))
+        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
         text(1,7,3,0,1,'<<< ' + str(v3_focus) + ' >>>',fv,0)
         time.sleep(0.25)
         
@@ -1129,6 +1183,46 @@ while True:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_height * 0.51),int(preview_width * 0.15),int(preview_height * 0.33),int(preview_width * 0.45)),gw)
                 elif Pi_Cam == 2 and ((vwidth == 640 and vheight == 480) or (vwidth == 720 and vheight == 540)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_height * 0.50),int(preview_width * 0.22),int(preview_height * 0.33),int(preview_width * 0.31)),gw)
+
+        # ARDUCAM AF
+        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and fcount < max_fcount and use_ard == 0:
+                image2 = pygame.surfarray.pixels3d(image)
+                crop2 = image2[xx-histarea:xx+histarea,xy-histarea:xy+histarea]
+                gray = cv2.cvtColor(crop2,cv2.COLOR_RGB2GRAY)
+                foc = cv2.Laplacian(gray, cv2.CV_64F).var()
+                for f in range(0,len(video_limits)-1,3):
+                    if video_limits[f] == 'focus':
+                        pmin = video_limits[f+1]
+                        pmax = video_limits[f+2]
+                if foc >= 50:
+                    ran = 0
+                else:
+                    focus = random.randint(100, 4000)
+                    fcount = 1
+                    ran = 1
+                    old_foc = foc
+                if (int(foc) >= int(old_foc) or fcount == 0) and ran == 0:
+                    if fcount == 0:
+                        if focus < 2000:
+                            focus  += fstep
+                        else:
+                            focus  -= fstep
+                    else:        
+                        focus  += fstep
+                elif ran == 0:
+                    fstep = -fstep
+                    focus += fstep
+                old_foc = foc
+                focus = max(pmin,focus)
+                focus = min(pmax,focus)
+                text(20,1,3,2,0,"Ctrl : " + str(int(focus)),fv* 2,0)
+                if focus < 100 or focus > 4000:
+                    focus = 2000
+                    fcount = 0
+                os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
+                time.sleep(.5)
+                fcount += 1
+
         pygame.display.update()
     
     # continuously read mouse buttons
@@ -2023,7 +2117,7 @@ while True:
                 if (mousex > preview_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
                     focus = int(((mousex-preview_width-bw) / bw) * pmax)
                     draw_Vbar(1,7,dgryColor,'focus',focus)
-                    os.system("v4l2-ctl -d /dev/v4l-subdev1 -c focus_absolute=" + str(focus))
+                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                 elif mousex > preview_width + bw and mousey > ((button_row-1)*bh) + (bh/3) and mousey < ((button_row-1)*bh) + (bh/1.5) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
                     if button_pos == 2:
@@ -2031,13 +2125,13 @@ while True:
                     elif button_pos == 3:
                         focus += 10
                     draw_Vbar(1,7,dgryColor,'focus',focus)
-                    os.system("v4l2-ctl -d /dev/v4l-subdev1 -c focus_absolute=" + str(focus))
+                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
 
                 elif (mousey > preview_height + (bh*3) and mousey < preview_height + (bh*3) + (bh/3)) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
                     focus = int(((mousex-((button_row - 8)*bw)) / bw)* pmax)
                     draw_Vbar(1,7,dgryColor,'focus',focus)
-                    os.system("v4l2-ctl -d /dev/v4l-subdev1 -c focus_absolute=" + str(focus))
+                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                 elif mousey > preview_height + (bh*3) and mousey > preview_height + (bh*3) + (bh/3) and mousey < preview_height + (bh*3) + (bh/1.5) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
                     if button_pos == 0:
@@ -2045,7 +2139,10 @@ while True:
                     elif button_pos == 1:
                         focus += 10
                     draw_Vbar(1,7,dgryColor,'focus',focus)
-                    os.system("v4l2-ctl -d /dev/v4l-subdev1 -c focus_absolute=" + str(focus))
+                    if cam0 == "imx519" and camera == 0:
+                        os.system("v4l2-ctl -d /dev/v4l-subdev1 -c focus_absolute=" + str(focus))
+                    if cam1 == "imx519" and camera == 1:
+                        os.system("v4l2-ctl -d /dev/v4l-subdev6 -c focus_absolute=" + str(focus))
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                 # new v3
                 elif (mousex > preview_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and Pi_Cam == 3 and foc_man == 1:
@@ -2121,7 +2218,7 @@ while True:
                         button(1,7,1,9)
                         if os.path.exists("ctrls.txt"):
                             os.remove("ctrls.txt")
-                        os.system("v4l2-ctl -d /dev/v4l-subdev1 --list-ctrls >> ctrls.txt")
+                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " --list-ctrls >> ctrls.txt")
                         restart = 1
                         time.sleep(0.25)
                         ctrlstxt = []
@@ -2132,7 +2229,7 @@ while True:
                                 line = file.readline()
                         foc_ctrl = ctrlstxt[3].split('value=')
                         focus = int(foc_ctrl[1])
-                        os.system("v4l2-ctl -d /dev/v4l-subdev1 -c focus_absolute=" + str(focus))
+                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
                         text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                         draw_Vbar(1,7,dgryColor,'focus',focus)
                         text(1,7,3,1,1,"manual",fv,0)
@@ -2140,6 +2237,7 @@ while True:
                     elif (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
                         focus_mode = 0
                         foc_man = 0
+                        fcount = 0
                         zoom = 0
                         button(1,7,0,9)
                         text(1,7,5,0,1,"FOCUS",ft,7)
@@ -2228,6 +2326,7 @@ while True:
                     fxy = 0
                     fxz = 1
                     fyz = 1
+                    #fcount = 0
                     if Pi_Cam == 3 and v3_f_mode == 0:
                         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
                 restart = 1
@@ -2585,9 +2684,9 @@ while True:
                         rpistr += " --sharpness " + str(sharpness/10)
                         rpistr += " --quality " + str(quality)
                         rpistr += " --denoise " + denoises[denoise] # + " --width 2304 --height 1296"
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0:
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                             rpistr += " --autofocus "
-                        if Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0:
+                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                             rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
                                 rpistr += " --lens-position " + str(v3_focus/100)
@@ -2753,9 +2852,9 @@ while True:
                         rpistr += " --saturation " + str(saturation/10)
                         rpistr += " --sharpness " + str(sharpness/10)
                         rpistr += " --denoise "    + denoises[denoise]
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0:
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                             rpistr += " --autofocus "
-                        if Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0:
+                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                             rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
                                 rpistr += " --lens-position " + str(v3_focus/100)
@@ -2776,7 +2875,7 @@ while True:
                             zxo = ((igw/2)-(preview_width/2))/igw
                             zyo = ((igh/2)-(preview_height/2))/igh
                             rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
-                        print (rpistr)
+                        #print (rpistr)
                         p = subprocess.Popen(rpistr, shell=True, preexec_fn=os.setsid)
                         start_video = time.monotonic()
                         stop = 0
@@ -2893,9 +2992,9 @@ while True:
                         rpistr += " --saturation " + str(saturation/10)
                         rpistr += " --sharpness " + str(sharpness/10)
                         rpistr += " --denoise "    + denoises[denoise]
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0:
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                             rpistr += " --autofocus "
-                        if Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0:
+                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                             rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
                                 rpistr += " --lens-position " + str(v3_focus/100)
@@ -3024,9 +3123,9 @@ while True:
                             rpistr += " --sharpness " + str(sharpness/10)
                             rpistr += " --quality " + str(quality)
                             rpistr += " --denoise "    + denoises[denoise]
-                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and tinterval > 5:
+                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and tinterval > 5 and use_ard == 1:
                                 rpistr += " --autofocus "
-                            if Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0:
+                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                                 rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
                                     rpistr += " --lens-position " + str(v3_focus/100)
@@ -3174,9 +3273,9 @@ while True:
                                     rpistr += " --sharpness " + str(sharpness/10)
                                     rpistr += " --quality " + str(quality)
                                     rpistr += " --denoise "    + denoises[denoise]
-                                    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and tinterval > 5:
+                                    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and tinterval > 5 and use_ard == 1:
                                         rpistr += " --autofocus "
-                                    if Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0:
+                                    if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                                         rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                         if v3_f_mode == 1:
                                             rpistr += " --lens-position " + str(v3_focus/100)
@@ -3316,9 +3415,9 @@ while True:
                             rpistr += " --saturation " + str(saturation/10)
                             rpistr += " --sharpness "  + str(sharpness/10)
                             rpistr += " --denoise "    + denoises[denoise]
-                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0:
+                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                                 rpistr += " --autofocus "
-                            if Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0:
+                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                                 rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
                                     rpistr += " --lens-position " + str(v3_focus/100)
