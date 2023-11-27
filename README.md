@@ -7,10 +7,13 @@ preview uses rpicam-vid (so may not be as sharp as captured stills), stills rpic
 At your own risk !!. Ensure you have any required software backed up.
 
 Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP and 64MP Autofocus. 
-(Note for Arducam cameras you need to follow their installation instructions https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/Quick-Start-Guide/ 
-and install their version of libcamera)
 
-I have only tested switching 2 cameras on a Pi5, right click on preview image, with official Pi Cameras as l can't get the Pi5 to see the arducam cameras. It will work with different models of Pi cameras.
+(Note You can use an Arducam 16/64MP camera with the default Pi Rpicam-apps... remember to add dtoverlay=imx519 to /boot/config.txt (see below for a Pi5))
+
+(To make an Arducam 16/64MP work on a Pi5...make a copy of usr/share/libcamera/ipa/rpi/pisp/imx219.json and rename it usr/share/libcamera/ipa/rpi/pisp/imx519.json
+in /boot/firmware/config.txt #camera_auto_detect=1, and add dtoverlay=imx519,cam0 or dtoverlay=imx519,cam1 as appropriate. If you have a 2nd camera add a dtoverlay for that as well.)
+
+It will work with different models of cameras.
 
 ## Screenshot
 
