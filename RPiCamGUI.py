@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.70
+version = 4.71
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -685,6 +685,9 @@ def Menu():
     text(1,9,1,1,1,"Timelapse",ft,7)
   if (Pi_Cam == 5 or Pi_Cam == 6):
     text(1,7,3,1,1,"auto",fv,7)
+    if foc_man == 1:
+        text(1,7,3,1,1,"manual",fv,0)
+   
   draw_Vbar(1,3,lpurColor,'vformat',vformat)
   if Pi_Cam == 3:
     button(0,15,0,5)
@@ -908,7 +911,8 @@ old_histarea = histarea
 if rotate == 0:
     text(0,0,6,2,1,"Please Wait for preview...",int(fv*1.7),1)
 preview()
-foc_sub = -1
+foc_sub3 = -1
+foc_sub5 = -1
 for x in range(0,10):
     if os.path.exists("ctrls.txt"):
         os.remove("ctrls.txt")
@@ -921,9 +925,12 @@ for x in range(0,10):
             ctrlstxt.append(line.strip())
             line = file.readline()
     for a in range(0,len(ctrlstxt)):
-        if ctrlstxt[a][0:14] == "focus_absolute":
-            print(x)
-            foc_sub = x
+        if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=4095":
+            print(5,x)
+            foc_sub5 = x
+        if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=1023":
+            print(3,x)
+            foc_sub3 = x
 
 # main loop
 while True:
@@ -936,7 +943,7 @@ while True:
         v3_focus += 1
         v3_focus = min(v3_focus,v3_pmax)
         draw_Vbar(1,7,dgryColor,'focus',v3_focus * 4)
-        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
+        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub3) + " -c focus_absolute=" + str(focus))
         text(1,7,3,0,1,'<<< ' + str(v3_focus) + ' >>>',fv,0)
         time.sleep(0.25)
 
@@ -957,7 +964,7 @@ while True:
             focus += 10
         focus = max(pmin,focus)
         focus = min(pmax,focus)
-        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
+        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
         text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
         draw_Vbar(1,7,dgryColor,'focus',focus)
         text(1,7,3,1,1,"manual",fv,0)
@@ -971,7 +978,7 @@ while True:
         v3_focus -= 1
         v3_focus = max(v3_focus,v3_pmin)
         draw_Vbar(1,7,dgryColor,'focus',v3_focus * 4)
-        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
+        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub3) + " -c focus_absolute=" + str(focus))
         text(1,7,3,0,1,'<<< ' + str(v3_focus) + ' >>>',fv,0)
         time.sleep(0.25)
         
@@ -1219,7 +1226,7 @@ while True:
                 if focus < 100 or focus > 4000:
                     focus = 2000
                     fcount = 0
-                os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
+                os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
                 time.sleep(.5)
                 fcount += 1
 
@@ -2117,7 +2124,7 @@ while True:
                 if (mousex > preview_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
                     focus = int(((mousex-preview_width-bw) / bw) * pmax)
                     draw_Vbar(1,7,dgryColor,'focus',focus)
-                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
+                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                 elif mousex > preview_width + bw and mousey > ((button_row-1)*bh) + (bh/3) and mousey < ((button_row-1)*bh) + (bh/1.5) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
                     if button_pos == 2:
@@ -2125,13 +2132,13 @@ while True:
                     elif button_pos == 3:
                         focus += 10
                     draw_Vbar(1,7,dgryColor,'focus',focus)
-                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
+                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
 
                 elif (mousey > preview_height + (bh*3) and mousey < preview_height + (bh*3) + (bh/3)) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
                     focus = int(((mousex-((button_row - 8)*bw)) / bw)* pmax)
                     draw_Vbar(1,7,dgryColor,'focus',focus)
-                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
+                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                 elif mousey > preview_height + (bh*3) and mousey > preview_height + (bh*3) + (bh/3) and mousey < preview_height + (bh*3) + (bh/1.5) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
                     if button_pos == 0:
@@ -2218,7 +2225,7 @@ while True:
                         button(1,7,1,9)
                         if os.path.exists("ctrls.txt"):
                             os.remove("ctrls.txt")
-                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " --list-ctrls >> ctrls.txt")
+                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " --list-ctrls >> ctrls.txt")
                         restart = 1
                         time.sleep(0.25)
                         ctrlstxt = []
@@ -2229,7 +2236,7 @@ while True:
                                 line = file.readline()
                         foc_ctrl = ctrlstxt[3].split('value=')
                         focus = int(foc_ctrl[1])
-                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub) + " -c focus_absolute=" + str(focus))
+                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
                         text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                         draw_Vbar(1,7,dgryColor,'focus',focus)
                         text(1,7,3,1,1,"manual",fv,0)
