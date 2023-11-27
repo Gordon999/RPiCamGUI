@@ -13,7 +13,7 @@ Script to allow control of a Pi Camera. Will work with all Pi camera models, v1,
 (To make an Arducam 16/64MP work on a Pi5...make a copy of usr/share/libcamera/ipa/rpi/pisp/imx219.json and rename it usr/share/libcamera/ipa/rpi/pisp/imx519.json.  
 ln /boot/firmware/config.txt #camera_auto_detect=1, and add dtoverlay=imx519,cam0 or dtoverlay=imx519,cam1 as appropriate. If you have a 2nd camera add a dtoverlay for that as well.)
 
-It will work with different models of cameras.
+Switching will work with different models of cameras.
 
 ## Screenshot
 
