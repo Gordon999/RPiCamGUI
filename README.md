@@ -81,5 +81,5 @@ curl -fsSL https://raw.githubusercontent.com/Gordon999/RPiCamGUI/main/RPiCamGUI.
 Use the following commands to run it.
   
 ```bash
-python3 ~/PiLibCameraGUI.py
+python3 ~/RPiCamGUI.py
 ```
