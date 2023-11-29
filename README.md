@@ -14,7 +14,7 @@ Script to allow control of a Pi Camera. Will work with all Pi camera models, v1,
 
 Make a copy of https://github.com/ArduCAM/libcamera/blob/arducam/src/ipa/rpi/pisp/data/imx519.json and save it to usr/share/libcamera/ipa/rpi/pisp/imx519.json.
 
-Download imx519mf.json and put it in usr/share/libcamera/ipa/rpi/pisp/, This json allows manual focussing.
+edit imx519.json by modifying line 3691 "rpi.af" to "rpi.mf" and save as imx519mf.json and put it in usr/share/libcamera/ipa/rpi/pisp/, This json allows manual focussing.
 
 ln /boot/firmware/config.txt #camera_auto_detect=1, and add dtoverlay=imx519,cam0 or dtoverlay=imx519,cam1 as appropriate. If you have a 2nd camera add a dtoverlay for that as well.)
 
