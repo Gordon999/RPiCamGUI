@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.71
+version = 4.73
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -52,8 +52,8 @@ use_ard = 0
 sq_dis = 0
 
 # set default values (see limits below)
-rotate      = 0      # rotate preview ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
-camera      = 1       # choose camera to use
+rotate      = 0       # rotate preview ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
+camera      = 0       # choose camera to use, usually 0 unless using a Pi5 or multiswitcher
 stream_port = 5000    # set video streaming port number
 mode        = 1       # set camera mode ['manual','normal','sport'] 
 speed       = 16      # position in shutters list (16 = 1/125th)
@@ -111,7 +111,7 @@ max_gs      = 15
 focus       = 2000
 foc_man     = 0
 fcount      = 0
-fstep       = 10
+fstep       = 20
 max_fcount  = 30
 old_foc     = 0
 ran         = 0
@@ -232,6 +232,21 @@ v3_f_speed  = config[29]
 v3_f_range  = config[30]
 #rotate      = config[31]
 
+#check Pi model.
+Pi = 0
+if os.path.exists ('/run/shm/md.txt'): 
+    os.remove("/run/shm/md.txt")
+os.system("cat /proc/cpuinfo >> /run/shm/md.txt")
+with open("/run/shm/md.txt", "r") as file:
+        line = file.readline()
+        while line:
+           line = file.readline()
+           if line[0:5] == "Model":
+               model = line
+mod = model.split(" ")
+if mod[3] == "5":
+    Pi = 5
+    
 def Camera_Version():
   # Check for Pi Camera version
   global mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0
@@ -271,6 +286,7 @@ def Camera_Version():
     elif camstxt[x][0:4] == "1 : " and max_camera < 1:
         max_camera = 1
     pic = 0
+    Pi_Cam = -1
     for x in range(0,len(camids)):
         if camera == 0:
             if cam0 == camids[x]:
@@ -560,7 +576,7 @@ def draw_Vbar(col,row,color,msg,value):
     pygame.display.update()
 
 def preview():
-    global scientif,scientific,fxx,fxy,fxz,v3_focus,v3_hdr,v3_f_mode,v3_f_modes,prev_fps,focus_fps,focus_mode,restart,rpistr,count,p, brightness,contrast,modes,mode,red,blue,gain,sspeed,ev,preview_width,preview_height,zoom,igw,igh,zx,zy,awbs,awb,saturations,saturation,meters,meter,flickers,flicker,sharpnesss,sharpness,rotate
+    global Pi,scientif,scientific,fxx,fxy,fxz,v3_focus,v3_hdr,v3_f_mode,v3_f_modes,prev_fps,focus_fps,focus_mode,restart,rpistr,count,p, brightness,contrast,modes,mode,red,blue,gain,sspeed,ev,preview_width,preview_height,zoom,igw,igh,zx,zy,awbs,awb,saturations,saturation,meters,meter,flickers,flicker,sharpnesss,sharpness,rotate
     files = glob.glob('/run/shm/*.jpg')
     for f in files:
         os.remove(f)
@@ -627,6 +643,9 @@ def preview():
             rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
         if os.path.exists('usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'):
             rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
+    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5:
+        if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+            rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
     if zoom > 1 and zoom < 5:
         zxo = ((1920-zwidths[4 - zoom])/2)/1920
         zyo = ((1440-zheights[4 - zoom])/2)/1440
@@ -911,6 +930,8 @@ old_histarea = histarea
 if rotate == 0:
     text(0,0,6,2,1,"Please Wait for preview...",int(fv*1.7),1)
 preview()
+
+# determine /dev/v4l-subdevX for Pi v3 and Arducam 16/64MP cameras
 foc_sub3 = -1
 foc_sub5 = -1
 for x in range(0,10):
@@ -926,10 +947,8 @@ for x in range(0,10):
             line = file.readline()
     for a in range(0,len(ctrlstxt)):
         if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=4095":
-            print(5,x)
             foc_sub5 = x
         if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=1023":
-            print(3,x)
             foc_sub3 = x
 
 # main loop
@@ -1192,9 +1211,10 @@ while True:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_height * 0.50),int(preview_width * 0.22),int(preview_height * 0.33),int(preview_width * 0.31)),gw)
 
         # ARDUCAM AF
-        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and fcount < max_fcount and use_ard == 0:
+        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and fcount < max_fcount and Pi != 5:
                 image2 = pygame.surfarray.pixels3d(image)
                 crop2 = image2[xx-histarea:xx+histarea,xy-histarea:xy+histarea]
+                pygame.draw.rect(windowSurfaceObj,redColor,Rect(xx-histarea,xy-histarea,histarea*2,histarea*2),1)
                 gray = cv2.cvtColor(crop2,cv2.COLOR_RGB2GRAY)
                 foc = cv2.Laplacian(gray, cv2.CV_64F).var()
                 for f in range(0,len(video_limits)-1,3):
@@ -1204,13 +1224,13 @@ while True:
                 if foc >= 50:
                     ran = 0
                 else:
-                    focus = random.randint(100, 4000)
+                    focus = random.randint(pmin + 100,pmax - 100)
                     fcount = 1
                     ran = 1
                     old_foc = foc
                 if (int(foc) >= int(old_foc) or fcount == 0) and ran == 0:
                     if fcount == 0:
-                        if focus < 2000:
+                        if focus < int(pmax/2):
                             focus  += fstep
                         else:
                             focus  -= fstep
@@ -1222,11 +1242,12 @@ while True:
                 old_foc = foc
                 focus = max(pmin,focus)
                 focus = min(pmax,focus)
-                text(20,1,3,2,0,"Ctrl : " + str(int(focus)),fv* 2,0)
-                if focus < 100 or focus > 4000:
-                    focus = 2000
+                if focus < pmin + 100 or focus > pmax - 100:
+                    focus = int(pmax/2)
                     fcount = 0
                 os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
+                text(20,1,3,2,0,"Ctrl  : " + str(int(focus)),fv* 2,0)
+                text(20,2,3,2,0,"Focus : " + str(int(foc)),fv* 2,0)
                 time.sleep(.5)
                 fcount += 1
 
@@ -2693,6 +2714,9 @@ while True:
                         rpistr += " --denoise " + denoises[denoise] # + " --width 2304 --height 1296"
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                             rpistr += " --autofocus "
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                 rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                         if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                             rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
@@ -2730,7 +2754,6 @@ while True:
                                 if rotate == 0:
                                     image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
                                 else:
-                                    #image = pygame.transform.rotate(image, int(rotate * 90))
                                     if rotate != 2:
                                         igwr = image.get_width()
                                         ighr = image.get_height()
@@ -2859,8 +2882,12 @@ while True:
                         rpistr += " --saturation " + str(saturation/10)
                         rpistr += " --sharpness " + str(sharpness/10)
                         rpistr += " --denoise "    + denoises[denoise]
+
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                             rpistr += " --autofocus "
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                         if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                             rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
@@ -3001,6 +3028,9 @@ while True:
                         rpistr += " --denoise "    + denoises[denoise]
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                             rpistr += " --autofocus "
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                         if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                             rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
@@ -3130,8 +3160,11 @@ while True:
                             rpistr += " --sharpness " + str(sharpness/10)
                             rpistr += " --quality " + str(quality)
                             rpistr += " --denoise "    + denoises[denoise]
-                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and tinterval > 5 and use_ard == 1:
+                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                                 rpistr += " --autofocus "
+                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                    rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                             if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                                 rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
@@ -3280,8 +3313,11 @@ while True:
                                     rpistr += " --sharpness " + str(sharpness/10)
                                     rpistr += " --quality " + str(quality)
                                     rpistr += " --denoise "    + denoises[denoise]
-                                    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and tinterval > 5 and use_ard == 1:
+                                    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                                         rpistr += " --autofocus "
+                                    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                                        if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                            rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                                     if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                                         rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                         if v3_f_mode == 1:
@@ -3423,7 +3459,10 @@ while True:
                             rpistr += " --sharpness "  + str(sharpness/10)
                             rpistr += " --denoise "    + denoises[denoise]
                             if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                                rpistr += " --autofocus "
+                                rpistr += " --autofocus " 
+                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                    rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                             if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
                                 rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
