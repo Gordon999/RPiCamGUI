@@ -352,7 +352,7 @@ def Camera_Version():
     max_vformat = max_vf_1
   elif Pi_Cam == 4:               # Pi HQ
     max_vformat = max_vf_4a
-    if (os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') or os.path.exists('usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json')) and Pi_Cam == 4:
+    if (os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') or os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json')) and Pi_Cam == 4:
         scientif = 1
     else:
         scientif = 0
@@ -641,7 +641,7 @@ def preview():
     if Pi_Cam == 4 and scientific == 1:
         if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json'):
             rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
-        if os.path.exists('usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'):
+        if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'):
             rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
     if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5:
         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
