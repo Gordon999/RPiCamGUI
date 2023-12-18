@@ -352,7 +352,7 @@ def Camera_Version():
     max_vformat = max_vf_1
   elif Pi_Cam == 4:               # Pi HQ
     max_vformat = max_vf_4a
-    if (os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') or os.path.exists('usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json')) and Pi_Cam == 4:
+    if (os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') or os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json')) and Pi_Cam == 4:
         scientif = 1
     else:
         scientif = 0
