@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.74
+version = 4.76
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -177,6 +177,24 @@ v3_f_modes   = ['auto','manual','continuous']
 v3_f_ranges  = ['normal','macro','full']
 v3_f_speeds  = ['normal','fast']
 histograms   = ["OFF","Red","Green","Blue","Lum","ALL"]
+
+#check Pi model.
+Pi = 0
+if os.path.exists ('/run/shm/md.txt'): 
+    os.remove("/run/shm/md.txt")
+os.system("cat /proc/cpuinfo >> /run/shm/md.txt")
+with open("/run/shm/md.txt", "r") as file:
+        line = file.readline()
+        while line:
+           line = file.readline()
+           if line[0:5] == "Model":
+               model = line
+mod = model.split(" ")
+if mod[3] == "5":
+    Pi = 5
+    codecs.append('mp4')
+    codecs2.append('mp4')
+    
 still_limits = ['mode',0,len(modes)-1,'speed',0,len(shutters)-1,'gain',0,30,'brightness',-100,100,'contrast',0,200,'ev',-10,10,'blue',1,80,'sharpness',0,30,
                 'denoise',0,len(denoises)-1,'quality',0,100,'red',1,80,'extn',0,len(extns)-1,'saturation',0,20,'meter',0,len(meters)-1,'awb',0,len(awbs)-1,
                 'histogram',0,len(histograms)-1,'v3_f_speed',0,len(v3_f_speeds)-1]
@@ -232,174 +250,165 @@ v3_f_speed  = config[29]
 v3_f_range  = config[30]
 #rotate      = config[31]
 
-#check Pi model.
-Pi = 0
-if os.path.exists ('/run/shm/md.txt'): 
-    os.remove("/run/shm/md.txt")
-os.system("cat /proc/cpuinfo >> /run/shm/md.txt")
-with open("/run/shm/md.txt", "r") as file:
-        line = file.readline()
-        while line:
-           line = file.readline()
-           if line[0:5] == "Model":
-               model = line
-mod = model.split(" ")
-if mod[3] == "5":
-    Pi = 5
+if codec > len(codecs):
+    codec = 0
     
 def Camera_Version():
-  # Check for Pi Camera version
-  global mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0
-  # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
-  if os.path.exists('libcams.txt'):
-   os.rename('libcams.txt', 'oldlibcams.txt')
-  os.system("rpicam-vid --list-cameras >> libcams.txt")
-  time.sleep(0.5)
-  # read libcams.txt file
-  camstxt = []
-  with open("libcams.txt", "r") as file:
-    line = file.readline()
-    while line:
-        camstxt.append(line.strip())
-        line = file.readline()
-  max_camera = 0
-  same_cams  = 0
-  cam0 = "0"
-  cam1 = "1"
-  cam2 = "2"
-  cam3 = "3"
-  for x in range(0,len(camstxt)):
-    # Determine camera models
-    if camstxt[x][0:4] == "0 : ":
-        cam0 = camstxt[x][4:10]
-    elif camstxt[x][0:4] == "1 : ":
-        cam1 = camstxt[x][4:10]
-    elif camstxt[x][0:4] == "2 : ":
-        cam2 = camstxt[x][4:10]
-    elif camstxt[x][0:4] == "3 : ":
-        cam3 = camstxt[x][4:10]
-    # Determine MAXIMUM number of cameras available 
-    if camstxt[x][0:4] == "3 : " and max_camera < 3:
-        max_camera = 3
-    elif camstxt[x][0:4] == "2 : " and max_camera < 2:
-        max_camera = 2
-    elif camstxt[x][0:4] == "1 : " and max_camera < 1:
-        max_camera = 1
-    pic = 0
-    Pi_Cam = -1
-    for x in range(0,len(camids)):
-        if camera == 0:
-            if cam0 == camids[x]:
-                Pi_Cam = x
-                pic = 1
-        elif camera == 1:
-            if cam1 == camids[x]:
-                Pi_Cam = x
-                pic = 1
-        elif camera == 2:
-            if cam2 == camids[x]:
-                Pi_Cam = x
-                pic = 1
-        elif camera == 3:
-            if cam3 == camids[x]:
-                Pi_Cam = x
-                pic = 1
-        if pic == 1:
-            max_shutter = max_shutters[Pi_Cam]
-            max_gain = max_gains[Pi_Cam]
-            mag = int(max_gain/4)
-            still_limits[8] = max_gain
-            
-  pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + cameras[Pi_Cam] + " Camera" )
-    
-  if max_camera == 1 and cam0 == cam1:
-    same_cams = 1
-        
-
-  if Pi_Cam == 5 or Pi_Cam == 6:
-    # read /boot/config.txt file
-    configtxt = []
-    with open("/boot/config.txt", "r") as file:
+    # Check for Pi Camera version
+    global mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0
+    # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
+    if os.path.exists('libcams.txt'):
+        os.rename('libcams.txt', 'oldlibcams.txt')
+    os.system("rpicam-vid --list-cameras >> libcams.txt")
+    time.sleep(0.5)
+    # read libcams.txt file
+    camstxt = []
+    with open("libcams.txt", "r") as file:
         line = file.readline()
         while line:
-            configtxt.append(line.strip())
+            camstxt.append(line.strip())
             line = file.readline()
+    max_camera = 0
+    same_cams  = 0
+    cam0 = "0"
+    cam1 = "1"
+    cam2 = "2"
+    cam3 = "3"
+    Pi_Cam = -1
+    for x in range(0,len(camstxt)):
+        # Determine camera models
+        if camstxt[x][0:4] == "0 : ":
+            cam0 = camstxt[x][4:10]
+        elif camstxt[x][0:4] == "1 : ":
+            cam1 = camstxt[x][4:10]
+        elif camstxt[x][0:4] == "2 : ":
+            cam2 = camstxt[x][4:10]
+        elif camstxt[x][0:4] == "3 : ":
+            cam3 = camstxt[x][4:10]
+        # Determine MAXIMUM number of cameras available 
+        if camstxt[x][0:4] == "3 : " and max_camera < 3:
+            max_camera = 3
+        elif camstxt[x][0:4] == "2 : " and max_camera < 2:
+            max_camera = 2
+        elif camstxt[x][0:4] == "1 : " and max_camera < 1:
+            max_camera = 1
+        pic = 0
+        Pi_Cam = -1
+        for x in range(0,len(camids)):
+            if camera == 0:
+                if cam0 == camids[x]:
+                    Pi_Cam = x
+                    pic = 1
+            elif camera == 1:
+                if cam1 == camids[x]:
+                    Pi_Cam = x
+                    pic = 1
+            elif camera == 2:
+                if cam2 == camids[x]:
+                    Pi_Cam = x
+                    pic = 1
+            elif camera == 3:
+                if cam3 == camids[x]:
+                    Pi_Cam = x
+                    pic = 1
+            if pic == 1:
+                max_shutter = max_shutters[Pi_Cam]
+                max_gain = max_gains[Pi_Cam]
+                mag = int(max_gain/4)
+                still_limits[8] = max_gain
+    if Pi_Cam == -1:
+        print("No Camera Found")
+        pygame.display.quit()
+        sys.exit()
             
-  # max video formats (not for h264)
-  max_vf_7  = 7
-  max_vf_6  = 20
-  max_vf_5  = 14
-  max_vf_4  = 18
-  max_vf_3  = 19
-  max_vf_2  = 15
-  max_vf_1  = 14
-  max_vf_4a = 12
-  max_vf_0  = 10 # default if using h264
-
-  if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP or 64MP
-    max_vformat = max_vf_6
-  elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
-    max_vformat = max_vf_5
-  elif Pi_Cam == 7:               # Pi GS
-    max_vformat = max_vf_7
-  elif codec > 0 and Pi_Cam == 4: # Pi HQ
-    max_vformat = max_vf_4
-  elif codec > 0 and Pi_Cam == 3: # Pi V3
-    max_vformat = max_vf_3
-  elif codec > 0 and Pi_Cam == 2: # Pi V2
-    max_vformat = max_vf_2
-  elif codec > 0 and Pi_Cam == 1: # Pi V1
-    max_vformat = max_vf_1
-  elif Pi_Cam == 4:               # Pi HQ
-    max_vformat = max_vf_4a
-    if (os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') or os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json')) and Pi_Cam == 4:
-        scientif = 1
+    pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + cameras[Pi_Cam] + " Camera" )
+    if max_camera == 1 and cam0 == cam1:
+        same_cams = 1
+    if Pi_Cam == 5 or Pi_Cam == 6:
+        # read /boot/config.txt file
+        configtxt = []
+        with open("/boot/config.txt", "r") as file:
+            line = file.readline()
+            while line:
+                configtxt.append(line.strip())
+                line = file.readline()
+    # max video formats (not for h264)
+    max_vf_7  = 7
+    max_vf_6  = 20
+    max_vf_5  = 14
+    max_vf_4  = 18
+    max_vf_3  = 19
+    max_vf_2  = 15
+    max_vf_1  = 14
+    max_vf_4a = 12
+    max_vf_0  = 10 # default if using h264
+    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP or 64MP
+        max_vformat = max_vf_6
+    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
+        max_vformat = max_vf_5
+    elif Pi_Cam == 7:               # Pi GS
+        max_vformat = max_vf_7
+    elif codec > 0 and Pi_Cam == 4: # Pi HQ
+        max_vformat = max_vf_4
+    elif codec > 0 and Pi_Cam == 3: # Pi V3
+        max_vformat = max_vf_3
+    elif codec > 0 and Pi_Cam == 2: # Pi V2
+        max_vformat = max_vf_2
+    elif codec > 0 and Pi_Cam == 1: # Pi V1
+        max_vformat = max_vf_1
+    elif Pi_Cam == 4:               # Pi HQ
+        max_vformat = max_vf_4a
+        if (os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') or os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json')) and Pi_Cam == 4:
+            scientif = 1
+        else:
+            scientif = 0
     else:
-        scientif = 0
-  else:
-    max_vformat = max_vf_0
-  if vformat > max_vformat:
-    vformat = max_vformat
-  vwidth    = vwidths[vformat]
-  vheight   = vheights[vformat]
-  vfps      = v_max_fps[vformat]
-
-  video_limits[5] = vfps
-  if tinterval > 0:
-    tduration = tinterval * tshots
-  else:
-    tduration = 5
-
-  shutter = shutters[speed]
-  if shutter < 0:
-    shutter = abs(1/shutter)
-  sspeed = int(shutter * 1000000)
-  if (shutter * 1000000) - int(shutter * 1000000) > 0.5:
-    sspeed +=1
-  # determine max speed for camera
-  max_speed = 0
-  while max_shutter > shutters[max_speed]:
-    max_speed +=1
-  if speed > max_speed:
-    speed = max_speed
+        max_vformat = max_vf_0
+    if vformat > max_vformat:
+        vformat = max_vformat
+    vwidth    = vwidths[vformat]
+    vheight   = vheights[vformat]
+    vfps      = v_max_fps[vformat]
+    video_limits[5] = vfps
+    if tinterval > 0:
+        tduration = tinterval * tshots
+    else:
+        tduration = 5
     shutter = shutters[speed]
     if shutter < 0:
         shutter = abs(1/shutter)
     sspeed = int(shutter * 1000000)
+    if (shutter * 1000000) - int(shutter * 1000000) > 0.5:
+        sspeed +=1
+    # determine max speed for camera
+    max_speed = 0
+    while max_shutter > shutters[max_speed]:
+        max_speed +=1
+    if speed > max_speed:
+        speed = max_speed
+        shutter = shutters[speed]
+        if shutter < 0:
+            shutter = abs(1/shutter)
+        sspeed = int(shutter * 1000000)
+        if mode == 0:
+            if shutters[speed] < 0:
+                text(0,2,3,1,1,"1/" + str(abs(shutters[speed])),fv,10)
+            else:
+                text(0,2,3,1,1,str(shutters[speed]),fv,10)
+        else:
+            if shutters[speed] < 0:
+                text(0,2,0,1,1,"1/" + str(abs(shutters[speed])),fv,10)
+            else:
+                text(0,2,0,1,1,str(shutters[speed]),fv,10)
     if mode == 0:
-        if shutters[speed] < 0:
-            text(0,2,3,1,1,"1/" + str(abs(shutters[speed])),fv,10)
-        else:
-            text(0,2,3,1,1,str(shutters[speed]),fv,10)
-    else:
-        if shutters[speed] < 0:
-            text(0,2,0,1,1,"1/" + str(abs(shutters[speed])),fv,10)
-        else:
-            text(0,2,0,1,1,str(shutters[speed]),fv,10)
-  if mode == 0:
-    draw_bar(0,2,lgrnColor,'speed',speed)
+        draw_bar(0,2,lgrnColor,'speed',speed)
 
 Camera_Version()
+
+if Pi == 5:
+    video_limits[1] = 1
+    if vlen == 0:
+        vlen = 1
 
 pygame.init()
 if frame == 1:
@@ -576,86 +585,86 @@ def draw_Vbar(col,row,color,msg,value):
     pygame.display.update()
 
 def preview():
-    global Pi,scientif,scientific,fxx,fxy,fxz,v3_focus,v3_hdr,v3_f_mode,v3_f_modes,prev_fps,focus_fps,focus_mode,restart,rpistr,count,p, brightness,contrast,modes,mode,red,blue,gain,sspeed,ev,preview_width,preview_height,zoom,igw,igh,zx,zy,awbs,awb,saturations,saturation,meters,meter,flickers,flicker,sharpnesss,sharpness,rotate
+    global Pi,scientif,scientific,fxx,fxy,fxz,v3_focus,v3_hdr,v3_f_mode,v3_f_modes,prev_fps,focus_fps,focus_mode,restart,datastr,count,p, brightness,contrast,modes,mode,red,blue,gain,sspeed,ev,preview_width,preview_height,zoom,igw,igh,zx,zy,awbs,awb,saturations,saturation,meters,meter,flickers,flicker,sharpnesss,sharpness,rotate
     files = glob.glob('/run/shm/*.jpg')
     for f in files:
         os.remove(f)
     speed2 = sspeed
     speed2 = min(speed2,2000000)
-    rpistr = "rpicam-vid --camera " + str(camera) + " -n --codec mjpeg -t 0 --segment 1"
+    datastr = "rpicam-vid --camera " + str(camera) + " -n --codec mjpeg -t 0 --segment 1"
     if (Pi_Cam == 5 or Pi_Cam == 6) and (focus_mode == 1 or zoom > 0):
-        rpistr += " --width 3280 --height 2464 -o /run/shm/test%d.jpg "
+        datastr += " --width 3280 --height 2464 -o /run/shm/test%d.jpg "
     elif Pi_Cam == 7 :
-        rpistr += " --width 1456 --height 1088 -o /run/shm/test%d.jpg "
+        datastr += " --width 1456 --height 1088 -o /run/shm/test%d.jpg "
     elif Pi_Cam == 3 :
-        rpistr += " --width 2304 --height 1296 -o /run/shm/test%d.jpg "
+        datastr += " --width 2304 --height 1296 -o /run/shm/test%d.jpg "
     elif (Pi_Cam == 5 or Pi_Cam == 6) or focus_mode == 1 :
-        rpistr += " --width 1920 --height 1440 -o /run/shm/test%d.jpg "
+        datastr += " --width 1920 --height 1440 -o /run/shm/test%d.jpg "
     else:
         if preview_width == 600 and preview_height == 480:
-            rpistr += " --width 720 --height 540 -o /run/shm/test%d.jpg "
+            datastr += " --width 720 --height 540 -o /run/shm/test%d.jpg "
         else:
-            rpistr += " --width 1920 --height 1440 -o /run/shm/test%d.jpg "
-    rpistr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+            datastr += " --width 1920 --height 1440 -o /run/shm/test%d.jpg "
+    datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
     if mode == 0:
-        rpistr += " --shutter " + str(speed2) 
+        datastr += " --shutter " + str(speed2) 
     else:
-        rpistr += " --exposure " + str(modes[mode]) 
+        datastr += " --exposure " + str(modes[mode]) 
     if zoom > 4 and (Pi_Cam < 5 or Pi_Cam == 7) and Pi_Cam != 3 and mode != 0:
-        rpistr += " --framerate " + str(focus_fps)
+        datastr += " --framerate " + str(focus_fps)
     elif (zoom < 5 or Pi_Cam == 3) and mode != 0:
-        rpistr += " --framerate " + str(prev_fps)
+        datastr += " --framerate " + str(prev_fps)
     elif mode == 0:
         speed3 = 1000000/speed2
         speed3 = min(speed3,25)
-        rpistr += " --framerate " + str(speed3)
+        datastr += " --framerate " + str(speed3)
     if ev != 0:
-        rpistr += " --ev " + str(ev)
+        datastr += " --ev " + str(ev)
     if sspeed > 5000000 and mode == 0:
-        rpistr += " --gain 1 --awbgains " + str(red/10) + "," + str(blue/10)
+        datastr += " --gain 1 --awbgains " + str(red/10) + "," + str(blue/10)
     else:
-        rpistr += " --gain " + str(gain)
+        datastr += " --gain " + str(gain)
         if awb == 0:
-            rpistr += " --awbgains " + str(red/10) + "," + str(blue/10)
+            datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
         else:
-            rpistr += " --awb " + awbs[awb]
-    rpistr += " --metering "   + meters[meter]
-    rpistr += " --saturation " + str(saturation/10)
-    rpistr += " --sharpness "  + str(sharpness/10)
-    rpistr += " --denoise "    + denoises[denoise]
-    rpistr += " --quality " + str(quality)
+            datastr += " --awb " + awbs[awb]
+    datastr += " --metering "   + meters[meter]
+    datastr += " --saturation " + str(saturation/10)
+    datastr += " --sharpness "  + str(sharpness/10)
+    datastr += " --denoise "    + denoises[denoise]
+    datastr += " --quality " + str(quality)
     if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-        rpistr += " --autofocus "
+        datastr += " --autofocus "
     if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-        rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+        datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
         if v3_f_mode == 1:
-            rpistr += " --lens-position " + str(v3_focus/100)
+            datastr += " --lens-position " + str(v3_focus/100)
     elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
-        rpistr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+        datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
     if Pi_Cam == 3 and v3_f_speed != 0:
-        rpistr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
+        datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
     if Pi_Cam == 3 and v3_f_range != 0:
-        rpistr += " --autofocus-range " + v3_f_ranges[v3_f_range]
+        datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
     if Pi_Cam == 3 and v3_hdr == 1:
-        rpistr += " --hdr"
+        datastr += " --hdr"
     if Pi_Cam == 4 and scientific == 1:
         if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json'):
-            rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'):
-            rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
+            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
     if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5:
         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-            rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
     if zoom > 1 and zoom < 5:
         zxo = ((1920-zwidths[4 - zoom])/2)/1920
         zyo = ((1440-zheights[4 - zoom])/2)/1440
-        rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
+        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
     if zoom == 5:
         zxo = ((igw/2)-(preview_width/2))/igw
         zyo = ((igh/2)-(preview_height/2))/igh
-        rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
-    p = subprocess.Popen(rpistr, shell=True, preexec_fn=os.setsid)
-    #print (rpistr)
+        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
+    p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
+    #print (datastr)
     restart = 0
     time.sleep(0.2)
     if Pi_Cam == 3 and rotate == 0:
@@ -722,11 +731,16 @@ def Menu():
         text(0,13,3,1,1,"Off",fv,10)
     else:
         text(0,13,3,1,1,"ON ",fv,10)
-    if foc_man == 1:
+    if v3_f_mode == 1 :
         button(1,7,1,9)
         draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
         text(1,7,3,0,1,'<<< ' + str(int(v3_focus)) + ' >>>',fv,0)
         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
+    elif v3_f_mode == 0 or v3_f_mode == 2:
+        button(1,7,0,9)
+        text(1,7,5,0,1,"FOCUS",ft,7)
+        text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
+        
     draw_bar(0,15,greyColor,'v3_f_speed',v3_f_speed)
     draw_Vbar(1,15,greyColor,'v3_f_range',v3_f_range)
     if fxz != 1:
@@ -2264,7 +2278,7 @@ while True:
                         time.sleep(0.25)
                     elif (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
                         focus_mode = 0
-                        foc_man = 0
+                        foc_man = 0 # auto focus
                         fcount = 0
                         zoom = 0
                         button(1,7,0,9)
@@ -2481,7 +2495,6 @@ while True:
                     if (sq_dis == 0 and mousex < preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 0):
                         histarea -=1
                         histarea = max(histarea,pmin)
-                                               
                     else:
                         histarea +=1
                         histarea = min(histarea,pmax)
@@ -2684,64 +2697,64 @@ while True:
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         if extns[extn] != 'raw':
                             fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
-                            rpistr = "rpicam-still --camera " + str(camera) + " -e " + extns[extn] + " -n -t 5000 -o " + fname
+                            datastr = "rpicam-still --camera " + str(camera) + " -e " + extns[extn] + " -n -t 5000 -o " + fname
                         else:
                             fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
-                            rpistr = "rpicam-still --camera " + str(camera) + " -r -n -t 5000 -o " + fname
+                            datastr = "rpicam-still --camera " + str(camera) + " -r -n -t 5000 -o " + fname
                             if preview_width == 640 and preview_height == 480 and zoom == 4:
-                                rpistr += " --rawfull"
-                        rpistr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                                datastr += " --rawfull"
+                        datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
                         if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom == 4:
-                            rpistr += " -r --rawfull"
+                            datastr += " -r --rawfull"
                         if mode == 0:
-                            rpistr += " --shutter " + str(sspeed)
+                            datastr += " --shutter " + str(sspeed)
                         else:
-                            rpistr += " --exposure " + str(modes[mode])
+                            datastr += " --exposure " + str(modes[mode])
                         if ev != 0:
-                            rpistr += " --ev " + str(ev)
+                            datastr += " --ev " + str(ev)
                         if sspeed > 1000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
-                            rpistr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
+                            datastr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
                         else:    
-                            rpistr += " --gain " + str(gain)
+                            datastr += " --gain " + str(gain)
                             if awb == 0:
-                                rpistr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                                datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
                             else:
-                                rpistr += " --awb " + awbs[awb]
-                        rpistr += " --metering " + meters[meter]
-                        rpistr += " --saturation " + str(saturation/10)
-                        rpistr += " --sharpness " + str(sharpness/10)
-                        rpistr += " --quality " + str(quality)
-                        rpistr += " --denoise " + denoises[denoise] # + " --width 2304 --height 1296"
+                                datastr += " --awb " + awbs[awb]
+                        datastr += " --metering " + meters[meter]
+                        datastr += " --saturation " + str(saturation/10)
+                        datastr += " --sharpness " + str(sharpness/10)
+                        datastr += " --quality " + str(quality)
+                        datastr += " --denoise " + denoises[denoise] # + " --width 2304 --height 1296"
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                            rpistr += " --autofocus "
+                            datastr += " --autofocus "
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                 rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                         if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                            rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
-                                rpistr += " --lens-position " + str(v3_focus/100)
+                                datastr += " --lens-position " + str(v3_focus/100)
                         elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
-                            rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
+                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
                         elif Pi_Cam == 3 and zoom == 0:
-                            rpistr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                            datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if  v3_hdr == 1:
-                            rpistr += " --hdr"
+                            datastr += " --hdr"
                         if Pi_Cam == 6 and mode == 0 and button_pos == 1:
-                            rpistr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
+                            datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                         elif Pi_Cam == 6:
-                            rpistr += " --width 9152 --height 6944"
+                            datastr += " --width 9152 --height 6944"
                         if zoom > 0 and zoom < 5:
                             zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
                             zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                            rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
                         if zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
                             zyo = ((igh/2)-(preview_height/2))/igh
-                            rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
-                        rpistr += " --metadata - --metadata-format txt >> PiLibtext.txt"
-                        #print(rpistr)
-                        os.system(rpistr)
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
+                        datastr += " --metadata - --metadata-format txt >> PiLibtext.txt"
+                        #print(datastr)
+                        os.system(datastr)
 
                         while not os.path.exists(fname):
                             pass
@@ -2822,8 +2835,11 @@ while True:
                         # TAKE VIDEO
                         os.killpg(p.pid, signal.SIGTERM)
                         button(1,0,1,3)
-                        text(1,0,3,0,1,"STOP ",ft,0)
-                        text(1,0,3,1,1,"Record",ft,0)
+                        if Pi == 5:
+                            text(1,0,3,0,1,"Video",ft,0)
+                        else:
+                            text(1,0,3,0,1,"STOP ",ft,0)
+                        text(1,0,3,1,1,"Recording",ft,0)
                         text(0,0,0,0,1,"CAPTURE",ft,7)
                         if Pi_Cam == 6 and mode == 0 and tinterval > 0:
                             text(0,0,0,1,1,"STILL    2x2",ft,7)
@@ -2839,81 +2855,84 @@ while True:
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
                         if codecs2[codec] != 'raw':
-                            rpistr = "rpicam-vid --camera " + str(camera) + " -t " + str(vlen * 1000) + " -o " + vname
+                            datastr = "rpicam-vid --camera " + str(camera) + " -t " + str(vlen * 1000) + " -o " + vname
                             if mode != 0:
-                                rpistr += " --framerate " + str(fps)
+                                datastr += " --framerate " + str(fps)
                             else:
                                 speed7 = sspeed
                                 speed7 = max(speed7,int((1/fps)*1000000))
-                                rpistr += " --framerate " + str(int((1/speed7)*1000000))
+                                datastr += " --framerate " + str(int((1/speed7)*1000000))
                             if codecs[codec] != 'h264' and codecs[codec] != 'mp4':
-                                rpistr += " --codec " + codecs[codec]
-                            else:
+                                datastr += " --codec " + codecs[codec]
+                            elif codecs[codec] != 'mp4':
                                 prof = h264profiles[profile].split(" ")
-                                #rpistr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
-                                rpistr += " --level " + str(prof[1])
+                                #datastr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
+                                datastr += " --level " + str(prof[1])
                         else:
-                            rpistr = "rpicam-raw --camera " + str(camera) + " -t " + str(vlen * 1000) + " -o " + vname + " --framerate " + str(fps)
+                            datastr = "rpicam-raw --camera " + str(camera) + " -t " + str(vlen * 1000) + " -o " + vname + " --framerate " + str(fps)
                         if vpreview == 0:
-                            rpistr += " -n "
-                        rpistr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                            datastr += " -n "
+                        datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
                         if zoom > 0:
-                            rpistr += " --width " + str(preview_width) + " --height " + str(preview_height)
+                            datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
                         elif Pi_Cam == 4 and vwidth == 2028:
-                            rpistr += " --mode 2028:1520:12"
+                            datastr += " --mode 2028:1520:12"
                         elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
-                            rpistr += " --mode 2304:1296:10 --width 2304 --height 1296"
+                            datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
                         elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
-                            rpistr += " --mode 2028:1520:10 --width 2028 --height 1520"
+                            datastr += " --mode 2028:1520:10 --width 2028 --height 1520"
                         else:
-                            rpistr += " --width " + str(vwidth) + " --height " + str(vheight)
+                            datastr += " --width " + str(vwidth) + " --height " + str(vheight)
                         if mode == 0:
-                            rpistr += " --shutter " + str(sspeed)
+                            datastr += " --shutter " + str(sspeed)
                         else:
-                            rpistr += " --exposure " + modes[mode]
-                        rpistr += " --gain " + str(gain)
+                            datastr += " --exposure " + modes[mode]
+                        datastr += " --gain " + str(gain)
                         if ev != 0:
-                            rpistr += " --ev " + str(ev)
+                            datastr += " --ev " + str(ev)
                         if awb == 0:
-                            rpistr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                            datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
                         else:
-                            rpistr += " --awb " + awbs[awb]
-                        rpistr += " --metering " + meters[meter]
-                        rpistr += " --saturation " + str(saturation/10)
-                        rpistr += " --sharpness " + str(sharpness/10)
-                        rpistr += " --denoise "    + denoises[denoise]
+                            datastr += " --awb " + awbs[awb]
+                        datastr += " --metering " + meters[meter]
+                        datastr += " --saturation " + str(saturation/10)
+                        datastr += " --sharpness " + str(sharpness/10)
+                        datastr += " --denoise "    + denoises[denoise]
 
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                            rpistr += " --autofocus "
+                            datastr += " --autofocus "
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                         if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                            rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
-                                rpistr += " --lens-position " + str(v3_focus/100)
+                                datastr += " --lens-position " + str(v3_focus/100)
                         elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
-                            rpistr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                            datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if Pi_Cam == 3 and v3_f_speed != 0:
-                            rpistr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
+                            datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
                         if Pi_Cam == 3 and v3_f_range != 0:
-                            rpistr += " --autofocus-range " + v3_f_ranges[v3_f_range]
+                            datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
                         if Pi_Cam == 3 and v3_hdr == 1:
-                            rpistr += " --hdr"
-                        rpistr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
+                            datastr += " --hdr"
+                        datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
                         if zoom > 0 and zoom < 5:
                             zxo = ((1920-zwidths[4 - zoom])/2)/1920
                             zyo = ((1440-zheights[4 - zoom])/2)/1440
-                            rpistr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
+                            datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
                         if zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
                             zyo = ((igh/2)-(preview_height/2))/igh
-                            rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
-                        #print (rpistr)
-                        p = subprocess.Popen(rpistr, shell=True, preexec_fn=os.setsid)
-                        start_video = time.monotonic()
-                        stop = 0
-                        while (time.monotonic() - start_video < vlen or vlen == 0) and stop == 0:
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
+                        #print (datastr)
+                        if Pi == 5 and codecs[codec] == 'mp4':
+                            os.system(datastr)
+                        else:
+                          p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
+                          start_video = time.monotonic()
+                          stop = 0
+                          while (time.monotonic() - start_video < vlen or vlen == 0) and stop == 0:
                             if vlen != 0:
                                 vlength = int(vlen - (time.monotonic()-start_video))
                             else:
@@ -2988,72 +3007,72 @@ while True:
                         now = datetime.datetime.now()
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
-                        rpistr = "rpicam-vid --camera " + str(camera) + " -t " + str(vlen * 1000) + " --inline --listen -o tcp://0.0.0.0:" + str(stream_port)
+                        datastr = "rpicam-vid --camera " + str(camera) + " -t " + str(vlen * 1000) + " --inline --listen -o tcp://0.0.0.0:" + str(stream_port)
                         if mode != 0:
-                            rpistr += " --framerate " + str(fps)
+                            datastr += " --framerate " + str(fps)
                         else:
                             speed7 = sspeed
                             speed7 = max(speed7,int((1/fps)*1000000))
-                            rpistr += " --framerate " + str(int((1/speed7)*1000000))
+                            datastr += " --framerate " + str(int((1/speed7)*1000000))
                         prof = h264profiles[profile].split(" ")
-                        #rpistr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
-                        rpistr += " --level " + str(prof[1])
+                        #datastr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
+                        datastr += " --level " + str(prof[1])
                         if vpreview == 0:
-                            rpistr += " -n "
-                        rpistr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                            datastr += " -n "
+                        datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
                         if zoom > 0:
-                            rpistr += " --width " + str(preview_width) + " --height " + str(preview_height)
+                            datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
                         elif Pi_Cam == 4 and vwidth == 2028:
-                            rpistr += " --mode 2028:1520:12"
+                            datastr += " --mode 2028:1520:12"
                         elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
-                            rpistr += " --mode 2304:1296:10 --width 2304 --height 1296"
+                            datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
                         elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
-                            rpistr += " --mode 2028:1520:10 --width 2028 --height 1520"
+                            datastr += " --mode 2028:1520:10 --width 2028 --height 1520"
                         else:
-                            rpistr += " --width " + str(vwidth) + " --height " + str(vheight)
+                            datastr += " --width " + str(vwidth) + " --height " + str(vheight)
                         if mode == 0:
-                            rpistr += " --shutter " + str(sspeed)
+                            datastr += " --shutter " + str(sspeed)
                         else:
-                            rpistr += " --exposure " + modes[mode]
-                        rpistr += " --gain " + str(gain)
+                            datastr += " --exposure " + modes[mode]
+                        datastr += " --gain " + str(gain)
                         if ev != 0:
-                            rpistr += " --ev " + str(ev)
+                            datastr += " --ev " + str(ev)
                         if awb == 0:
-                            rpistr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                            datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
                         else:
-                            rpistr += " --awb " + awbs[awb]
-                        rpistr += " --metering " + meters[meter]
-                        rpistr += " --saturation " + str(saturation/10)
-                        rpistr += " --sharpness " + str(sharpness/10)
-                        rpistr += " --denoise "    + denoises[denoise]
+                            datastr += " --awb " + awbs[awb]
+                        datastr += " --metering " + meters[meter]
+                        datastr += " --saturation " + str(saturation/10)
+                        datastr += " --sharpness " + str(sharpness/10)
+                        datastr += " --denoise "    + denoises[denoise]
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                            rpistr += " --autofocus "
+                            datastr += " --autofocus "
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                         if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                            rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
-                                rpistr += " --lens-position " + str(v3_focus/100)
+                                datastr += " --lens-position " + str(v3_focus/100)
                         elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
-                            rpistr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                            datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if Pi_Cam == 3 and v3_f_speed != 0:
-                            rpistr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
+                            datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
                         if Pi_Cam == 3 and v3_f_range != 0:
-                            rpistr += " --autofocus-range " + v3_f_ranges[v3_f_range]
+                            datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
                         if Pi_Cam == 3 and v3_hdr == 1:
-                            rpistr += " --hdr"
-                        rpistr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
+                            datastr += " --hdr"
+                        datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
                         if zoom > 0 and zoom < 5:
                             zxo = ((1920-zwidths[4 - zoom])/2)/1920
                             zyo = ((1440-zheights[4 - zoom])/2)/1440
-                            rpistr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
+                            datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
                         if zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
                             zyo = ((igh/2)-(preview_height/2))/igh
-                            rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
-                        #print (rpistr)
-                        p = subprocess.Popen(rpistr, shell=True, preexec_fn=os.setsid)
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
+                        #print (datastr)
+                        p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
                         start_video = time.monotonic()
                         stop = 0
                         while (time.monotonic() - start_video < vlen or vlen == 0) and stop == 0:
@@ -3133,62 +3152,62 @@ while True:
                             count = 0
                             fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
                             if extns[extn] != 'raw':
-                                rpistr = "rpicam-still --camera " + str(camera) + " -e " + extns[extn] + " -s -n -t 0 -o " + fname
+                                datastr = "rpicam-still --camera " + str(camera) + " -e " + extns[extn] + " -s -n -t 0 -o " + fname
                             else:
-                                rpistr = "rpicam-still --camera " + str(camera) + " -r -s -n -t 0 -o " + fname 
+                                datastr = "rpicam-still --camera " + str(camera) + " -r -s -n -t 0 -o " + fname 
                                 if preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                    rpistr += " --rawfull"
-                            rpistr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                                    datastr += " --rawfull"
+                            datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
                             if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                rpistr += " -r --rawfull"
+                                datastr += " -r --rawfull"
                             if mode == 0:
-                                rpistr += " --shutter " + str(sspeed)
+                                datastr += " --shutter " + str(sspeed)
                             else:
-                                rpistr += " --exposure " + modes[mode]
+                                datastr += " --exposure " + modes[mode]
                             if ev != 0:
-                                rpistr += " --ev " + str(ev)
+                                datastr += " --ev " + str(ev)
                             if sspeed > 1000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
-                                rpistr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
+                                datastr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
                             else:
-                                rpistr += " --gain " + str(gain)
+                                datastr += " --gain " + str(gain)
                                 if awb == 0:
-                                    rpistr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                                    datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
                                 else:
-                                    rpistr += " --awb " + awbs[awb]
-                            rpistr += " --metering " + meters[meter]
-                            rpistr += " --saturation " + str(saturation/10)
-                            rpistr += " --sharpness " + str(sharpness/10)
-                            rpistr += " --quality " + str(quality)
-                            rpistr += " --denoise "    + denoises[denoise]
+                                    datastr += " --awb " + awbs[awb]
+                            datastr += " --metering " + meters[meter]
+                            datastr += " --saturation " + str(saturation/10)
+                            datastr += " --sharpness " + str(sharpness/10)
+                            datastr += " --quality " + str(quality)
+                            datastr += " --denoise "    + denoises[denoise]
                             if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                                rpistr += " --autofocus "
+                                datastr += " --autofocus "
                             if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                                 if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                    rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                             if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                                rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                                datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
-                                    rpistr += " --lens-position " + str(v3_focus/100)
+                                    datastr += " --lens-position " + str(v3_focus/100)
                             elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
-                                rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
+                                datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
                             elif Pi_Cam == 3 and zoom == 0:
-                                rpistr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                                datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if  v3_hdr == 1:
-                                rpistr += " --hdr"
+                                datastr += " --hdr"
                             if Pi_Cam == 6 and mode == 0 and button_pos == 2:
-                                rpistr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
+                                datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                             elif Pi_Cam == 6:
-                                rpistr += " --width 9152 --height 6944"
+                                datastr += " --width 9152 --height 6944"
                             if zoom > 0 and zoom < 5:
                                 zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
                                 zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                                rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
                             if zoom == 5:
                                 zxo = ((igw/2)-(preview_width/2))/igw
                                 zyo = ((igh/2)-(preview_height/2))/igh
-                                rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
-                            p = subprocess.Popen(rpistr, shell=True, preexec_fn=os.setsid)
-                            #print (rpistr)
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
+                            p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
+                            #print (datastr)
                             start_timelapse = time.monotonic()
                             start2 = time.monotonic()
                             stop = 0
@@ -3289,59 +3308,59 @@ while True:
                                         time.sleep(0.1)
                                     fname =  pic_dir + str(timestamp) + "_" + str(count) + "." + extns2[extn]
                                     if extns[extn] != 'raw':
-                                        rpistr = "rpicam-still --camera " + str(camera) + " -e " + extns[extn] + " -n -t 1000 -o " + fname
+                                        datastr = "rpicam-still --camera " + str(camera) + " -e " + extns[extn] + " -n -t 1000 -o " + fname
                                     else:
-                                        rpistr = "rpicam-still --camera " + str(camera) + " -r -n -t 1000 -o " + fname 
+                                        datastr = "rpicam-still --camera " + str(camera) + " -r -n -t 1000 -o " + fname 
                                         if preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                            rpistr += " --rawfull"
-                                    rpistr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                                            datastr += " --rawfull"
+                                    datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
                                     if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                        rpistr += " -r --rawfull"
-                                    rpistr += " --shutter " + str(sspeed)
+                                        datastr += " -r --rawfull"
+                                    datastr += " --shutter " + str(sspeed)
                                     if ev != 0:
-                                        rpistr += " --ev " + str(ev)
+                                        datastr += " --ev " + str(ev)
                                     if sspeed > 1000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
-                                        rpistr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
+                                        datastr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
                                     else:
-                                        rpistr += " --gain " + str(gain)
+                                        datastr += " --gain " + str(gain)
                                         if awb == 0:
-                                            rpistr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                                            datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
                                         else:
-                                            rpistr += " --awb " + awbs[awb]
-                                    rpistr += " --metering " + meters[meter]
-                                    rpistr += " --saturation " + str(saturation/10)
-                                    rpistr += " --sharpness " + str(sharpness/10)
-                                    rpistr += " --quality " + str(quality)
-                                    rpistr += " --denoise "    + denoises[denoise]
+                                            datastr += " --awb " + awbs[awb]
+                                    datastr += " --metering " + meters[meter]
+                                    datastr += " --saturation " + str(saturation/10)
+                                    datastr += " --sharpness " + str(sharpness/10)
+                                    datastr += " --quality " + str(quality)
+                                    datastr += " --denoise "    + denoises[denoise]
                                     if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                                        rpistr += " --autofocus "
+                                        datastr += " --autofocus "
                                     if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                                         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                            rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                                            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                                     if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                                        rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                                        datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                         if v3_f_mode == 1:
-                                            rpistr += " --lens-position " + str(v3_focus/100)
+                                            datastr += " --lens-position " + str(v3_focus/100)
                                     elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
-                                        rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
+                                        datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
                                     elif Pi_Cam == 3 and zoom == 0:
-                                        rpistr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                                        datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                                     if  v3_hdr == 1:
-                                        rpistr += " --hdr"
+                                        datastr += " --hdr"
                                     if Pi_Cam == 6 and mode == 0 and button_pos == 2:
-                                        rpistr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
+                                        datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                                     elif Pi_Cam == 6:
-                                        rpistr += " --width 9152 --height 6944"
+                                        datastr += " --width 9152 --height 6944"
                                     if zoom > 0 and zoom < 5:
                                         zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
                                         zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                                        rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                                        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
                                     if zoom == 5:
                                         zxo = ((igw/2)-(preview_width/2))/igw
                                         zyo = ((igh/2)-(preview_height/2))/igh
-                                        rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
-                                    #print(rpistr)
-                                    p = subprocess.Popen(rpistr, shell=True, preexec_fn=os.setsid)
+                                        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
+                                    #print(datastr)
+                                    p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
                                     text(0,0,6,2,1,"Please Wait, taking Timelapse ..."  + " " + str(count+1),int(fv*1.7),1)
                                     show = 0
                                     while count == old_count:
@@ -3431,85 +3450,85 @@ while True:
                             timestamp = now.strftime("%y%m%d%H%M%S")
                             fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
                             if codecs2[codec] != 'raw':
-                                rpistr = "rpicam-vid --camera " + str(camera) + " -n --codec mjpeg -t " + str(tduration*1000) + " --segment 1 -o " + fname
+                                datastr = "rpicam-vid --camera " + str(camera) + " -n --codec mjpeg -t " + str(tduration*1000) + " --segment 1 -o " + fname
                             else:
                                 fname =  pic_dir + str(timestamp) + '_%04d.' + codecs2[codec]
-                                rpistr = "rpicam-raw --camera " + str(camera) + " -n -t " + str(tduration*1000) + " --segment 1 -o " + fname  
+                                datastr = "rpicam-raw --camera " + str(camera) + " -n -t " + str(tduration*1000) + " --segment 1 -o " + fname  
                             if zoom > 0:
-                                rpistr += " --width " + str(preview_width) + " --height " + str(preview_height)
+                                datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
                             else:
-                                rpistr += " --width " + str(vwidth) + " --height " + str(vheight)
-                            rpistr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                                datastr += " --width " + str(vwidth) + " --height " + str(vheight)
+                            datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
                             if mode == 0:
-                                rpistr += " --shutter " + str(sspeed) + " --framerate " + str(1000000/sspeed)
+                                datastr += " --shutter " + str(sspeed) + " --framerate " + str(1000000/sspeed)
                             else:
-                                rpistr += " --exposure " + str(modes[mode]) + " --framerate " + str(fps)
+                                datastr += " --exposure " + str(modes[mode]) + " --framerate " + str(fps)
                             if ev != 0:
-                                rpistr += " --ev " + str(ev)
+                                datastr += " --ev " + str(ev)
                             if sspeed > 5000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
-                                rpistr += " --gain 1 --immediate --awbgains " + str(red/10) + "," + str(blue/10)
+                                datastr += " --gain 1 --immediate --awbgains " + str(red/10) + "," + str(blue/10)
                             else:
-                                rpistr += " --gain " + str(gain)
+                                datastr += " --gain " + str(gain)
                                 if awb == 0:
-                                    rpistr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                                    datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
                                 else:
-                                    rpistr += " --awb " + awbs[awb]
-                            rpistr += " --metering "   + meters[meter]
-                            rpistr += " --saturation " + str(saturation/10)
-                            rpistr += " --sharpness "  + str(sharpness/10)
-                            rpistr += " --denoise "    + denoises[denoise]
+                                    datastr += " --awb " + awbs[awb]
+                            datastr += " --metering "   + meters[meter]
+                            datastr += " --saturation " + str(saturation/10)
+                            datastr += " --sharpness "  + str(sharpness/10)
+                            datastr += " --denoise "    + denoises[denoise]
                             if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                                rpistr += " --autofocus " 
+                                datastr += " --autofocus " 
                             if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                                 if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                    rpistr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
                             if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                                rpistr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                                datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
-                                    rpistr += " --lens-position " + str(v3_focus/100)
+                                    datastr += " --lens-position " + str(v3_focus/100)
                             elif Pi_Cam == 3 and zoom == 0:
-                                rpistr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                                datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if Pi_Cam == 3 and v3_hdr == 1:
-                                rpistr += " --hdr"
+                                datastr += " --hdr"
                             if zoom > 0 and zoom < 5 :
                                 zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
                                 zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                                rpistr += " --mode 1920:1440:10 --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                                datastr += " --mode 1920:1440:10 --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
                             if zoom == 5:
                                 zxo = ((igw/2)-(preview_width/2))/igw
                                 zyo = ((igh/2)-(preview_height/2))/igh
-                                rpistr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
-                            #print (rpistr)
-                            p = subprocess.Popen(rpistr, shell=True, preexec_fn=os.setsid)
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
+                            #print (datastr)
+                            p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
                             start_timelapse = time.monotonic()
                             stop = 0
                             while time.monotonic() - start_timelapse < tduration+1 and stop == 0:
                                 tdur = int(tduration - (time.monotonic() - start_timelapse))
                                 td = timedelta(seconds=tdur)
                                 text(1,10,1,1,1,str(td),fv,12)
-                                for event in pygame.event.get():
-                                    if (event.type == MOUSEBUTTONUP):
-                                        mousex, mousey = event.pos
-                                        # stop timelapse
-                                        if mousex > preview_width:
-                                            button_column = int((mousex-preview_width)/bw) + 1
-                                            button_row = int((mousey)/bh) + 1
-                                        else:
-                                            if mousey - preview_height < bh:
-                                                button_column = 1
-                                                button_row = int(mousex / bw) + 1
-                                            elif mousey - preview_height < bh * 2:
-                                                button_column = 1
-                                                button_row = int(mousex / bw) + 7
-                                            elif mousey - preview_height < bh * 3:
-                                                button_column = 2
-                                                button_row = int(mousex / bw) + 1
-                                            elif mousey - preview_height < bh * 4:
-                                                button_column = 2
-                                                button_row = int(mousex / bw) + 7
-                                        if button_column == 2 and button_row == 10:
-                                            os.killpg(p.pid, signal.SIGTERM)
-                                            stop = 1
+                            #    for event in pygame.event.get():
+                            #        if (event.type == MOUSEBUTTONUP):
+                            #            mousex, mousey = event.pos
+                            #            # stop timelapse
+                            #            if mousex > preview_width:
+                            #                button_column = int((mousex-preview_width)/bw) + 1
+                            #                button_row = int((mousey)/bh) + 1
+                            #            else:
+                            #                if mousey - preview_height < bh:
+                            #                    button_column = 1
+                            #                    button_row = int(mousex / bw) + 1
+                            #                elif mousey - preview_height < bh * 2:
+                            #                    button_column = 1
+                            #                    button_row = int(mousex / bw) + 7
+                            #                elif mousey - preview_height < bh * 3:
+                            #                    button_column = 2
+                            #                    button_row = int(mousex / bw) + 1
+                            #                elif mousey - preview_height < bh * 4:
+                            #                    button_column = 2
+                            #                    button_row = int(mousex / bw) + 7
+                            #            if button_column == 2 and button_row == 10:
+                            #                os.killpg(p.pid, signal.SIGTERM)
+                            #                stop = 1
                         button(1,9,0,2)
                         if tinterval != 0:
                             text(1,12,3,1,1,str(tshots),fv,12)
