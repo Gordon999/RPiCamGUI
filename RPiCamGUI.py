@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.76
+version = 4.77
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -255,7 +255,7 @@ if codec > len(codecs):
     
 def Camera_Version():
     # Check for Pi Camera version
-    global mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0
+    global configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('libcams.txt'):
         os.rename('libcams.txt', 'oldlibcams.txt')
@@ -324,14 +324,22 @@ def Camera_Version():
     pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + cameras[Pi_Cam] + " Camera" )
     if max_camera == 1 and cam0 == cam1:
         same_cams = 1
+    configtxt = []
     if Pi_Cam == 5 or Pi_Cam == 6:
         # read /boot/config.txt file
-        configtxt = []
-        with open("/boot/config.txt", "r") as file:
+        if Pi != 5:
+          with open("/boot/config.txt", "r") as file:
             line = file.readline()
             while line:
                 configtxt.append(line.strip())
                 line = file.readline()
+        else:
+          with open("/boot/firmware/config.txt", "r") as file:
+            line = file.readline()
+            while line:
+                configtxt.append(line.strip())
+                line = file.readline()
+
     # max video formats (not for h264)
     max_vf_7  = 7
     max_vf_6  = 20
@@ -404,11 +412,6 @@ def Camera_Version():
         draw_bar(0,2,lgrnColor,'speed',speed)
 
 Camera_Version()
-
-if Pi == 5:
-    video_limits[1] = 1
-    if vlen == 0:
-        vlen = 1
 
 pygame.init()
 if frame == 1:
