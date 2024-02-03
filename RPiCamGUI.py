@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.77
+version = 4.78
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -190,8 +190,8 @@ with open("/run/shm/md.txt", "r") as file:
            if line[0:5] == "Model":
                model = line
 mod = model.split(" ")
-if mod[3] == "5":
-    Pi = 5
+Pi = int(mod[3])
+if Pi == 5:
     codecs.append('mp4')
     codecs2.append('mp4')
     
@@ -250,7 +250,7 @@ v3_f_speed  = config[29]
 v3_f_range  = config[30]
 #rotate      = config[31]
 
-if codec > len(codecs):
+if codec > len(codecs)-1:
     codec = 0
     
 def Camera_Version():
@@ -366,7 +366,7 @@ def Camera_Version():
         max_vformat = max_vf_1
     elif Pi_Cam == 4:               # Pi HQ
         max_vformat = max_vf_4a
-        if (os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') or os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json')) and Pi_Cam == 4:
+        if ((Pi != 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json')) or (Pi == 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'))):
             scientif = 1
         else:
             scientif = 0
@@ -651,9 +651,9 @@ def preview():
     if Pi_Cam == 3 and v3_hdr == 1:
         datastr += " --hdr"
     if Pi_Cam == 4 and scientific == 1:
-        if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json'):
+        if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
-        if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'):
+        if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
     if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5:
         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
@@ -2728,6 +2728,11 @@ while True:
                         datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --quality " + str(quality)
                         datastr += " --denoise " + denoises[denoise] # + " --width 2304 --height 1296"
+                        if Pi_Cam == 4 and scientific == 1:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                             datastr += " --autofocus "
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
@@ -2901,7 +2906,11 @@ while True:
                         datastr += " --saturation " + str(saturation/10)
                         datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --denoise "    + denoises[denoise]
-
+                        if Pi_Cam == 4 and scientific == 1:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                             datastr += " --autofocus "
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
@@ -3048,6 +3057,11 @@ while True:
                         datastr += " --saturation " + str(saturation/10)
                         datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --denoise "    + denoises[denoise]
+                        if Pi_Cam == 4 and scientific == 1:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                             datastr += " --autofocus "
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
@@ -3182,6 +3196,11 @@ while True:
                             datastr += " --sharpness " + str(sharpness/10)
                             datastr += " --quality " + str(quality)
                             datastr += " --denoise "    + denoises[denoise]
+                            if Pi_Cam == 4 and scientific == 1:
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
                             if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                                 datastr += " --autofocus "
                             if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
@@ -3335,6 +3354,11 @@ while True:
                                     datastr += " --sharpness " + str(sharpness/10)
                                     datastr += " --quality " + str(quality)
                                     datastr += " --denoise "    + denoises[denoise]
+                                    if Pi_Cam == 4 and scientific == 1:
+                                        if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                                        if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
                                     if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                                         datastr += " --autofocus "
                                     if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
@@ -3480,6 +3504,11 @@ while True:
                             datastr += " --saturation " + str(saturation/10)
                             datastr += " --sharpness "  + str(sharpness/10)
                             datastr += " --denoise "    + denoises[denoise]
+                            if Pi_Cam == 4 and scientific == 1:
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
                             if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
                                 datastr += " --autofocus " 
                             if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
