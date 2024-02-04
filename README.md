@@ -6,7 +6,7 @@ preview uses rpicam-vid (so may not be as sharp as captured stills), stills rpic
 
 At your own risk !!. Ensure you have any required software backed up.
 
-Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP and 64MP Autofocus. 
+Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP and 64MP Autofocus. Note current issue with v2 cameras and Pi5 https://github.com/raspberrypi/libcamera/issues/104
 
 (Note You can use an Arducam 16/64MP camera with the default Pi Rpicam-apps... remember to add dtoverlay=imx519 to /boot/config.txt (see below for a Pi5))
 
