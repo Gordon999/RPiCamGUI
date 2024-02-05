@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.78
+version = 4.80
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -339,7 +339,6 @@ def Camera_Version():
             while line:
                 configtxt.append(line.strip())
                 line = file.readline()
-
     # max video formats (not for h264)
     max_vf_7  = 7
     max_vf_6  = 20
@@ -358,6 +357,10 @@ def Camera_Version():
         max_vformat = max_vf_7
     elif codec > 0 and Pi_Cam == 4: # Pi HQ
         max_vformat = max_vf_4
+        if ((Pi != 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json')) or (Pi == 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'))):
+            scientif = 1
+        else:
+            scientif = 0
     elif codec > 0 and Pi_Cam == 3: # Pi V3
         max_vformat = max_vf_3
     elif codec > 0 and Pi_Cam == 2: # Pi V2
