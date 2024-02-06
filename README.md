@@ -10,7 +10,7 @@ Script to allow control of a Pi Camera. Will work with all Pi camera models, v1,
 
 (Note You can use an Arducam 16/64MP camera with the default Pi Rpicam-apps... remember to add dtoverlay=imx519 to /boot/config.txt (see below for a Pi5))
 
-(To make an Arducam 16/64MP work on a Pi5...
+(To make an Arducam 16/64MP (probably NOT Owlsight) work on a Pi5...
 
 Make a copy of https://github.com/ArduCAM/libcamera/blob/arducam/src/ipa/rpi/pisp/data/imx519.json and save it to usr/share/libcamera/ipa/rpi/pisp/imx519.json.
 
