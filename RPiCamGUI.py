@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.80
+version = 4.82
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -255,7 +255,7 @@ if codec > len(codecs)-1:
     
 def Camera_Version():
     # Check for Pi Camera version
-    global configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0
+    global camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('libcams.txt'):
         os.rename('libcams.txt', 'oldlibcams.txt')
@@ -275,15 +275,39 @@ def Camera_Version():
     cam2 = "2"
     cam3 = "3"
     Pi_Cam = -1
+    vwidths2  = []
+    vheights2 = []
+    vfps2 = []
     for x in range(0,len(camstxt)):
         # Determine camera models
         if camstxt[x][0:4] == "0 : ":
             cam0 = camstxt[x][4:10]
-        elif camstxt[x][0:4] == "1 : ":
+        if cam0 != "0" and cam1 == "1" and camera == 0:
+            # determine native formats
+            forms = camstxt[x].split(" ")
+            for q in range(0,len(forms)):
+                if "x" in forms[q] and "/" not in forms[q] and "m" not in forms[q] and "[" not in forms[q]:
+                    qwidth,qheight = forms[q].split("x")
+                    vwidths2.append(int(qwidth))
+                    vheights2.append(int(qheight))
+                if forms[q][0:1] == "[" and "x" not in forms[q]:
+                    vfps2.append(int(forms[q][1:3]))
+     
+        if camstxt[x][0:4] == "1 : ":
             cam1 = camstxt[x][4:10]
-        elif camstxt[x][0:4] == "2 : ":
+        if cam0 != "0" and cam1 != "1" and camera == 1:
+              # determine native formats
+              forms = camstxt[x].split(" ")
+              for q in range(0,len(forms)):
+               if "x" in forms[q] and "/" not in forms[q] and "m" not in forms[q] and "[" not in forms[q]:
+                  qwidth,qheight = forms[q].split("x")
+                  vwidths2.append(int(qwidth))
+                  vheights2.append(int(qheight))
+               if forms[q][0:1] == "[" and "x" not in forms[q]:
+                    vfps2.append(int(forms[q][1:3]))
+        if camstxt[x][0:4] == "2 : ":
             cam2 = camstxt[x][4:10]
-        elif camstxt[x][0:4] == "3 : ":
+        if camstxt[x][0:4] == "3 : ":
             cam3 = camstxt[x][4:10]
         # Determine MAXIMUM number of cameras available 
         if camstxt[x][0:4] == "3 : " and max_camera < 3:
@@ -411,8 +435,6 @@ def Camera_Version():
                 text(0,2,0,1,1,"1/" + str(abs(shutters[speed])),fv,10)
             else:
                 text(0,2,0,1,1,str(shutters[speed]),fv,10)
-    if mode == 0:
-        draw_bar(0,2,lgrnColor,'speed',speed)
 
 Camera_Version()
 
@@ -708,7 +730,7 @@ button(1,14,0,5)
 button(0,14,0,5)
 
 def Menu():
-  global Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz
+  global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz
   if Pi_Cam == 6 and mode == 0:
     text(0,0,1,1,1,"STILL    2x2",ft,7)
   else:
@@ -762,7 +784,19 @@ def Menu():
       button(1,8,0,9)
       text(1,8,5,0,1,"Zoom",ft,7)
       text(1,8,3,1,1,"",fv,7)
-      text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+      # determine if camera native format
+      vw = 0
+      x = 0
+      while x < len(vwidths2) and vw == 0:
+          if vwidth == vwidths2[x]:
+               if vheight == vheights2[x]:
+                  vw = 1
+          x += 1
+      if vw == 0:
+          text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+      if vw == 1:
+          text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+      #text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
     elif zoom < 10:
       button(1,8,1,9)
       text(1,8,2,0,1,"ZOOMED",ft,0)
@@ -831,7 +865,19 @@ if zoom == 0:
     button(1,8,0,9)
     text(1,8,5,0,1,"Zoom",ft,7)
     text(1,8,3,1,1,"",fv,7)
-    text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+    # determine if camera native format
+    vw = 0
+    x = 0
+    while x < len(vwidths2) and vw == 0:
+        if vwidth == vwidths2[x]:
+             if vheight == vheights2[x]:
+                vw = 1
+        x += 1
+    if vw == 0:
+        text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+    if vw == 1:
+        text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+    #text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
 elif zoom < 10:
     button(1,8,1,9)
     text(1,8,2,0,1,"ZOOMED",ft,0)
@@ -983,7 +1029,8 @@ while True:
         v3_focus = min(v3_focus,v3_pmax)
         draw_Vbar(1,7,dgryColor,'focus',v3_focus * 4)
         os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub3) + " -c focus_absolute=" + str(focus))
-        text(1,7,3,0,1,'<<< ' + str(v3_focus) + ' >>>',fv,0)
+        fd = 1/(v3_focus/100)
+        text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
         time.sleep(0.25)
 
     # Arducam FOCUS UP/DOWN
@@ -1018,7 +1065,8 @@ while True:
         v3_focus = max(v3_focus,v3_pmin)
         draw_Vbar(1,7,dgryColor,'focus',v3_focus * 4)
         os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub3) + " -c focus_absolute=" + str(focus))
-        text(1,7,3,0,1,'<<< ' + str(v3_focus) + ' >>>',fv,0)
+        fd = 1/(v3_focus/100)
+        text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
         time.sleep(0.25)
         
     pics = glob.glob('/run/shm/*.jpg')
@@ -1997,7 +2045,19 @@ while True:
                 video_limits[5] = vfps
                 text(1,2,3,1,1,str(fps),fv,11)
                 draw_Vbar(1,2,lpurColor,'fps',fps)
-                text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                # determine if camera native format
+                vw = 0
+                x = 0
+                while x < len(vwidths2) and vw == 0:
+                    if vwidth == vwidths2[x]:
+                        if vheight == vheights2[x]:
+                            vw = 1
+                    x += 1
+                if vw == 0:
+                    text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                if vw == 1:
+                    text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                
                 time.sleep(.25)
 
             elif button_row == 5:
@@ -2196,7 +2256,8 @@ while True:
                 elif (mousex > preview_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and Pi_Cam == 3 and foc_man == 1:
                     v3_focus = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin)) + pmin
                     draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
-                    text(1,7,3,0,1,'<<< ' + str(int(v3_focus)) + ' >>>',fv,0)
+                    fd = 1/(v3_focus/100)
+                    text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
                 elif mousex > preview_width + bw and mousey > ((button_row-1)*bh) + (bh/3) and mousey < ((button_row-1)*bh) + (bh/1.5) and Pi_Cam == 3  and foc_man == 1:
                     if button_pos == 2:
@@ -2206,12 +2267,14 @@ while True:
                         v3_focus += 1
                         v3_focus = min(v3_focus,pmax)
                     draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
-                    text(1,7,3,0,1,'<<< ' + str(int(v3_focus)) + ' >>>',fv,0)
+                    fd = 1/(v3_focus/100)
+                    text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
                 elif (mousey > preview_height + (bh*3) and mousey < preview_height + (bh*3) + (bh/3)) and Pi_Cam == 3 and foc_man == 1:
                     v3_focus = int(((mousex-((button_row - 8)*bw)) / bw)* pmax)
                     draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
-                    text(1,7,3,0,1,'<<< ' + str(int(v3_focus)) + ' >>>',fv,0)
+                    fd = 1/(v3_focus/100)
+                    text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
                 elif mousey > preview_height + (bh*3) and mousey > preview_height + (bh*3) + (bh/3) and mousey < preview_height + (bh*3) + (bh/1.5) and Pi_Cam == 3 and foc_man == 1:
                     if button_pos == 0:
@@ -2220,7 +2283,8 @@ while True:
                     elif button_pos == 1:
                         v3_focus += 1
                     draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
-                    text(1,7,3,0,1,'<<< ' + str(int(v3_focus)) + ' >>>',fv,0)
+                    fd = 1/(v3_focus/100)
+                    text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
                     
                 elif ((sq_dis == 0 and button_pos > 1) or (sq_dis == 1 and button_pos == 0)):
@@ -2257,7 +2321,8 @@ while True:
                         time.sleep(0.25)
                         restart = 1 
                         draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
-                        text(1,7,3,0,1,'<<< ' + str(int(v3_focus)) + ' >>>',fv,0)
+                        fd = 1/(v3_focus/100)
+                        text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
                         time.sleep(0.25)
                     elif (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0:
