@@ -1,10 +1,12 @@
-# RPiCamGUI
+ù# RPiCamGUI
 
 To work with RaspiOS based on BULLSEYE / BOOKWORM, using rpicam (NOT raspistill/raspivid).
 
 preview uses rpicam-vid (so may not be as sharp as captured stills), stills rpicam-still, videos rpicam-vid, timelapses depends on timings and settings, rpicam-still, -vid or -raw. Note preview has a maximum shutter setting of 1 second.
 
 At your own risk !!. Ensure you have any required software backed up.
+
+Pi4B or Pi5B recommended.
 
 Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP and 64MP Autofocus. Note current issue with v2 cameras and Pi5 https://github.com/raspberrypi/libcamera/issues/104
 
@@ -47,8 +49,6 @@ For use with Hyperpixel square display set preview_width  = 720, preview_height 
 If you want a fullscreen display set fullscreen = 1 in the script. if using a full HD screen (1920×1080) then set preview-width to 1440 and preview-height to 1080, fullscreen = 1
 
 lf you want to use HQ imx477_scientific.json the file needs to be in /usr/share/libcamera/ipa/raspberrypi/imx477_scientific.json, except for a pi5 where it needs to be in usr/share/libcamera/ipa/rpi/pisp/ . see https://forums.raspberrypi.com/viewtopic.php?t=343449#p2068315. available here... https://github.com/raspberrypi/libcamera/blob/main/src/ipa/rpi/pisp/data/imx477_scientific.json
-
-Pi4B recommended.
 
 Shows a reduced preview but saves stills at camera full resolution, and videos at user set resolution.
 
