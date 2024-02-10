@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.82
+version = 4.83
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -179,7 +179,7 @@ v3_f_speeds  = ['normal','fast']
 histograms   = ["OFF","Red","Green","Blue","Lum","ALL"]
 
 #check Pi model.
-Pi = 0
+Pi = -1
 if os.path.exists ('/run/shm/md.txt'): 
     os.remove("/run/shm/md.txt")
 os.system("cat /proc/cpuinfo >> /run/shm/md.txt")
@@ -190,7 +190,11 @@ with open("/run/shm/md.txt", "r") as file:
            if line[0:5] == "Model":
                model = line
 mod = model.split(" ")
-Pi = int(mod[3])
+if mod[3] == "Zero":
+    Pi = 0
+else:
+    Pi = int(mod[3])
+print("Pi",Pi)
 if Pi == 5:
     codecs.append('mp4')
     codecs2.append('mp4')
@@ -3005,7 +3009,7 @@ while True:
                             zxo = ((igw/2)-(preview_width/2))/igw
                             zyo = ((igh/2)-(preview_height/2))/igh
                             datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
-                        #print (datastr)
+                        print (datastr)
                         if Pi == 5 and codecs[codec] == 'mp4':
                             os.system(datastr)
                         else:
