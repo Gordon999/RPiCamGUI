@@ -1,4 +1,4 @@
-ù# RPiCamGUI
+# RPiCamGUI
 
 To work with RaspiOS based on BULLSEYE / BOOKWORM, using rpicam (NOT raspistill/raspivid).
 
