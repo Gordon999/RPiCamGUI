@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.83L
+version = 4.83
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
