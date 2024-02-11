@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.83
+version = 4.84
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -1023,7 +1023,7 @@ for x in range(0,10):
 
 # main loop
 while True:
-    time.sleep(0.1)
+    time.sleep(0.01)
     # focus UP
     if Pi_Cam == 3:
       if buttonFUP.is_pressed:
@@ -1325,12 +1325,95 @@ while True:
 
         pygame.display.update()
     
-    # continuously read mouse buttons
-    buttonx = pygame.mouse.get_pressed()
-    if buttonx[0] != 0 :
-        pos = pygame.mouse.get_pos()
-        mousex = pos[0]
-        mousey = pos[1]
+    #check for any mouse button presses
+    for event in pygame.event.get():
+      if event.type == QUIT:
+          os.killpg(p.pid, signal.SIGTERM)
+          pygame.quit()
+      elif (event.type == MOUSEBUTTONUP):
+        mousex, mousey = event.pos
+        if mousex < preview_width and mousey < preview_height and rotate == 0 and event.button != 3:
+            xx = mousex
+            xx = min(xx,preview_width - histarea)
+            xx = max(xx,histarea)
+            xy = mousey
+            if Pi_Cam == 3 and zoom < 5:
+                xy = min(xy,int(preview_height * .75) - histarea)
+            else:
+                xy = min(xy,preview_height - histarea)
+            xy = max(xy,histarea)
+            if Pi_Cam == 3 and mousex < preview_width and mousey < preview_height *.75 and zoom == 0 and (v3_f_mode == 0 or v3_f_mode == 2):
+                fxx = (xx - 25)/preview_width
+                xy  = min(xy,int((preview_height - 25) * .75))
+                fxy = ((xy - 20) * 1.3333)/preview_height
+                fxz = 50/preview_width
+                fyz = fxz
+                if fxz != 1:
+                    text(1,7,3,1,1,"Spot",fv,7)
+            elif Pi_Cam == 3 and zoom == 0:
+                fxx = 0
+                fxy = 0
+                fxz = 1
+                fzy = 1
+                if (v3_f_mode == 0 or v3_f_mode == 2):
+                    text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
+            if Pi_Cam == 3 and zoom == 0:
+                restart = 1
+                    
+        # SWITCH CAMERA
+        if mousex < preview_width and mousey < preview_height and event.button == 3:
+            camera += 1
+            if camera > max_camera:
+                camera = 0
+            poll = p.poll()
+            if poll == None:
+                os.killpg(p.pid, signal.SIGTERM)
+            if same_cams == 0:
+                Camera_Version()
+                Menu()
+            restart = 1
+                
+        if (sq_dis == 0 and mousex > preview_width) or (sq_dis == 1 and mousey > preview_height):
+            if sq_dis == 0:
+                button_column = int((mousex-preview_width)/bw) + 1
+                button_row = int((mousey)/bh) + 1
+                if mousex > preview_width + bw + (bw/2):
+                    button_pos = 2
+                elif mousex > preview_width + (bw/2):
+                    button_pos = 1
+                else:
+                    button_pos = 0
+            else:
+                if mousey - preview_height < bh:
+                    button_column = 1
+                    button_row = int(mousex / bw) + 1
+                    if mousex > ((button_row -1) * bw) + (bw/2):
+                        button_pos = 1
+                    else:
+                        button_pos = 0
+                elif mousey - preview_height < bh * 2:
+                    button_column = 1
+                    button_row = int(mousex / bw) + 7
+                    if mousex > ((button_row - 7) * bw) + (bw/2):
+                        button_pos = 1
+                    else:
+                        button_pos = 0
+                elif mousey - preview_height < bh * 3:
+                    button_column = 2
+                    button_row = int(mousex / bw) + 1
+                    if mousex > ((button_row -1) * bw) + (bw/2):
+                        button_pos = 1
+                    else:
+                        button_pos = 0
+                elif mousey - preview_height < bh * 4:
+                    button_column = 2
+                    button_row = int(mousex / bw) + 8
+                    if mousex > ((button_row - 8) * bw) + (bw/2):
+                        button_pos = 1
+                    else:
+                        button_pos = 0
+            y = button_row-1
+                
         # determine button pressed
         if mousex > preview_width or (sq_dis == 1 and mousey > preview_height):
           # normal layout(buttons on right)
@@ -1378,6 +1461,167 @@ while True:
                       button_pos = 0
   
           if button_column == 1:
+            if button_row == 1 :
+                        # TAKE STILL
+                        os.killpg(p.pid, signal.SIGTERM)
+                        button(0,0,1,4)
+                        if os.path.exists("PiLibtext.txt"):
+                             os.remove("PiLibtext.txt")
+                        text(0,0,2,0,1,"CAPTURING",ft,0)
+                        if Pi_Cam == 6 and mode == 0 and button_pos == 1:
+                            text(0,0,2,1,1,"STILL    2x2",ft,0)
+                        else:
+                            text(0,0,2,1,1,"STILL",ft,0)
+                        text(1,0,0,0,1,"CAPTURE",ft,7)
+                        text(1,0,0,1,1,"Video",ft,7)
+                        text(1,9,0,0,1,"CAPTURE",ft,7)
+                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
+                            text(1,9,0,1,1,"T'lapse  2x2",ft,7)
+                        else:
+                            text(1,9,0,1,1,"Timelapse",ft,7)
+                        text(0,0,6,2,1,"Please Wait, taking still ...",int(fv*1.7),1)
+                        now = datetime.datetime.now()
+                        timestamp = now.strftime("%y%m%d%H%M%S")
+                        if extns[extn] != 'raw':
+                            fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
+                            datastr = "libcamera-still --camera " + str(camera) + " -e " + extns[extn] + " -n -t 5000 -o " + fname
+                        else:
+                            fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
+                            datastr = "libcamera-still --camera " + str(camera) + " -r -n -t 5000 -o " + fname
+                            if preview_width == 640 and preview_height == 480 and zoom == 4:
+                                datastr += " --rawfull"
+                        datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                        if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom == 4:
+                            datastr += " -r --rawfull"
+                        if mode == 0:
+                            datastr += " --shutter " + str(sspeed)
+                        else:
+                            datastr += " --exposure " + str(modes[mode])
+                        if ev != 0:
+                            datastr += " --ev " + str(ev)
+                        if sspeed > 1000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
+                            datastr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
+                        else:    
+                            datastr += " --gain " + str(gain)
+                            if awb == 0:
+                                datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                            else:
+                                datastr += " --awb " + awbs[awb]
+                        datastr += " --metering " + meters[meter]
+                        datastr += " --saturation " + str(saturation/10)
+                        datastr += " --sharpness " + str(sharpness/10)
+                        datastr += " --quality " + str(quality)
+                        datastr += " --denoise " + denoises[denoise] # + " --width 2304 --height 1296"
+                        if Pi_Cam == 4 and scientific == 1:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
+                            datastr += " --autofocus "
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                            if v3_f_mode == 1:
+                                datastr += " --lens-position " + str(v3_focus/100)
+                        elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
+                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
+                        elif Pi_Cam == 3 and zoom == 0:
+                            datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                        if  v3_hdr == 1:
+                            datastr += " --hdr"
+                        if Pi_Cam == 6 and mode == 0 and button_pos == 1:
+                            datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
+                        elif Pi_Cam == 6:
+                            datastr += " --width 9152 --height 6944"
+                        if zoom > 0 and zoom < 5:
+                            zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
+                            zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                        if zoom == 5:
+                            zxo = ((igw/2)-(preview_width/2))/igw
+                            zyo = ((igh/2)-(preview_height/2))/igh
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
+                        datastr += " --metadata - --metadata-format txt >> PiLibtext.txt"
+                        #print(datastr)
+                        os.system(datastr)
+
+                        while not os.path.exists(fname):
+                            pass
+                        if extns2[extn] == 'jpg' or extns2[extn] == 'bmp' or extns2[extn] == 'png':
+                            image = pygame.image.load(fname)
+                            if rotate != 0:
+                                image = pygame.transform.rotate(image, int(rotate * 90))
+                                pygame.image.save(image,fname[:-4]+"r." + extns2[extn])
+                            if Pi_Cam == 3 and zoom < 5:
+                                if rotate == 0:
+                                    image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
+                                else:
+                                    if rotate != 2:
+                                        igwr = image.get_width()
+                                        ighr = image.get_height()
+                                        image = pygame.transform.scale(image, (int(preview_height * (igwr/ighr)),preview_height))
+                                    else:
+                                        image = pygame.transform.scale(image, (preview_width,preview_height))
+                            else:
+                                if rotate == 0 or rotate == 2:
+                                    image = pygame.transform.scale(image, (preview_width,preview_height))
+                                else:
+                                    if rotate != 2:
+                                        igwr = image.get_width()
+                                        ighr = image.get_height()
+                                        image = pygame.transform.scale(image, (int(preview_height * (igwr/ighr)),preview_height))
+                                    else:
+                                        image = pygame.transform.scale(image, (preview_width,preview_height))
+                            if rotate == 1 or rotate == 3:
+                                windowSurfaceObj.blit(image, (int((preview_width/2) - ((preview_height * (igwr/ighr)))/2),0))
+                            else:
+                                windowSurfaceObj.blit(image, (0,0))
+                        dgain = 0
+                        again = 0
+                        etime = 0
+                        if os.path.exists("PiLibtext.txt"):
+                          with open("PiLibtext.txt", "r") as file:
+                            line = file.readline()
+                            check = line.split("=")
+                            if check[0] == "DigitalGain":
+                                dgain = check[1][:-1]
+                            if check[0] == "AnalogueGain":
+                                again = check[1][:-1]
+                            if check[0] == "ExposureTime":
+                                etime = check[1][:-1]
+                            while line:
+                                line = file.readline()
+                                check = line.split("=")
+                                if check[0] == "DigitalGain":
+                                    dgain = check[1][:-1]
+                                if check[0] == "AnalogueGain":
+                                    again = check[1][:-1]
+                                if check[0] == "ExposureTime":
+                                    etime = check[1][:-1]
+                          text(0,25,6,2,1,"Ana Gain: " + str(again) + " Dig Gain: " + str(dgain) + " Exp Time: " + str(etime) +"uS",int(fv*1.5),1)
+                        text(0,0,6,2,1,fname,int(fv*1.5),1)
+                        pygame.display.update()
+                        time.sleep(2)
+                        if rotate != 0:
+                            pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,preview_width,preview_height),0)
+                        button(0,0,0,4)
+                        text(0,0,1,0,1,"CAPTURE",ft,7)
+                        text(1,0,1,0,1,"CAPTURE",ft,7)
+                        text(1,0,1,1,1,"Video",ft,7)
+                        if Pi_Cam == 6 and mode == 0:
+                            text(0,0,1,1,1,"STILL    2x2",ft,7)
+                        else:
+                            text(0,0,1,1,1,"Still ",ft,7)
+                        text(1,9,1,0,1,"CAPTURE",ft,7)
+                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
+                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
+                        else:
+                            text(1,9,1,1,1,"Timelapse",ft,7)
+                        restart = 2
+
             if button_row == 2:
                 # MODE
                 for f in range(0,len(still_limits)-1,3):
@@ -1882,6 +2126,749 @@ while True:
                 time.sleep(.25)
                
           elif button_column == 2:
+            if button_row == 1 and event.button != 3:
+                        # TAKE VIDEO
+                        os.killpg(p.pid, signal.SIGTERM)
+                        button(1,0,1,3)
+                        if Pi == 5:
+                            text(1,0,3,0,1,"Video",ft,0)
+                        else:
+                            text(1,0,3,0,1,"STOP ",ft,0)
+                        text(1,0,3,1,1,"Recording",ft,0)
+                        text(0,0,0,0,1,"CAPTURE",ft,7)
+                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
+                            text(0,0,0,1,1,"STILL    2x2",ft,7)
+                        else:
+                            text(0,0,0,1,1,"Still ",ft,7)
+                        text(1,9,0,0,1,"CAPTURE",ft,7)
+                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
+                            text(1,9,0,1,1,"T'lapse  2x2",ft,7)
+                        else:
+                            text(1,9,0,1,1,"Timelapse",ft,7)
+                        text(0,0,6,2,1,"Please Wait, taking video ...",int(fv*1.7),1)
+                        now = datetime.datetime.now()
+                        timestamp = now.strftime("%y%m%d%H%M%S")
+                        vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
+                        if codecs2[codec] != 'raw':
+                            datastr = "libcamera-vid --camera " + str(camera) + " -t " + str(vlen * 1000) + " -o " + vname
+                            if mode != 0:
+                                datastr += " --framerate " + str(fps)
+                            else:
+                                speed7 = sspeed
+                                speed7 = max(speed7,int((1/fps)*1000000))
+                                datastr += " --framerate " + str(int((1/speed7)*1000000))
+                            if codecs[codec] != 'h264' and codecs[codec] != 'mp4':
+                                datastr += " --codec " + codecs[codec]
+                            elif codecs[codec] != 'mp4':
+                                prof = h264profiles[profile].split(" ")
+                                #datastr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
+                                datastr += " --level " + str(prof[1])
+                        else:
+                            datastr = "libcamera-raw --camera " + str(camera) + " -t " + str(vlen * 1000) + " -o " + vname + " --framerate " + str(fps)
+                        if vpreview == 0:
+                            datastr += " -n "
+                        datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                        if zoom > 0:
+                            datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
+                        elif Pi_Cam == 4 and vwidth == 2028:
+                            datastr += " --mode 2028:1520:12"
+                        elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
+                            datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
+                        elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
+                            datastr += " --mode 2028:1520:10 --width 2028 --height 1520"
+                        else:
+                            datastr += " --width " + str(vwidth) + " --height " + str(vheight)
+                        if mode == 0:
+                            datastr += " --shutter " + str(sspeed)
+                        else:
+                            datastr += " --exposure " + modes[mode]
+                        datastr += " --gain " + str(gain)
+                        if ev != 0:
+                            datastr += " --ev " + str(ev)
+                        if awb == 0:
+                            datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                        else:
+                            datastr += " --awb " + awbs[awb]
+                        datastr += " --metering " + meters[meter]
+                        datastr += " --saturation " + str(saturation/10)
+                        datastr += " --sharpness " + str(sharpness/10)
+                        datastr += " --denoise "    + denoises[denoise]
+                        if Pi_Cam == 4 and scientific == 1:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
+                            datastr += " --autofocus "
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                            if v3_f_mode == 1:
+                                datastr += " --lens-position " + str(v3_focus/100)
+                        elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
+                            datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                        if Pi_Cam == 3 and v3_f_speed != 0:
+                            datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
+                        if Pi_Cam == 3 and v3_f_range != 0:
+                            datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
+                        if Pi_Cam == 3 and v3_hdr == 1:
+                            datastr += " --hdr"
+                        datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
+                        if zoom > 0 and zoom < 5:
+                            zxo = ((1920-zwidths[4 - zoom])/2)/1920
+                            zyo = ((1440-zheights[4 - zoom])/2)/1440
+                            datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
+                        if zoom == 5:
+                            zxo = ((igw/2)-(preview_width/2))/igw
+                            zyo = ((igh/2)-(preview_height/2))/igh
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
+                        #print (datastr)
+                        if Pi == 5 and codecs[codec] == 'mp4':
+                            os.system(datastr)
+                        else:
+                          p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
+                          start_video = time.monotonic()
+                          stop = 0
+                          while (time.monotonic() - start_video < vlen or vlen == 0) and stop == 0:
+                            if vlen != 0:
+                                vlength = int(vlen - (time.monotonic()-start_video))
+                            else:
+                                vlength = int(time.monotonic()-start_video)
+                            td = timedelta(seconds=vlength)
+                            text(1,1,1,1,1,str(td),fv,11)
+                            for event in pygame.event.get():
+                                if (event.type == MOUSEBUTTONUP):
+                                    mousex, mousey = event.pos
+                                    # stop video recording
+                                    if mousex > preview_width:
+                                        button_column = int((mousex-preview_width)/bw) + 1
+                                        button_row = int((mousey)/bh) + 1
+                                        if mousex > preview_width + bw + (bw/2):
+                                            button_pos = 1
+                                        else:
+                                            button_pos = 0
+                                    else:
+                                        if mousey - preview_height < bh:
+                                            button_column = 1
+                                            button_row = int(mousex / bw) + 1
+                                        elif mousey - preview_height < bh * 2:
+                                            button_column = 1
+                                            button_row = int(mousex / bw) + 7
+                                        elif mousey - preview_height < bh * 3:
+                                            button_column = 2
+                                            button_row = int(mousex / bw) + 1
+                                        elif mousey - preview_height < bh * 4:
+                                            button_column = 2
+                                            button_row = int(mousex / bw) + 7
+                                    if button_column == 2 and button_row == 1:
+                                       os.killpg(p.pid, signal.SIGTERM)
+                                       stop = 1
+                        text(0,0,6,2,1,vname,int(fv*1.5),1)
+                        time.sleep(1)
+                        td = timedelta(seconds=vlen)
+                        if rotate != 0:
+                            pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,preview_width,preview_height),0)
+                        text(1,1,3,1,1,str(td),fv,11)
+                        button(1,0,0,3)
+                        text(0,0,1,0,1,"CAPTURE",ft,7)
+                        if Pi_Cam == 5 and mode == 0:
+                            text(0,0,1,1,1,"STILL    2x2",ft,7)
+                        else:
+                            text(0,0,1,1,1,"Still ",ft,7)
+                        text(1,0,1,0,1,"CAPTURE",ft,7)
+                        text(1,0,1,1,1,"Video",ft,7)
+                        text(1,9,1,0,1,"CAPTURE",ft,7)
+                        if Pi_Cam == 5 and mode == 0 and tinterval > 0:
+                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
+                        else:
+                            text(1,9,1,1,1,"Timelapse",ft,7)
+                        restart = 2
+                                       
+            elif button_row == 1 and event.button == 3:
+                        # STREAM VIDEO
+                        os.killpg(p.pid, signal.SIGTERM)
+                        button(1,0,1,3)
+                        text(1,0,3,0,1,"STOP ",ft,0)
+                        text(1,0,3,1,1,"STREAM",ft,0)
+                        text(0,0,0,0,1,"CAPTURE",ft,7)
+                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
+                            text(0,0,0,1,1,"STILL    2x2",ft,7)
+                        else:
+                            text(0,0,0,1,1,"Still ",ft,7)
+                        text(1,9,0,0,1,"CAPTURE",ft,7)
+                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
+                            text(1,9,0,1,1,"T'lapse  2x2",ft,7)
+                        else:
+                            text(1,9,0,1,1,"Timelapse",ft,7)
+                        text(0,0,6,2,1,"Streaming Video ...",int(fv*1.7),1)
+                        now = datetime.datetime.now()
+                        timestamp = now.strftime("%y%m%d%H%M%S")
+                        vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
+                        datastr = "libcamera-vid --camera " + str(camera) + " -t " + str(vlen * 1000) + " --inline --listen -o tcp://0.0.0.0:" + str(stream_port)
+                        if mode != 0:
+                            datastr += " --framerate " + str(fps)
+                        else:
+                            speed7 = sspeed
+                            speed7 = max(speed7,int((1/fps)*1000000))
+                            datastr += " --framerate " + str(int((1/speed7)*1000000))
+                        prof = h264profiles[profile].split(" ")
+                        #datastr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
+                        datastr += " --level " + str(prof[1])
+                        if vpreview == 0:
+                            datastr += " -n "
+                        datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                        if zoom > 0:
+                            datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
+                        elif Pi_Cam == 4 and vwidth == 2028:
+                            datastr += " --mode 2028:1520:12"
+                        elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
+                            datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
+                        elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
+                            datastr += " --mode 2028:1520:10 --width 2028 --height 1520"
+                        else:
+                            datastr += " --width " + str(vwidth) + " --height " + str(vheight)
+                        if mode == 0:
+                            datastr += " --shutter " + str(sspeed)
+                        else:
+                            datastr += " --exposure " + modes[mode]
+                        datastr += " --gain " + str(gain)
+                        if ev != 0:
+                            datastr += " --ev " + str(ev)
+                        if awb == 0:
+                            datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                        else:
+                            datastr += " --awb " + awbs[awb]
+                        datastr += " --metering " + meters[meter]
+                        datastr += " --saturation " + str(saturation/10)
+                        datastr += " --sharpness " + str(sharpness/10)
+                        datastr += " --denoise "    + denoises[denoise]
+                        if Pi_Cam == 4 and scientific == 1:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
+                            datastr += " --autofocus "
+                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                            if v3_f_mode == 1:
+                                datastr += " --lens-position " + str(v3_focus/100)
+                        elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
+                            datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                        if Pi_Cam == 3 and v3_f_speed != 0:
+                            datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
+                        if Pi_Cam == 3 and v3_f_range != 0:
+                            datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
+                        if Pi_Cam == 3 and v3_hdr == 1:
+                            datastr += " --hdr"
+                        datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
+                        if zoom > 0 and zoom < 5:
+                            zxo = ((1920-zwidths[4 - zoom])/2)/1920
+                            zyo = ((1440-zheights[4 - zoom])/2)/1440
+                            datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
+                        if zoom == 5:
+                            zxo = ((igw/2)-(preview_width/2))/igw
+                            zyo = ((igh/2)-(preview_height/2))/igh
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
+                        #print (datastr)
+                        p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
+                        start_video = time.monotonic()
+                        stop = 0
+                        while (time.monotonic() - start_video < vlen or vlen == 0) and stop == 0:
+                            if vlen != 0:
+                                vlength = int(vlen - (time.monotonic()-start_video))
+                            else:
+                                vlength = int(time.monotonic()-start_video)
+                            td = timedelta(seconds=vlength)
+                            text(1,1,1,1,1,str(td),fv,11)
+                            for event in pygame.event.get():
+                                if (event.type == MOUSEBUTTONUP):
+                                    mousex, mousey = event.pos
+                                    # stop video streaming
+                                    if mousex > preview_width:
+                                        button_column = int((mousex-preview_width)/bw) + 1
+                                        button_row = int((mousey)/bh) + 1
+                                        if mousex > preview_width + bw + (bw/2):
+                                            button_pos = 1
+                                        else:
+                                            button_pos = 0
+                                    else:
+                                        if mousey - preview_height < bh:
+                                            button_column = 1
+                                            button_row = int(mousex / bw) + 1
+                                        elif mousey - preview_height < bh * 2:
+                                            button_column = 1
+                                            button_row = int(mousex / bw) + 7
+                                        elif mousey - preview_height < bh * 3:
+                                            button_column = 2
+                                            button_row = int(mousex / bw) + 1
+                                        elif mousey - preview_height < bh * 4:
+                                            button_column = 2
+                                            button_row = int(mousex / bw) + 7
+                                    if button_column == 2 and button_row == 1:
+                                       os.killpg(p.pid, signal.SIGTERM)
+                                       stop = 1
+                        td = timedelta(seconds=vlen)
+                        if rotate != 0:
+                            pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,preview_width,preview_height),0)
+                        text(1,1,3,1,1,str(td),fv,11)
+                        button(1,0,0,3)
+                        text(0,0,1,0,1,"CAPTURE",ft,7)
+                        if Pi_Cam == 5 and mode == 0:
+                            text(0,0,1,1,1,"STILL    2x2",ft,7)
+                        else:
+                            text(0,0,1,1,1,"Still ",ft,7)
+                        text(1,0,1,0,1,"CAPTURE",ft,7)
+                        text(1,0,1,1,1,"Video",ft,7)
+                        text(1,9,1,0,1,"CAPTURE",ft,7)
+                        if Pi_Cam == 5 and mode == 0 and tinterval > 0:
+                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
+                        else:
+                            text(1,9,1,1,1,"Timelapse",ft,7)
+                        restart = 2
+                        
+            elif button_row == 10:
+                        # TAKE TIMELAPSE
+                        os.killpg(p.pid, signal.SIGTERM)
+                        button(1,9,1,2)
+                        text(1,9,3,0,1,"STOP",ft,0)
+                        text(1,9,3,1,1,"Timelapse",ft,0)
+                        text(0,0,0,0,1,"CAPTURE",ft,7)
+                        text(1,0,0,0,1,"CAPTURE",ft,7)
+                        text(1,0,0,1,1,"Video",ft,7)
+                        if Pi_Cam == 5 and mode == 0:
+                            text(0,0,0,1,1,"STILL    2x2",ft,7)
+                        else:
+                            text(0,0,0,1,1,"Still ",ft,7)
+                        tcount = 0
+                        
+                        if tinterval > 0 and mode != 0:
+                            text(1,9,3,0,1,"STOP",ft,0)
+                            text(1,9,3,1,1,"Timelapse",ft,0)
+                            text(0,0,6,2,1,"Please Wait, taking Timelapse ...",int(fv*1.7),1)
+                            now = datetime.datetime.now()
+                            timestamp = now.strftime("%y%m%d%H%M%S")
+                            count = 0
+                            fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
+                            if extns[extn] != 'raw':
+                                datastr = "libcamera-still --camera " + str(camera) + " -e " + extns[extn] + " -s -n -t 0 -o " + fname
+                            else:
+                                datastr = "libcamera-still --camera " + str(camera) + " -r -s -n -t 0 -o " + fname 
+                                if preview_width == 640 and preview_height == 480 and zoom >= 4:
+                                    datastr += " --rawfull"
+                            datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                            if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom >= 4:
+                                datastr += " -r --rawfull"
+                            if mode == 0:
+                                datastr += " --shutter " + str(sspeed)
+                            else:
+                                datastr += " --exposure " + modes[mode]
+                            if ev != 0:
+                                datastr += " --ev " + str(ev)
+                            if sspeed > 1000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
+                                datastr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
+                            else:
+                                datastr += " --gain " + str(gain)
+                                if awb == 0:
+                                    datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                                else:
+                                    datastr += " --awb " + awbs[awb]
+                            datastr += " --metering " + meters[meter]
+                            datastr += " --saturation " + str(saturation/10)
+                            datastr += " --sharpness " + str(sharpness/10)
+                            datastr += " --quality " + str(quality)
+                            datastr += " --denoise "    + denoises[denoise]
+                            if Pi_Cam == 4 and scientific == 1:
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
+                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
+                                datastr += " --autofocus "
+                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                                datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                                if v3_f_mode == 1:
+                                    datastr += " --lens-position " + str(v3_focus/100)
+                            elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
+                                datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
+                            elif Pi_Cam == 3 and zoom == 0:
+                                datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                            if  v3_hdr == 1:
+                                datastr += " --hdr"
+                            if Pi_Cam == 6 and mode == 0 and button_pos == 2:
+                                datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
+                            elif Pi_Cam == 6:
+                                datastr += " --width 9152 --height 6944"
+                            if zoom > 0 and zoom < 5:
+                                zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
+                                zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                            if zoom == 5:
+                                zxo = ((igw/2)-(preview_width/2))/igw
+                                zyo = ((igh/2)-(preview_height/2))/igh
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
+                            p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
+                            #print (datastr)
+                            start_timelapse = time.monotonic()
+                            start2 = time.monotonic()
+                            stop = 0
+                            pics3 = []
+                            count = 0
+                            old_count = 0
+                            while count < tshots and stop == 0:
+                                if time.monotonic() - start2 >= tinterval:
+                                    os.system('pkill -SIGUSR1 libcamera-still')
+                                    start2 = time.monotonic()
+                                    text(0,0,6,2,1,"Please Wait, taking Timelapse ..."  + " " + str(count+1),int(fv*1.7),1)
+                                    show = 0
+                                    while count == old_count:
+                                        time.sleep(0.1)
+                                        pics3 = glob.glob(pic_dir + "*.*")
+                                        counts = []
+                                        for xu in range(0,len(pics3)):
+                                            ww = pics3[xu].split("/")
+                                            if ww[4][0:12] == timestamp:
+                                                counts.append(pics3[xu])
+                                        count = len(counts)
+                                        counts.sort()
+                                        for event in pygame.event.get():
+                                            if (event.type == MOUSEBUTTONUP):
+                                                mousex, mousey = event.pos
+                                                # stop timelapse
+                                                if mousex > preview_width:
+                                                    button_column = int((mousex-preview_width)/bw) + 1
+                                                    button_row = int((mousey)/bh) + 1
+                                                else:
+                                                    if mousey - preview_height < bh:
+                                                        button_column = 1
+                                                        button_row = int(mousex / bw) + 1
+                                                    elif mousey - preview_height < bh * 2:
+                                                        button_column = 1
+                                                        button_row = int(mousex / bw) + 7
+                                                    elif mousey - preview_height < bh * 3:
+                                                        button_column = 2
+                                                        button_row = int(mousex / bw) + 1
+                                                    elif mousey - preview_height < bh * 4:
+                                                        button_column = 2
+                                                        button_row = int(mousex / bw) + 8
+                                                if button_column == 2 and button_row == 10:
+                                                    os.killpg(p.pid, signal.SIGTERM)
+                                                    text(1,12,3,1,1,str(tshots),fv,12)
+                                                    stop = 1
+                                                    count = tshots
+                                        
+                                    old_count = count
+                                    text(1,12,1,1,1,str(tshots - count),fv,12)
+                                    tdur = tinterval * (tshots - count)
+                                    td = timedelta(seconds=tdur)
+                                    text(1,10,1,1,1,str(td),fv,12)
+                                time.sleep(0.1)
+                                for event in pygame.event.get():
+                                    if (event.type == MOUSEBUTTONUP):
+                                        mousex, mousey = event.pos
+                                        # stop timelapse
+                                        if mousex > preview_width:
+                                            button_column = int((mousex-preview_width)/bw) + 1
+                                            button_row = int((mousey)/bh) + 1
+                                        else:
+                                            if mousey - preview_height < bh:
+                                                button_column = 1
+                                                button_row = int(mousex / bw) + 1
+                                            elif mousey - preview_height < bh * 2:
+                                                button_column = 1
+                                                button_row = int(mousex / bw) + 7
+                                            elif mousey - preview_height < bh * 3:
+                                                button_column = 2
+                                                button_row = int(mousex / bw) + 1
+                                            elif mousey - preview_height < bh * 4:
+                                                button_column = 2
+                                                button_row = int(mousex / bw) + 8
+                                        if button_column == 2 and button_row == 10:
+                                            os.killpg(p.pid, signal.SIGTERM)
+                                            text(1,12,3,1,1,str(tshots),fv,12)
+                                            stop = 1
+                                            count = tshots
+
+                        elif tinterval > 0 and mode == 0:
+                            text(1,9,3,0,1,"STOP",ft,0)
+                            text(1,9,3,1,1,"Timelapse",ft,0)
+                            text(0,0,6,2,1,"Please Wait, taking Timelapse ...",int(fv*1.7),1)
+                            now = datetime.datetime.now()
+                            timestamp = now.strftime("%y%m%d%H%M%S")
+                            start2 = time.monotonic()
+                            stop = 0
+                            pics3 = []
+                            count = 0
+                            old_count = 0
+                            while count < tshots and stop == 0:
+                                if time.monotonic() - start2 > tinterval:
+                                    start2 = time.monotonic()
+                                    poll = p.poll()
+                                    while poll == None:
+                                        poll = p.poll()
+                                        time.sleep(0.1)
+                                    fname =  pic_dir + str(timestamp) + "_" + str(count) + "." + extns2[extn]
+                                    if extns[extn] != 'raw':
+                                        datastr = "libcamera-still --camera " + str(camera) + " -e " + extns[extn] + " -n -t 1000 -o " + fname
+                                    else:
+                                        datastr = "libcamera-still --camera " + str(camera) + " -r -n -t 1000 -o " + fname 
+                                        if preview_width == 640 and preview_height == 480 and zoom >= 4:
+                                            datastr += " --rawfull"
+                                    datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                                    if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom >= 4:
+                                        datastr += " -r --rawfull"
+                                    datastr += " --shutter " + str(sspeed)
+                                    if ev != 0:
+                                        datastr += " --ev " + str(ev)
+                                    if sspeed > 1000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
+                                        datastr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
+                                    else:
+                                        datastr += " --gain " + str(gain)
+                                        if awb == 0:
+                                            datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                                        else:
+                                            datastr += " --awb " + awbs[awb]
+                                    datastr += " --metering " + meters[meter]
+                                    datastr += " --saturation " + str(saturation/10)
+                                    datastr += " --sharpness " + str(sharpness/10)
+                                    datastr += " --quality " + str(quality)
+                                    datastr += " --denoise "    + denoises[denoise]
+                                    if Pi_Cam == 4 and scientific == 1:
+                                        if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                                        if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
+                                    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
+                                        datastr += " --autofocus "
+                                    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                                        if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                                    if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                                        datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                                        if v3_f_mode == 1:
+                                            datastr += " --lens-position " + str(v3_focus/100)
+                                    elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
+                                        datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
+                                    elif Pi_Cam == 3 and zoom == 0:
+                                        datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                                    if  v3_hdr == 1:
+                                        datastr += " --hdr"
+                                    if Pi_Cam == 6 and mode == 0 and button_pos == 2:
+                                        datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
+                                    elif Pi_Cam == 6:
+                                        datastr += " --width 9152 --height 6944"
+                                    if zoom > 0 and zoom < 5:
+                                        zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
+                                        zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
+                                        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                                    if zoom == 5:
+                                        zxo = ((igw/2)-(preview_width/2))/igw
+                                        zyo = ((igh/2)-(preview_height/2))/igh
+                                        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
+                                    #print(datastr)
+                                    p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
+                                    text(0,0,6,2,1,"Please Wait, taking Timelapse ..."  + " " + str(count+1),int(fv*1.7),1)
+                                    show = 0
+                                    while count == old_count:
+                                        time.sleep(0.1)
+                                        pics3 = glob.glob(pic_dir + "*.*")
+                                        counts = []
+                                        for xu in range(0,len(pics3)):
+                                            ww = pics3[xu].split("/")
+                                            if ww[4][0:12] == timestamp:
+                                                counts.append(pics3[xu])
+                                        count = len(counts)
+                                        counts.sort()
+                                        if (extns2[extn] == 'jpg' or extns2[extn] == 'bmp' or extns2[extn] == 'png') and count > 0 and show == 0:
+                                            image = pygame.image.load(counts[count-1])
+                                            if (Pi_Cam != 3) or (Pi_Cam == 3 and zoom == 5):
+                                                catSurfacesmall = pygame.transform.scale(image, (preview_width,preview_height))
+                                            else:
+                                                catSurfacesmall = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
+                                            windowSurfaceObj.blit(catSurfacesmall, (0, 0))
+                                            text(0,0,6,2,1,counts[count-1],int(fv*1.5),1)
+                                            pygame.display.update()
+                                            show == 1
+                                        for event in pygame.event.get():
+                                            if (event.type == MOUSEBUTTONUP):
+                                                mousex, mousey = event.pos
+                                                # stop timelapse
+                                                if mousex > preview_width:
+                                                    button_column = int((mousex-preview_width)/bw) + 1
+                                                    button_row = int((mousey)/bh) + 1
+                                                else:
+                                                    if mousey - preview_height < bh:
+                                                        button_column = 1
+                                                        button_row = int(mousex / bw) + 1
+                                                    elif mousey - preview_height < bh * 2:
+                                                        button_column = 1
+                                                        button_row = int(mousex / bw) + 7
+                                                    elif mousey - preview_height < bh * 3:
+                                                        button_column = 2
+                                                        button_row = int(mousex / bw) + 1
+                                                    elif mousey - preview_height < bh * 4:
+                                                        button_column = 2
+                                                        button_row = int(mousex / bw) + 8
+                                                if button_column == 2 and button_row == 10:
+                                                    os.killpg(p.pid, signal.SIGTERM)
+                                                    text(1,12,3,1,1,str(tshots),fv,12)
+                                                    stop = 1
+                                                    count = tshots
+                                        
+                                    old_count = count
+                                    text(1,12,1,1,1,str(tshots - count),fv,12)
+                                    tdur = tinterval * (tshots - count)
+                                    td = timedelta(seconds=tdur)
+                                    text(1,10,1,1,1,str(td),fv,12)
+                                time.sleep(0.1)
+                                for event in pygame.event.get():
+                                    if (event.type == MOUSEBUTTONUP):
+                                        mousex, mousey = event.pos
+                                        # stop timelapse
+                                        if mousex > preview_width:
+                                            button_column = int((mousex-preview_width)/bw) + 1
+                                            button_row = int((mousey)/bh) + 1
+                                        else:
+                                            if mousey - preview_height < bh:
+                                                button_column = 1
+                                                button_row = int(mousex / bw) + 1
+                                            elif mousey - preview_height < bh * 2:
+                                                button_column = 1
+                                                button_row = int(mousex / bw) + 7
+                                            elif mousey - preview_height < bh * 3:
+                                                button_column = 2
+                                                button_row = int(mousex / bw) + 1
+                                            elif mousey - preview_height < bh * 4:
+                                                button_column = 2
+                                                button_row = int(mousex / bw) + 8
+                                        if button_column == 2 and button_row == 10:
+                                            os.killpg(p.pid, signal.SIGTERM)
+                                            text(1,12,3,1,1,str(tshots),fv,12)
+                                            stop = 1
+                                            count = tshots
+
+
+                        elif tinterval == 0:
+                            if tduration == 0:
+                                tduration = 1
+                            text(0,0,6,2,1,"Please Wait, taking Timelapse ...",int(fv*1.7),1)
+                            now = datetime.datetime.now()
+                            timestamp = now.strftime("%y%m%d%H%M%S")
+                            fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
+                            if codecs2[codec] != 'raw':
+                                datastr = "libcamera-vid --camera " + str(camera) + " -n --codec mjpeg -t " + str(tduration*1000) + " --segment 1 -o " + fname
+                            else:
+                                fname =  pic_dir + str(timestamp) + '_%04d.' + codecs2[codec]
+                                datastr = "libcamera-raw --camera " + str(camera) + " -n -t " + str(tduration*1000) + " --segment 1 -o " + fname  
+                            if zoom > 0:
+                                datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
+                            else:
+                                datastr += " --width " + str(vwidth) + " --height " + str(vheight)
+                            datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                            if mode == 0:
+                                datastr += " --shutter " + str(sspeed) + " --framerate " + str(1000000/sspeed)
+                            else:
+                                datastr += " --exposure " + str(modes[mode]) + " --framerate " + str(fps)
+                            if ev != 0:
+                                datastr += " --ev " + str(ev)
+                            if sspeed > 5000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
+                                datastr += " --gain 1 --immediate --awbgains " + str(red/10) + "," + str(blue/10)
+                            else:
+                                datastr += " --gain " + str(gain)
+                                if awb == 0:
+                                    datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                                else:
+                                    datastr += " --awb " + awbs[awb]
+                            datastr += " --metering "   + meters[meter]
+                            datastr += " --saturation " + str(saturation/10)
+                            datastr += " --sharpness "  + str(sharpness/10)
+                            datastr += " --denoise "    + denoises[denoise]
+                            if Pi_Cam == 4 and scientific == 1:
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
+                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
+                                datastr += " --autofocus " 
+                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
+                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
+                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                                datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
+                                if v3_f_mode == 1:
+                                    datastr += " --lens-position " + str(v3_focus/100)
+                            elif Pi_Cam == 3 and zoom == 0:
+                                datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
+                            if Pi_Cam == 3 and v3_hdr == 1:
+                                datastr += " --hdr"
+                            if zoom > 0 and zoom < 5 :
+                                zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
+                                zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
+                                datastr += " --mode 1920:1440:10 --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                            if zoom == 5:
+                                zxo = ((igw/2)-(preview_width/2))/igw
+                                zyo = ((igh/2)-(preview_height/2))/igh
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
+                            #print (datastr)
+                            p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
+                            start_timelapse = time.monotonic()
+                            stop = 0
+                            while time.monotonic() - start_timelapse < tduration+1 and stop == 0:
+                                tdur = int(tduration - (time.monotonic() - start_timelapse))
+                                td = timedelta(seconds=tdur)
+                                text(1,10,1,1,1,str(td),fv,12)
+                            #    for event in pygame.event.get():
+                            #        if (event.type == MOUSEBUTTONUP):
+                            #            mousex, mousey = event.pos
+                            #            # stop timelapse
+                            #            if mousex > preview_width:
+                            #                button_column = int((mousex-preview_width)/bw) + 1
+                            #                button_row = int((mousey)/bh) + 1
+                            #            else:
+                            #                if mousey - preview_height < bh:
+                            #                    button_column = 1
+                            #                    button_row = int(mousex / bw) + 1
+                            #                elif mousey - preview_height < bh * 2:
+                            #                    button_column = 1
+                            #                    button_row = int(mousex / bw) + 7
+                            #                elif mousey - preview_height < bh * 3:
+                            #                    button_column = 2
+                            #                    button_row = int(mousex / bw) + 1
+                            #                elif mousey - preview_height < bh * 4:
+                            #                    button_column = 2
+                            #                    button_row = int(mousex / bw) + 7
+                            #            if button_column == 2 and button_row == 10:
+                            #                os.killpg(p.pid, signal.SIGTERM)
+                            #                stop = 1
+                        button(1,9,0,2)
+                        if tinterval != 0:
+                            text(1,12,3,1,1,str(tshots),fv,12)
+                        if rotate != 0:
+                            pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,preview_width,preview_height),0)
+                        td = timedelta(seconds=tduration)
+                        text(1,10,3,1,1,str(td),fv,12)
+                        text(0,0,1,0,1,"CAPTURE",ft,7)
+                        text(1,0,1,0,1,"CAPTURE",ft,7)
+                        text(1,0,1,1,1,"Video",ft,7)
+                        if Pi_Cam == 6 and mode == 0:
+                            text(0,0,1,1,1,"STILL    2x2",ft,7)
+                        else:
+                            text(0,0,1,1,1,"Still ",ft,7)
+                        text(1,9,1,0,1,"CAPTURE",ft,7)
+                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
+                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
+                        else:
+                            text(1,9,1,1,1,"Timelapse",ft,7)
+                        restart = 2
+
             if button_row == 2:
                 # VIDEO LENGTH
                 for f in range(0,len(video_limits)-1,3):
@@ -2652,1007 +3639,7 @@ while True:
                    os.killpg(p.pid, signal.SIGTERM)
                    pygame.display.quit()
                    sys.exit()
-    # RESTART         
-    if restart > 0 and buttonx[0] == 0:
-        os.killpg(p.pid, signal.SIGTERM)
-        time.sleep(0.25)
-        text(0,0,6,2,1,"Waiting for preview ...",int(fv*1.7),1)
-        preview()
-        
-    #check for any mouse button presses
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            os.killpg(p.pid, signal.SIGTERM)
-            pygame.quit()
-        elif (event.type == MOUSEBUTTONUP):
-            mousex, mousey = event.pos
-            if mousex < preview_width and mousey < preview_height and rotate == 0 and event.button != 3:
-                xx = mousex
-                xx = min(xx,preview_width - histarea)
-                xx = max(xx,histarea)
-                xy = mousey
-                if Pi_Cam == 3 and zoom < 5:
-                    xy = min(xy,int(preview_height * .75) - histarea)
-                else:
-                    xy = min(xy,preview_height - histarea)
-                xy = max(xy,histarea)
-                if Pi_Cam == 3 and mousex < preview_width and mousey < preview_height *.75 and zoom == 0 and (v3_f_mode == 0 or v3_f_mode == 2):
-                    fxx = (xx - 25)/preview_width
-                    xy  = min(xy,int((preview_height - 25) * .75))
-                    fxy = ((xy - 20) * 1.3333)/preview_height
-                    fxz = 50/preview_width
-                    fyz = fxz
-                    if fxz != 1:
-                        text(1,7,3,1,1,"Spot",fv,7)
-                elif Pi_Cam == 3 and zoom == 0:
-                    fxx = 0
-                    fxy = 0
-                    fxz = 1
-                    fzy = 1
-                    if (v3_f_mode == 0 or v3_f_mode == 2):
-                        text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
-                if Pi_Cam == 3 and zoom == 0:
-                    restart = 1
-                    
-            # SWITCH CAMERA
-            if mousex < preview_width and mousey < preview_height and event.button == 3:
-                camera += 1
-                if camera > max_camera:
-                    camera = 0
-                poll = p.poll()
-                if poll == None:
-                    os.killpg(p.pid, signal.SIGTERM)
-                if same_cams == 0:
-                    Camera_Version()
-                    Menu()
-                restart = 1
-                
-            if (sq_dis == 0 and mousex > preview_width) or (sq_dis == 1 and mousey > preview_height):
-                if sq_dis == 0:
-                    button_column = int((mousex-preview_width)/bw) + 1
-                    button_row = int((mousey)/bh) + 1
-                    if mousex > preview_width + bw + (bw/2):
-                        button_pos = 2
-                    elif mousex > preview_width + (bw/2):
-                        button_pos = 1
-                    else:
-                        button_pos = 0
-                else:
-                    if mousey - preview_height < bh:
-                        button_column = 1
-                        button_row = int(mousex / bw) + 1
-                        if mousex > ((button_row -1) * bw) + (bw/2):
-                            button_pos = 1
-                        else:
-                            button_pos = 0
-                    elif mousey - preview_height < bh * 2:
-                        button_column = 1
-                        button_row = int(mousex / bw) + 7
-                        if mousex > ((button_row - 7) * bw) + (bw/2):
-                            button_pos = 1
-                        else:
-                            button_pos = 0
-                    elif mousey - preview_height < bh * 3:
-                        button_column = 2
-                        button_row = int(mousex / bw) + 1
-                        if mousex > ((button_row -1) * bw) + (bw/2):
-                            button_pos = 1
-                        else:
-                            button_pos = 0
-                    elif mousey - preview_height < bh * 4:
-                        button_column = 2
-                        button_row = int(mousex / bw) + 8
-                        if mousex > ((button_row - 8) * bw) + (bw/2):
-                            button_pos = 1
-                        else:
-                            button_pos = 0
-                y = button_row-1
-                
-                if button_column == 1:    
-                    if button_row == 1 :
-                        # TAKE STILL
-                        os.killpg(p.pid, signal.SIGTERM)
-                        button(0,0,1,4)
-                        if os.path.exists("PiLibtext.txt"):
-                             os.remove("PiLibtext.txt")
-                        text(0,0,2,0,1,"CAPTURING",ft,0)
-                        if Pi_Cam == 6 and mode == 0 and button_pos == 1:
-                            text(0,0,2,1,1,"STILL    2x2",ft,0)
-                        else:
-                            text(0,0,2,1,1,"STILL",ft,0)
-                        text(1,0,0,0,1,"CAPTURE",ft,7)
-                        text(1,0,0,1,1,"Video",ft,7)
-                        text(1,9,0,0,1,"CAPTURE",ft,7)
-                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
-                            text(1,9,0,1,1,"T'lapse  2x2",ft,7)
-                        else:
-                            text(1,9,0,1,1,"Timelapse",ft,7)
-                        text(0,0,6,2,1,"Please Wait, taking still ...",int(fv*1.7),1)
-                        now = datetime.datetime.now()
-                        timestamp = now.strftime("%y%m%d%H%M%S")
-                        if extns[extn] != 'raw':
-                            fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
-                            datastr = "libcamera-still --camera " + str(camera) + " -e " + extns[extn] + " -n -t 5000 -o " + fname
-                        else:
-                            fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
-                            datastr = "libcamera-still --camera " + str(camera) + " -r -n -t 5000 -o " + fname
-                            if preview_width == 640 and preview_height == 480 and zoom == 4:
-                                datastr += " --rawfull"
-                        datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
-                        if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom == 4:
-                            datastr += " -r --rawfull"
-                        if mode == 0:
-                            datastr += " --shutter " + str(sspeed)
-                        else:
-                            datastr += " --exposure " + str(modes[mode])
-                        if ev != 0:
-                            datastr += " --ev " + str(ev)
-                        if sspeed > 1000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
-                            datastr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
-                        else:    
-                            datastr += " --gain " + str(gain)
-                            if awb == 0:
-                                datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
-                            else:
-                                datastr += " --awb " + awbs[awb]
-                        datastr += " --metering " + meters[meter]
-                        datastr += " --saturation " + str(saturation/10)
-                        datastr += " --sharpness " + str(sharpness/10)
-                        datastr += " --quality " + str(quality)
-                        datastr += " --denoise " + denoises[denoise] # + " --width 2304 --height 1296"
-                        if Pi_Cam == 4 and scientific == 1:
-                            if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
-                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
-                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
-                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                            datastr += " --autofocus "
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
-                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
-                            if v3_f_mode == 1:
-                                datastr += " --lens-position " + str(v3_focus/100)
-                        elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
-                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                        elif Pi_Cam == 3 and zoom == 0:
-                            datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                        if  v3_hdr == 1:
-                            datastr += " --hdr"
-                        if Pi_Cam == 6 and mode == 0 and button_pos == 1:
-                            datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
-                        elif Pi_Cam == 6:
-                            datastr += " --width 9152 --height 6944"
-                        if zoom > 0 and zoom < 5:
-                            zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
-                            zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
-                        if zoom == 5:
-                            zxo = ((igw/2)-(preview_width/2))/igw
-                            zyo = ((igh/2)-(preview_height/2))/igh
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
-                        datastr += " --metadata - --metadata-format txt >> PiLibtext.txt"
-                        #print(datastr)
-                        os.system(datastr)
-
-                        while not os.path.exists(fname):
-                            pass
-                        if extns2[extn] == 'jpg' or extns2[extn] == 'bmp' or extns2[extn] == 'png':
-                            image = pygame.image.load(fname)
-                            if rotate != 0:
-                                image = pygame.transform.rotate(image, int(rotate * 90))
-                                pygame.image.save(image,fname[:-4]+"r." + extns2[extn])
-                            if Pi_Cam == 3 and zoom < 5:
-                                if rotate == 0:
-                                    image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
-                                else:
-                                    if rotate != 2:
-                                        igwr = image.get_width()
-                                        ighr = image.get_height()
-                                        image = pygame.transform.scale(image, (int(preview_height * (igwr/ighr)),preview_height))
-                                    else:
-                                        image = pygame.transform.scale(image, (preview_width,preview_height))
-                            else:
-                                if rotate == 0 or rotate == 2:
-                                    image = pygame.transform.scale(image, (preview_width,preview_height))
-                                else:
-                                    if rotate != 2:
-                                        igwr = image.get_width()
-                                        ighr = image.get_height()
-                                        image = pygame.transform.scale(image, (int(preview_height * (igwr/ighr)),preview_height))
-                                    else:
-                                        image = pygame.transform.scale(image, (preview_width,preview_height))
-                            if rotate == 1 or rotate == 3:
-                                windowSurfaceObj.blit(image, (int((preview_width/2) - ((preview_height * (igwr/ighr)))/2),0))
-                            else:
-                                windowSurfaceObj.blit(image, (0,0))
-                        dgain = 0
-                        again = 0
-                        etime = 0
-                        if os.path.exists("PiLibtext.txt"):
-                          with open("PiLibtext.txt", "r") as file:
-                            line = file.readline()
-                            check = line.split("=")
-                            if check[0] == "DigitalGain":
-                                dgain = check[1][:-1]
-                            if check[0] == "AnalogueGain":
-                                again = check[1][:-1]
-                            if check[0] == "ExposureTime":
-                                etime = check[1][:-1]
-                            while line:
-                                line = file.readline()
-                                check = line.split("=")
-                                if check[0] == "DigitalGain":
-                                    dgain = check[1][:-1]
-                                if check[0] == "AnalogueGain":
-                                    again = check[1][:-1]
-                                if check[0] == "ExposureTime":
-                                    etime = check[1][:-1]
-                          text(0,25,6,2,1,"Ana Gain: " + str(again) + " Dig Gain: " + str(dgain) + " Exp Time: " + str(etime) +"uS",int(fv*1.5),1)
-                        text(0,0,6,2,1,fname,int(fv*1.5),1)
-                        pygame.display.update()
-                        time.sleep(2)
-                        if rotate != 0:
-                            pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,preview_width,preview_height),0)
-                        button(0,0,0,4)
-                        text(0,0,1,0,1,"CAPTURE",ft,7)
-                        text(1,0,1,0,1,"CAPTURE",ft,7)
-                        text(1,0,1,1,1,"Video",ft,7)
-                        if Pi_Cam == 6 and mode == 0:
-                            text(0,0,1,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,1,1,1,"Still ",ft,7)
-                        text(1,9,1,0,1,"CAPTURE",ft,7)
-                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
-                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
-                        else:
-                            text(1,9,1,1,1,"Timelapse",ft,7)
-                        restart = 2
-                        
-                if button_column == 2:                       
-                    if button_row == 1 and event.button != 3:
-                        # TAKE VIDEO
-                        os.killpg(p.pid, signal.SIGTERM)
-                        button(1,0,1,3)
-                        if Pi == 5:
-                            text(1,0,3,0,1,"Video",ft,0)
-                        else:
-                            text(1,0,3,0,1,"STOP ",ft,0)
-                        text(1,0,3,1,1,"Recording",ft,0)
-                        text(0,0,0,0,1,"CAPTURE",ft,7)
-                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
-                            text(0,0,0,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,0,1,1,"Still ",ft,7)
-                        text(1,9,0,0,1,"CAPTURE",ft,7)
-                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
-                            text(1,9,0,1,1,"T'lapse  2x2",ft,7)
-                        else:
-                            text(1,9,0,1,1,"Timelapse",ft,7)
-                        text(0,0,6,2,1,"Please Wait, taking video ...",int(fv*1.7),1)
-                        now = datetime.datetime.now()
-                        timestamp = now.strftime("%y%m%d%H%M%S")
-                        vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
-                        if codecs2[codec] != 'raw':
-                            datastr = "libcamera-vid --camera " + str(camera) + " -t " + str(vlen * 1000) + " -o " + vname
-                            if mode != 0:
-                                datastr += " --framerate " + str(fps)
-                            else:
-                                speed7 = sspeed
-                                speed7 = max(speed7,int((1/fps)*1000000))
-                                datastr += " --framerate " + str(int((1/speed7)*1000000))
-                            if codecs[codec] != 'h264' and codecs[codec] != 'mp4':
-                                datastr += " --codec " + codecs[codec]
-                            elif codecs[codec] != 'mp4':
-                                prof = h264profiles[profile].split(" ")
-                                #datastr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
-                                datastr += " --level " + str(prof[1])
-                        else:
-                            datastr = "libcamera-raw --camera " + str(camera) + " -t " + str(vlen * 1000) + " -o " + vname + " --framerate " + str(fps)
-                        if vpreview == 0:
-                            datastr += " -n "
-                        datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
-                        if zoom > 0:
-                            datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
-                        elif Pi_Cam == 4 and vwidth == 2028:
-                            datastr += " --mode 2028:1520:12"
-                        elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
-                            datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
-                        elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
-                            datastr += " --mode 2028:1520:10 --width 2028 --height 1520"
-                        else:
-                            datastr += " --width " + str(vwidth) + " --height " + str(vheight)
-                        if mode == 0:
-                            datastr += " --shutter " + str(sspeed)
-                        else:
-                            datastr += " --exposure " + modes[mode]
-                        datastr += " --gain " + str(gain)
-                        if ev != 0:
-                            datastr += " --ev " + str(ev)
-                        if awb == 0:
-                            datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
-                        else:
-                            datastr += " --awb " + awbs[awb]
-                        datastr += " --metering " + meters[meter]
-                        datastr += " --saturation " + str(saturation/10)
-                        datastr += " --sharpness " + str(sharpness/10)
-                        datastr += " --denoise "    + denoises[denoise]
-                        if Pi_Cam == 4 and scientific == 1:
-                            if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
-                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
-                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
-                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                            datastr += " --autofocus "
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
-                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
-                            if v3_f_mode == 1:
-                                datastr += " --lens-position " + str(v3_focus/100)
-                        elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
-                            datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                        if Pi_Cam == 3 and v3_f_speed != 0:
-                            datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
-                        if Pi_Cam == 3 and v3_f_range != 0:
-                            datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-                        if Pi_Cam == 3 and v3_hdr == 1:
-                            datastr += " --hdr"
-                        datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
-                        if zoom > 0 and zoom < 5:
-                            zxo = ((1920-zwidths[4 - zoom])/2)/1920
-                            zyo = ((1440-zheights[4 - zoom])/2)/1440
-                            datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
-                        if zoom == 5:
-                            zxo = ((igw/2)-(preview_width/2))/igw
-                            zyo = ((igh/2)-(preview_height/2))/igh
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
-                        print (datastr)
-                        if Pi == 5 and codecs[codec] == 'mp4':
-                            os.system(datastr)
-                        else:
-                          p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
-                          start_video = time.monotonic()
-                          stop = 0
-                          while (time.monotonic() - start_video < vlen or vlen == 0) and stop == 0:
-                            if vlen != 0:
-                                vlength = int(vlen - (time.monotonic()-start_video))
-                            else:
-                                vlength = int(time.monotonic()-start_video)
-                            td = timedelta(seconds=vlength)
-                            text(1,1,1,1,1,str(td),fv,11)
-                            for event in pygame.event.get():
-                                if (event.type == MOUSEBUTTONUP):
-                                    mousex, mousey = event.pos
-                                    # stop video recording
-                                    if mousex > preview_width:
-                                        button_column = int((mousex-preview_width)/bw) + 1
-                                        button_row = int((mousey)/bh) + 1
-                                        if mousex > preview_width + bw + (bw/2):
-                                            button_pos = 1
-                                        else:
-                                            button_pos = 0
-                                    else:
-                                        if mousey - preview_height < bh:
-                                            button_column = 1
-                                            button_row = int(mousex / bw) + 1
-                                        elif mousey - preview_height < bh * 2:
-                                            button_column = 1
-                                            button_row = int(mousex / bw) + 7
-                                        elif mousey - preview_height < bh * 3:
-                                            button_column = 2
-                                            button_row = int(mousex / bw) + 1
-                                        elif mousey - preview_height < bh * 4:
-                                            button_column = 2
-                                            button_row = int(mousex / bw) + 7
-                                    if button_column == 2 and button_row == 1:
-                                       os.killpg(p.pid, signal.SIGTERM)
-                                       stop = 1
-                        text(0,0,6,2,1,vname,int(fv*1.5),1)
-                        time.sleep(1)
-                        td = timedelta(seconds=vlen)
-                        if rotate != 0:
-                            pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,preview_width,preview_height),0)
-                        text(1,1,3,1,1,str(td),fv,11)
-                        button(1,0,0,3)
-                        text(0,0,1,0,1,"CAPTURE",ft,7)
-                        if Pi_Cam == 5 and mode == 0:
-                            text(0,0,1,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,1,1,1,"Still ",ft,7)
-                        text(1,0,1,0,1,"CAPTURE",ft,7)
-                        text(1,0,1,1,1,"Video",ft,7)
-                        text(1,9,1,0,1,"CAPTURE",ft,7)
-                        if Pi_Cam == 5 and mode == 0 and tinterval > 0:
-                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
-                        else:
-                            text(1,9,1,1,1,"Timelapse",ft,7)
-                        restart = 2
-                                       
-                    elif button_row == 1 and event.button == 3:
-                        # STREAM VIDEO
-                        os.killpg(p.pid, signal.SIGTERM)
-                        button(1,0,1,3)
-                        text(1,0,3,0,1,"STOP ",ft,0)
-                        text(1,0,3,1,1,"STREAM",ft,0)
-                        text(0,0,0,0,1,"CAPTURE",ft,7)
-                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
-                            text(0,0,0,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,0,1,1,"Still ",ft,7)
-                        text(1,9,0,0,1,"CAPTURE",ft,7)
-                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
-                            text(1,9,0,1,1,"T'lapse  2x2",ft,7)
-                        else:
-                            text(1,9,0,1,1,"Timelapse",ft,7)
-                        text(0,0,6,2,1,"Streaming Video ...",int(fv*1.7),1)
-                        now = datetime.datetime.now()
-                        timestamp = now.strftime("%y%m%d%H%M%S")
-                        vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
-                        datastr = "libcamera-vid --camera " + str(camera) + " -t " + str(vlen * 1000) + " --inline --listen -o tcp://0.0.0.0:" + str(stream_port)
-                        if mode != 0:
-                            datastr += " --framerate " + str(fps)
-                        else:
-                            speed7 = sspeed
-                            speed7 = max(speed7,int((1/fps)*1000000))
-                            datastr += " --framerate " + str(int((1/speed7)*1000000))
-                        prof = h264profiles[profile].split(" ")
-                        #datastr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
-                        datastr += " --level " + str(prof[1])
-                        if vpreview == 0:
-                            datastr += " -n "
-                        datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
-                        if zoom > 0:
-                            datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
-                        elif Pi_Cam == 4 and vwidth == 2028:
-                            datastr += " --mode 2028:1520:12"
-                        elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
-                            datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
-                        elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
-                            datastr += " --mode 2028:1520:10 --width 2028 --height 1520"
-                        else:
-                            datastr += " --width " + str(vwidth) + " --height " + str(vheight)
-                        if mode == 0:
-                            datastr += " --shutter " + str(sspeed)
-                        else:
-                            datastr += " --exposure " + modes[mode]
-                        datastr += " --gain " + str(gain)
-                        if ev != 0:
-                            datastr += " --ev " + str(ev)
-                        if awb == 0:
-                            datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
-                        else:
-                            datastr += " --awb " + awbs[awb]
-                        datastr += " --metering " + meters[meter]
-                        datastr += " --saturation " + str(saturation/10)
-                        datastr += " --sharpness " + str(sharpness/10)
-                        datastr += " --denoise "    + denoises[denoise]
-                        if Pi_Cam == 4 and scientific == 1:
-                            if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
-                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
-                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
-                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                            datastr += " --autofocus "
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
-                            if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                            datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
-                            if v3_f_mode == 1:
-                                datastr += " --lens-position " + str(v3_focus/100)
-                        elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
-                            datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                        if Pi_Cam == 3 and v3_f_speed != 0:
-                            datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
-                        if Pi_Cam == 3 and v3_f_range != 0:
-                            datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-                        if Pi_Cam == 3 and v3_hdr == 1:
-                            datastr += " --hdr"
-                        datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
-                        if zoom > 0 and zoom < 5:
-                            zxo = ((1920-zwidths[4 - zoom])/2)/1920
-                            zyo = ((1440-zheights[4 - zoom])/2)/1440
-                            datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
-                        if zoom == 5:
-                            zxo = ((igw/2)-(preview_width/2))/igw
-                            zyo = ((igh/2)-(preview_height/2))/igh
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
-                        #print (datastr)
-                        p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
-                        start_video = time.monotonic()
-                        stop = 0
-                        while (time.monotonic() - start_video < vlen or vlen == 0) and stop == 0:
-                            if vlen != 0:
-                                vlength = int(vlen - (time.monotonic()-start_video))
-                            else:
-                                vlength = int(time.monotonic()-start_video)
-                            td = timedelta(seconds=vlength)
-                            text(1,1,1,1,1,str(td),fv,11)
-                            for event in pygame.event.get():
-                                if (event.type == MOUSEBUTTONUP):
-                                    mousex, mousey = event.pos
-                                    # stop video streaming
-                                    if mousex > preview_width:
-                                        button_column = int((mousex-preview_width)/bw) + 1
-                                        button_row = int((mousey)/bh) + 1
-                                        if mousex > preview_width + bw + (bw/2):
-                                            button_pos = 1
-                                        else:
-                                            button_pos = 0
-                                    else:
-                                        if mousey - preview_height < bh:
-                                            button_column = 1
-                                            button_row = int(mousex / bw) + 1
-                                        elif mousey - preview_height < bh * 2:
-                                            button_column = 1
-                                            button_row = int(mousex / bw) + 7
-                                        elif mousey - preview_height < bh * 3:
-                                            button_column = 2
-                                            button_row = int(mousex / bw) + 1
-                                        elif mousey - preview_height < bh * 4:
-                                            button_column = 2
-                                            button_row = int(mousex / bw) + 7
-                                    if button_column == 2 and button_row == 1:
-                                       os.killpg(p.pid, signal.SIGTERM)
-                                       stop = 1
-                        td = timedelta(seconds=vlen)
-                        if rotate != 0:
-                            pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,preview_width,preview_height),0)
-                        text(1,1,3,1,1,str(td),fv,11)
-                        button(1,0,0,3)
-                        text(0,0,1,0,1,"CAPTURE",ft,7)
-                        if Pi_Cam == 5 and mode == 0:
-                            text(0,0,1,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,1,1,1,"Still ",ft,7)
-                        text(1,0,1,0,1,"CAPTURE",ft,7)
-                        text(1,0,1,1,1,"Video",ft,7)
-                        text(1,9,1,0,1,"CAPTURE",ft,7)
-                        if Pi_Cam == 5 and mode == 0 and tinterval > 0:
-                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
-                        else:
-                            text(1,9,1,1,1,"Timelapse",ft,7)
-                        restart = 2
-                        
-                    elif button_row == 10:
-                        # TAKE TIMELAPSE
-                        os.killpg(p.pid, signal.SIGTERM)
-                        button(1,9,1,2)
-                        text(1,9,3,0,1,"STOP",ft,0)
-                        text(1,9,3,1,1,"Timelapse",ft,0)
-                        text(0,0,0,0,1,"CAPTURE",ft,7)
-                        text(1,0,0,0,1,"CAPTURE",ft,7)
-                        text(1,0,0,1,1,"Video",ft,7)
-                        if Pi_Cam == 5 and mode == 0:
-                            text(0,0,0,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,0,1,1,"Still ",ft,7)
-                        tcount = 0
-                        
-                        if tinterval > 0 and mode != 0:
-                            text(1,9,3,0,1,"STOP",ft,0)
-                            text(1,9,3,1,1,"Timelapse",ft,0)
-                            text(0,0,6,2,1,"Please Wait, taking Timelapse ...",int(fv*1.7),1)
-                            now = datetime.datetime.now()
-                            timestamp = now.strftime("%y%m%d%H%M%S")
-                            count = 0
-                            fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
-                            if extns[extn] != 'raw':
-                                datastr = "libcamera-still --camera " + str(camera) + " -e " + extns[extn] + " -s -n -t 0 -o " + fname
-                            else:
-                                datastr = "libcamera-still --camera " + str(camera) + " -r -s -n -t 0 -o " + fname 
-                                if preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                    datastr += " --rawfull"
-                            datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
-                            if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                datastr += " -r --rawfull"
-                            if mode == 0:
-                                datastr += " --shutter " + str(sspeed)
-                            else:
-                                datastr += " --exposure " + modes[mode]
-                            if ev != 0:
-                                datastr += " --ev " + str(ev)
-                            if sspeed > 1000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
-                                datastr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
-                            else:
-                                datastr += " --gain " + str(gain)
-                                if awb == 0:
-                                    datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
-                                else:
-                                    datastr += " --awb " + awbs[awb]
-                            datastr += " --metering " + meters[meter]
-                            datastr += " --saturation " + str(saturation/10)
-                            datastr += " --sharpness " + str(sharpness/10)
-                            datastr += " --quality " + str(quality)
-                            datastr += " --denoise "    + denoises[denoise]
-                            if Pi_Cam == 4 and scientific == 1:
-                                if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
-                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
-                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
-                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                                datastr += " --autofocus "
-                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
-                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                                datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
-                                if v3_f_mode == 1:
-                                    datastr += " --lens-position " + str(v3_focus/100)
-                            elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
-                                datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                            elif Pi_Cam == 3 and zoom == 0:
-                                datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                            if  v3_hdr == 1:
-                                datastr += " --hdr"
-                            if Pi_Cam == 6 and mode == 0 and button_pos == 2:
-                                datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
-                            elif Pi_Cam == 6:
-                                datastr += " --width 9152 --height 6944"
-                            if zoom > 0 and zoom < 5:
-                                zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
-                                zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
-                            if zoom == 5:
-                                zxo = ((igw/2)-(preview_width/2))/igw
-                                zyo = ((igh/2)-(preview_height/2))/igh
-                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
-                            p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
-                            #print (datastr)
-                            start_timelapse = time.monotonic()
-                            start2 = time.monotonic()
-                            stop = 0
-                            pics3 = []
-                            count = 0
-                            old_count = 0
-                            while count < tshots and stop == 0:
-                                if time.monotonic() - start2 >= tinterval:
-                                    os.system('pkill -SIGUSR1 libcamera-still')
-                                    start2 = time.monotonic()
-                                    text(0,0,6,2,1,"Please Wait, taking Timelapse ..."  + " " + str(count+1),int(fv*1.7),1)
-                                    show = 0
-                                    while count == old_count:
-                                        time.sleep(0.1)
-                                        pics3 = glob.glob(pic_dir + "*.*")
-                                        counts = []
-                                        for xu in range(0,len(pics3)):
-                                            ww = pics3[xu].split("/")
-                                            if ww[4][0:12] == timestamp:
-                                                counts.append(pics3[xu])
-                                        count = len(counts)
-                                        counts.sort()
-                                        for event in pygame.event.get():
-                                            if (event.type == MOUSEBUTTONUP):
-                                                mousex, mousey = event.pos
-                                                # stop timelapse
-                                                if mousex > preview_width:
-                                                    button_column = int((mousex-preview_width)/bw) + 1
-                                                    button_row = int((mousey)/bh) + 1
-                                                else:
-                                                    if mousey - preview_height < bh:
-                                                        button_column = 1
-                                                        button_row = int(mousex / bw) + 1
-                                                    elif mousey - preview_height < bh * 2:
-                                                        button_column = 1
-                                                        button_row = int(mousex / bw) + 7
-                                                    elif mousey - preview_height < bh * 3:
-                                                        button_column = 2
-                                                        button_row = int(mousex / bw) + 1
-                                                    elif mousey - preview_height < bh * 4:
-                                                        button_column = 2
-                                                        button_row = int(mousex / bw) + 8
-                                                if button_column == 2 and button_row == 10:
-                                                    os.killpg(p.pid, signal.SIGTERM)
-                                                    text(1,12,3,1,1,str(tshots),fv,12)
-                                                    stop = 1
-                                                    count = tshots
-                                        
-                                    old_count = count
-                                    text(1,12,1,1,1,str(tshots - count),fv,12)
-                                    tdur = tinterval * (tshots - count)
-                                    td = timedelta(seconds=tdur)
-                                    text(1,10,1,1,1,str(td),fv,12)
-                                time.sleep(0.1)
-                                for event in pygame.event.get():
-                                    if (event.type == MOUSEBUTTONUP):
-                                        mousex, mousey = event.pos
-                                        # stop timelapse
-                                        if mousex > preview_width:
-                                            button_column = int((mousex-preview_width)/bw) + 1
-                                            button_row = int((mousey)/bh) + 1
-                                        else:
-                                            if mousey - preview_height < bh:
-                                                button_column = 1
-                                                button_row = int(mousex / bw) + 1
-                                            elif mousey - preview_height < bh * 2:
-                                                button_column = 1
-                                                button_row = int(mousex / bw) + 7
-                                            elif mousey - preview_height < bh * 3:
-                                                button_column = 2
-                                                button_row = int(mousex / bw) + 1
-                                            elif mousey - preview_height < bh * 4:
-                                                button_column = 2
-                                                button_row = int(mousex / bw) + 8
-                                        if button_column == 2 and button_row == 10:
-                                            os.killpg(p.pid, signal.SIGTERM)
-                                            text(1,12,3,1,1,str(tshots),fv,12)
-                                            stop = 1
-                                            count = tshots
-
-                        elif tinterval > 0 and mode == 0:
-                            text(1,9,3,0,1,"STOP",ft,0)
-                            text(1,9,3,1,1,"Timelapse",ft,0)
-                            text(0,0,6,2,1,"Please Wait, taking Timelapse ...",int(fv*1.7),1)
-                            now = datetime.datetime.now()
-                            timestamp = now.strftime("%y%m%d%H%M%S")
-                            start2 = time.monotonic()
-                            stop = 0
-                            pics3 = []
-                            count = 0
-                            old_count = 0
-                            while count < tshots and stop == 0:
-                                if time.monotonic() - start2 > tinterval:
-                                    start2 = time.monotonic()
-                                    poll = p.poll()
-                                    while poll == None:
-                                        poll = p.poll()
-                                        time.sleep(0.1)
-                                    fname =  pic_dir + str(timestamp) + "_" + str(count) + "." + extns2[extn]
-                                    if extns[extn] != 'raw':
-                                        datastr = "libcamera-still --camera " + str(camera) + " -e " + extns[extn] + " -n -t 1000 -o " + fname
-                                    else:
-                                        datastr = "libcamera-still --camera " + str(camera) + " -r -n -t 1000 -o " + fname 
-                                        if preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                            datastr += " --rawfull"
-                                    datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
-                                    if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                        datastr += " -r --rawfull"
-                                    datastr += " --shutter " + str(sspeed)
-                                    if ev != 0:
-                                        datastr += " --ev " + str(ev)
-                                    if sspeed > 1000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
-                                        datastr += " --gain " + str(gain) + " --immediate --awbgains " + str(red/10) + "," + str(blue/10)
-                                    else:
-                                        datastr += " --gain " + str(gain)
-                                        if awb == 0:
-                                            datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
-                                        else:
-                                            datastr += " --awb " + awbs[awb]
-                                    datastr += " --metering " + meters[meter]
-                                    datastr += " --saturation " + str(saturation/10)
-                                    datastr += " --sharpness " + str(sharpness/10)
-                                    datastr += " --quality " + str(quality)
-                                    datastr += " --denoise "    + denoises[denoise]
-                                    if Pi_Cam == 4 and scientific == 1:
-                                        if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
-                                            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
-                                        if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
-                                            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                                    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                                        datastr += " --autofocus "
-                                    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
-                                        if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                            datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                                    if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                                        datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
-                                        if v3_f_mode == 1:
-                                            datastr += " --lens-position " + str(v3_focus/100)
-                                    elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
-                                        datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                                    elif Pi_Cam == 3 and zoom == 0:
-                                        datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                                    if  v3_hdr == 1:
-                                        datastr += " --hdr"
-                                    if Pi_Cam == 6 and mode == 0 and button_pos == 2:
-                                        datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
-                                    elif Pi_Cam == 6:
-                                        datastr += " --width 9152 --height 6944"
-                                    if zoom > 0 and zoom < 5:
-                                        zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
-                                        zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                                        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
-                                    if zoom == 5:
-                                        zxo = ((igw/2)-(preview_width/2))/igw
-                                        zyo = ((igh/2)-(preview_height/2))/igh
-                                        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
-                                    #print(datastr)
-                                    p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
-                                    text(0,0,6,2,1,"Please Wait, taking Timelapse ..."  + " " + str(count+1),int(fv*1.7),1)
-                                    show = 0
-                                    while count == old_count:
-                                        time.sleep(0.1)
-                                        pics3 = glob.glob(pic_dir + "*.*")
-                                        counts = []
-                                        for xu in range(0,len(pics3)):
-                                            ww = pics3[xu].split("/")
-                                            if ww[4][0:12] == timestamp:
-                                                counts.append(pics3[xu])
-                                        count = len(counts)
-                                        counts.sort()
-                                        if (extns2[extn] == 'jpg' or extns2[extn] == 'bmp' or extns2[extn] == 'png') and count > 0 and show == 0:
-                                            image = pygame.image.load(counts[count-1])
-                                            if (Pi_Cam != 3) or (Pi_Cam == 3 and zoom == 5):
-                                                catSurfacesmall = pygame.transform.scale(image, (preview_width,preview_height))
-                                            else:
-                                                catSurfacesmall = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
-                                            windowSurfaceObj.blit(catSurfacesmall, (0, 0))
-                                            text(0,0,6,2,1,counts[count-1],int(fv*1.5),1)
-                                            pygame.display.update()
-                                            show == 1
-                                        for event in pygame.event.get():
-                                            if (event.type == MOUSEBUTTONUP):
-                                                mousex, mousey = event.pos
-                                                # stop timelapse
-                                                if mousex > preview_width:
-                                                    button_column = int((mousex-preview_width)/bw) + 1
-                                                    button_row = int((mousey)/bh) + 1
-                                                else:
-                                                    if mousey - preview_height < bh:
-                                                        button_column = 1
-                                                        button_row = int(mousex / bw) + 1
-                                                    elif mousey - preview_height < bh * 2:
-                                                        button_column = 1
-                                                        button_row = int(mousex / bw) + 7
-                                                    elif mousey - preview_height < bh * 3:
-                                                        button_column = 2
-                                                        button_row = int(mousex / bw) + 1
-                                                    elif mousey - preview_height < bh * 4:
-                                                        button_column = 2
-                                                        button_row = int(mousex / bw) + 8
-                                                if button_column == 2 and button_row == 10:
-                                                    os.killpg(p.pid, signal.SIGTERM)
-                                                    text(1,12,3,1,1,str(tshots),fv,12)
-                                                    stop = 1
-                                                    count = tshots
-                                        
-                                    old_count = count
-                                    text(1,12,1,1,1,str(tshots - count),fv,12)
-                                    tdur = tinterval * (tshots - count)
-                                    td = timedelta(seconds=tdur)
-                                    text(1,10,1,1,1,str(td),fv,12)
-                                time.sleep(0.1)
-                                for event in pygame.event.get():
-                                    if (event.type == MOUSEBUTTONUP):
-                                        mousex, mousey = event.pos
-                                        # stop timelapse
-                                        if mousex > preview_width:
-                                            button_column = int((mousex-preview_width)/bw) + 1
-                                            button_row = int((mousey)/bh) + 1
-                                        else:
-                                            if mousey - preview_height < bh:
-                                                button_column = 1
-                                                button_row = int(mousex / bw) + 1
-                                            elif mousey - preview_height < bh * 2:
-                                                button_column = 1
-                                                button_row = int(mousex / bw) + 7
-                                            elif mousey - preview_height < bh * 3:
-                                                button_column = 2
-                                                button_row = int(mousex / bw) + 1
-                                            elif mousey - preview_height < bh * 4:
-                                                button_column = 2
-                                                button_row = int(mousex / bw) + 8
-                                        if button_column == 2 and button_row == 10:
-                                            os.killpg(p.pid, signal.SIGTERM)
-                                            text(1,12,3,1,1,str(tshots),fv,12)
-                                            stop = 1
-                                            count = tshots
-
-
-                        elif tinterval == 0:
-                            if tduration == 0:
-                                tduration = 1
-                            text(0,0,6,2,1,"Please Wait, taking Timelapse ...",int(fv*1.7),1)
-                            now = datetime.datetime.now()
-                            timestamp = now.strftime("%y%m%d%H%M%S")
-                            fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
-                            if codecs2[codec] != 'raw':
-                                datastr = "libcamera-vid --camera " + str(camera) + " -n --codec mjpeg -t " + str(tduration*1000) + " --segment 1 -o " + fname
-                            else:
-                                fname =  pic_dir + str(timestamp) + '_%04d.' + codecs2[codec]
-                                datastr = "libcamera-raw --camera " + str(camera) + " -n -t " + str(tduration*1000) + " --segment 1 -o " + fname  
-                            if zoom > 0:
-                                datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
-                            else:
-                                datastr += " --width " + str(vwidth) + " --height " + str(vheight)
-                            datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
-                            if mode == 0:
-                                datastr += " --shutter " + str(sspeed) + " --framerate " + str(1000000/sspeed)
-                            else:
-                                datastr += " --exposure " + str(modes[mode]) + " --framerate " + str(fps)
-                            if ev != 0:
-                                datastr += " --ev " + str(ev)
-                            if sspeed > 5000000 and mode == 0 and (Pi_Cam < 5 or Pi_Cam == 7):
-                                datastr += " --gain 1 --immediate --awbgains " + str(red/10) + "," + str(blue/10)
-                            else:
-                                datastr += " --gain " + str(gain)
-                                if awb == 0:
-                                    datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
-                                else:
-                                    datastr += " --awb " + awbs[awb]
-                            datastr += " --metering "   + meters[meter]
-                            datastr += " --saturation " + str(saturation/10)
-                            datastr += " --sharpness "  + str(sharpness/10)
-                            datastr += " --denoise "    + denoises[denoise]
-                            if Pi_Cam == 4 and scientific == 1:
-                                if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
-                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
-                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
-                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                                datastr += " --autofocus " 
-                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
-                                if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
-                                    datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
-                                datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
-                                if v3_f_mode == 1:
-                                    datastr += " --lens-position " + str(v3_focus/100)
-                            elif Pi_Cam == 3 and zoom == 0:
-                                datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                            if Pi_Cam == 3 and v3_hdr == 1:
-                                datastr += " --hdr"
-                            if zoom > 0 and zoom < 5 :
-                                zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
-                                zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                                datastr += " --mode 1920:1440:10 --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
-                            if zoom == 5:
-                                zxo = ((igw/2)-(preview_width/2))/igw
-                                zyo = ((igh/2)-(preview_height/2))/igh
-                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
-                            #print (datastr)
-                            p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
-                            start_timelapse = time.monotonic()
-                            stop = 0
-                            while time.monotonic() - start_timelapse < tduration+1 and stop == 0:
-                                tdur = int(tduration - (time.monotonic() - start_timelapse))
-                                td = timedelta(seconds=tdur)
-                                text(1,10,1,1,1,str(td),fv,12)
-                            #    for event in pygame.event.get():
-                            #        if (event.type == MOUSEBUTTONUP):
-                            #            mousex, mousey = event.pos
-                            #            # stop timelapse
-                            #            if mousex > preview_width:
-                            #                button_column = int((mousex-preview_width)/bw) + 1
-                            #                button_row = int((mousey)/bh) + 1
-                            #            else:
-                            #                if mousey - preview_height < bh:
-                            #                    button_column = 1
-                            #                    button_row = int(mousex / bw) + 1
-                            #                elif mousey - preview_height < bh * 2:
-                            #                    button_column = 1
-                            #                    button_row = int(mousex / bw) + 7
-                            #                elif mousey - preview_height < bh * 3:
-                            #                    button_column = 2
-                            #                    button_row = int(mousex / bw) + 1
-                            #                elif mousey - preview_height < bh * 4:
-                            #                    button_column = 2
-                            #                    button_row = int(mousex / bw) + 7
-                            #            if button_column == 2 and button_row == 10:
-                            #                os.killpg(p.pid, signal.SIGTERM)
-                            #                stop = 1
-                        button(1,9,0,2)
-                        if tinterval != 0:
-                            text(1,12,3,1,1,str(tshots),fv,12)
-                        if rotate != 0:
-                            pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,preview_width,preview_height),0)
-                        td = timedelta(seconds=tduration)
-                        text(1,10,3,1,1,str(td),fv,12)
-                        text(0,0,1,0,1,"CAPTURE",ft,7)
-                        text(1,0,1,0,1,"CAPTURE",ft,7)
-                        text(1,0,1,1,1,"Video",ft,7)
-                        if Pi_Cam == 6 and mode == 0:
-                            text(0,0,1,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,1,1,1,"Still ",ft,7)
-                        text(1,9,1,0,1,"CAPTURE",ft,7)
-                        if Pi_Cam == 6 and mode == 0 and tinterval > 0:
-                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
-                        else:
-                            text(1,9,1,1,1,"Timelapse",ft,7)
-                        restart = 2
+                     
         # RESTART
         if restart > 0:
             poll = p.poll()
