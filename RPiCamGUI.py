@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.85
+version = 4.86
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -731,7 +731,8 @@ def v3_focus_manual():
             v3_pmax = video_limits[f+2]
     restart = 1 
     draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-v3_pmin)
-    text(1,7,3,0,1,'<<< ' + str(int(v3_focus)) + ' >>>',fv,0)
+    fd = 1/(v3_focus/100)
+    text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
     text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
     time.sleep(0.25)
         
@@ -783,7 +784,8 @@ def Menu():
     if v3_f_mode == 1 :
         button(1,7,1,9)
         draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
-        text(1,7,3,0,1,'<<< ' + str(int(v3_focus)) + ' >>>',fv,0)
+        fd = 1/(v3_focus/100)
+        text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
     elif v3_f_mode == 0 or v3_f_mode == 2:
         button(1,7,0,9)
