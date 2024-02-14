@@ -65,6 +65,8 @@ Click mouse on the left of a button to decrease, right to increase or use the ap
  
 lf using a Pi HQ camera for astrophotography it might be worth a try adding "imx477.dpc_enable=0" in /boot/cmdline.txt this will disable depleted pixel correction. 
 
+## Spot Focus
+
 ![spotfocus](spotfocus.jpg)
 
 # To install(manual):
