@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Copyright (c) 2023
+"""Copyright (c) 2024
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -32,7 +32,12 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.86
+version = 4.87
+
+# streaming parameters
+stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
+stream_port = 5000          # set video streaming port number
+udp_ip_addr = "10.42.0.52"  # IP address of the client for UDP streaming
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
@@ -54,7 +59,6 @@ sq_dis = 0
 # set default values (see limits below)
 rotate      = 0       # rotate preview ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
 camera      = 0       # choose camera to use, usually 0 unless using a Pi5 or multiswitcher
-stream_port = 5000    # set video streaming port number
 mode        = 1       # set camera mode ['manual','normal','sport'] 
 speed       = 16      # position in shutters list (16 = 1/125th)
 gain        = 0       # set gain 
@@ -2342,10 +2346,14 @@ while True:
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
                         if lver != "bookworm":
-                            datastr = "libcamera-vid"
+                            datastr = "libcamera-vid "
                         else:
-                            datastr = "rpicam-vid"
-                        datastr += "--camera " + str(camera) + " -t " + str(vlen * 1000) + " --inline --listen -o tcp://0.0.0.0:" + str(stream_port)
+                            datastr = "rpicam-vid "
+                        datastr += "--camera " + str(camera) + " -t " + str(vlen * 1000)
+                        if stream_type == 0:
+                            datastr += " --inline --listen -o tcp://0.0.0.0:" + str(stream_port)
+                        elif stream_type == 1:
+                            datastr += " --inline -o udp://" + udp_ip_addr + ":" + str(stream_port)
                         if mode != 0:
                             datastr += " --framerate " + str(fps)
                         else:
@@ -2413,7 +2421,10 @@ while True:
                         if zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
                             zyo = ((igh/2)-(preview_height/2))/igh
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
+                        if stream_type == 2:
+                            data = "#rtp{sdp=rtsp://:" + str(stream_port) + "/stream1}"
+                            datastr += " --inline -o - | cvlc stream:///dev/stdin --sout '" + data + "' :demux=h264"
                         #print (datastr)
                         p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
                         start_video = time.monotonic()
