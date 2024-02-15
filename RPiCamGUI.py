@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.87
+version = 4.88
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -845,7 +845,7 @@ Menu()
 
 # write button texts
 text(0,0,1,0,1,"CAPTURE",ft,7)
-text(1,0,1,0,1,"CAPTURE",ft,7)
+text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
 text(1,0,1,1,1,"Video",ft,7)
 text(0,1,5,0,1,"Mode",ft,10)
 text(0,1,3,1,1,modes[mode],fv,10)
@@ -1495,7 +1495,7 @@ while True:
                             text(0,0,2,1,1,"STILL    2x2",ft,0)
                         else:
                             text(0,0,2,1,1,"STILL",ft,0)
-                        text(1,0,0,0,1,"CAPTURE",ft,7)
+                        text(1,0,0,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,0,1,1,"Video",ft,7)
                         text(1,9,0,0,1,"CAPTURE",ft,7)
                         if Pi_Cam == 6 and mode == 0 and tinterval > 0:
@@ -1640,7 +1640,7 @@ while True:
                             pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,preview_width,preview_height),0)
                         button(0,0,0,4)
                         text(0,0,1,0,1,"CAPTURE",ft,7)
-                        text(1,0,1,0,1,"CAPTURE",ft,7)
+                        text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,1,1,1,"Video",ft,7)
                         if Pi_Cam == 6 and mode == 0:
                             text(0,0,1,1,1,"STILL    2x2",ft,7)
@@ -2316,7 +2316,7 @@ while True:
                             text(0,0,1,1,1,"STILL    2x2",ft,7)
                         else:
                             text(0,0,1,1,1,"Still ",ft,7)
-                        text(1,0,1,0,1,"CAPTURE",ft,7)
+                        text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,1,1,1,"Video",ft,7)
                         text(1,9,1,0,1,"CAPTURE",ft,7)
                         if Pi_Cam == 5 and mode == 0 and tinterval > 0:
@@ -2473,7 +2473,7 @@ while True:
                             text(0,0,1,1,1,"STILL    2x2",ft,7)
                         else:
                             text(0,0,1,1,1,"Still ",ft,7)
-                        text(1,0,1,0,1,"CAPTURE",ft,7)
+                        text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,1,1,1,"Video",ft,7)
                         text(1,9,1,0,1,"CAPTURE",ft,7)
                         if Pi_Cam == 5 and mode == 0 and tinterval > 0:
@@ -2489,7 +2489,7 @@ while True:
                         text(1,9,3,0,1,"STOP",ft,0)
                         text(1,9,3,1,1,"Timelapse",ft,0)
                         text(0,0,0,0,1,"CAPTURE",ft,7)
-                        text(1,0,0,0,1,"CAPTURE",ft,7)
+                        text(1,0,0,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,0,1,1,"Video",ft,7)
                         if Pi_Cam == 5 and mode == 0:
                             text(0,0,0,1,1,"STILL    2x2",ft,7)
@@ -2926,7 +2926,7 @@ while True:
                         td = timedelta(seconds=tduration)
                         text(1,10,3,1,1,str(td),fv,12)
                         text(0,0,1,0,1,"CAPTURE",ft,7)
-                        text(1,0,1,0,1,"CAPTURE",ft,7)
+                        text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,1,1,1,"Video",ft,7)
                         if Pi_Cam == 6 and mode == 0:
                             text(0,0,1,1,1,"STILL    2x2",ft,7)
