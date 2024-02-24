@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.88
+version = 4.89
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -312,7 +312,7 @@ def Camera_Version():
                     vwidths2.append(int(qwidth))
                     vheights2.append(int(qheight))
                 if forms[q][0:1] == "[" and "x" not in forms[q]:
-                    vfps2.append(int(forms[q][1:3]))
+                    vfps2.append(int(float(forms[q][1:3])))
      
         if camstxt[x][0:4] == "1 : ":
             cam1 = camstxt[x][4:10]
@@ -325,7 +325,7 @@ def Camera_Version():
                   vwidths2.append(int(qwidth))
                   vheights2.append(int(qheight))
                if forms[q][0:1] == "[" and "x" not in forms[q]:
-                    vfps2.append(int(forms[q][1:3]))
+                    vfps2.append(int(float(forms[q][1:3])))
         if camstxt[x][0:4] == "2 : ":
             cam2 = camstxt[x][4:10]
         if camstxt[x][0:4] == "3 : ":
@@ -717,7 +717,7 @@ def preview():
         zyo = ((igh/2)-(preview_height/2))/igh
         datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
     p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
-    #print (datastr)
+    #print(datastr)
     restart = 0
     time.sleep(0.2)
     if Pi_Cam == 3 and rotate == 0:
