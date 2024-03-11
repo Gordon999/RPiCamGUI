@@ -13,7 +13,7 @@ Script to allow control of a Pi Camera. Will work with all Pi camera models, v1,
 To start streaming right mouse click on CAPTURE/Stream video button. Set streaming type in the script. 
 Time of streaming set by v_length.
 
-(Note You can use an Arducam 16/64MP camera with the default Pi Rpicam-apps... remember to add dtoverlay=imx519 to /boot/config.txt (see below for a Pi5))
+(Note You can use an Arducam 16/64MP camera with the default Pi Rpicam-apps... remember to add dtoverlay=imx519 to /boot/config.txt (see below for a Pi5)) Don't install Arducams libcamera apps, use the default Pi versions.
 
 (To make an Arducam 16/64MP (probably NOT Owlsight) work on a Pi5...
 
