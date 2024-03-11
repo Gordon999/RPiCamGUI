@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.89
+version = 4.90
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -115,8 +115,10 @@ max_gs      = 15
 focus       = 2000
 foc_man     = 0
 fcount      = 0
+fcount2     = 0
 fstep       = 20
 max_fcount  = 30
+max_fcount2 = 2 
 old_foc     = 0
 ran         = 0
 prev_fps    = 10 
@@ -219,7 +221,7 @@ if Pi == 5:
 still_limits = ['mode',0,len(modes)-1,'speed',0,len(shutters)-1,'gain',0,30,'brightness',-100,100,'contrast',0,200,'ev',-10,10,'blue',1,80,'sharpness',0,30,
                 'denoise',0,len(denoises)-1,'quality',0,100,'red',1,80,'extn',0,len(extns)-1,'saturation',0,20,'meter',0,len(meters)-1,'awb',0,len(awbs)-1,
                 'histogram',0,len(histograms)-1,'v3_f_speed',0,len(v3_f_speeds)-1]
-video_limits = ['vlen',0,3600,'fps',1,40,'focus',0,4096,'vformat',0,7,'0',0,0,'zoom',0,5,'Focus',0,1,'tduration',1,9999,'tinterval',0,999,'tshots',1,999,
+video_limits = ['vlen',0,3600,'fps',1,40,'focus',0,2500,'vformat',0,7,'0',0,0,'zoom',0,5,'Focus',0,1,'tduration',1,9999,'tinterval',0,999,'tshots',1,999,
                 'flicker',0,3,'codec',0,len(codecs)-1,'profile',0,len(h264profiles)-1,'v3_focus',0,1023,'histarea',10,50,'v3_f_range',0,len(v3_f_ranges)-1]
 
 # check config_file exists, if not then write default values
@@ -1043,6 +1045,7 @@ for x in range(0,10):
             foc_sub5 = x
         if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=1023":
             foc_sub3 = x
+            print(foc_sub3)
 
 # main loop
 while True:
@@ -1306,7 +1309,7 @@ while True:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_height * 0.50),int(preview_width * 0.22),int(preview_height * 0.33),int(preview_width * 0.31)),gw)
 
         # ARDUCAM AF
-        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and fcount < max_fcount and Pi != 5:
+        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and fcount < max_fcount and fcount2 < max_fcount2 * max_fcount and Pi != 5:
                 image2 = pygame.surfarray.pixels3d(image)
                 crop2 = image2[xx-histarea:xx+histarea,xy-histarea:xy+histarea]
                 pygame.draw.rect(windowSurfaceObj,redColor,Rect(xx-histarea,xy-histarea,histarea*2,histarea*2),1)
@@ -1321,6 +1324,7 @@ while True:
                 else:
                     focus = random.randint(pmin + 100,pmax - 100)
                     fcount = 1
+                    fcount2 +=1
                     ran = 1
                     old_foc = foc
                 if (int(foc) >= int(old_foc) or fcount == 0) and ran == 0:
@@ -1345,6 +1349,7 @@ while True:
                 text(20,2,3,2,0,"Focus : " + str(int(foc)),fv* 2,0)
                 time.sleep(.5)
                 fcount += 1
+        
 
         pygame.display.update()
     
@@ -3412,6 +3417,7 @@ while True:
                         focus_mode = 0
                         foc_man = 0 # auto focus
                         fcount = 0
+                        fcount2 = 0
                         zoom = 0
                         button(1,7,0,9)
                         text(1,7,5,0,1,"FOCUS",ft,7)
