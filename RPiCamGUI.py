@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.90
+version = 4.91
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -636,7 +636,7 @@ def draw_Vbar(col,row,color,msg,value):
     pygame.display.update()
 
 def preview():
-    global lver,Pi,scientif,scientific,fxx,fxy,fxz,v3_focus,v3_hdr,v3_f_mode,v3_f_modes,prev_fps,focus_fps,focus_mode,restart,datastr,count,p, brightness,contrast,modes,mode,red,blue,gain,sspeed,ev,preview_width,preview_height,zoom,igw,igh,zx,zy,awbs,awb,saturations,saturation,meters,meter,flickers,flicker,sharpnesss,sharpness,rotate
+    global use_ard,lver,Pi,scientif,scientific,fxx,fxy,fxz,v3_focus,v3_hdr,v3_f_mode,v3_f_modes,prev_fps,focus_fps,focus_mode,restart,datastr,count,p, brightness,contrast,modes,mode,red,blue,gain,sspeed,ev,preview_width,preview_height,zoom,igw,igh,zx,zy,awbs,awb,saturations,saturation,meters,meter,flickers,flicker,sharpnesss,sharpness,rotate
     files = glob.glob('/run/shm/*.jpg')
     for f in files:
         os.remove(f)
@@ -1309,7 +1309,7 @@ while True:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_height * 0.50),int(preview_width * 0.22),int(preview_height * 0.33),int(preview_width * 0.31)),gw)
 
         # ARDUCAM AF
-        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and fcount < max_fcount and fcount2 < max_fcount2 * max_fcount and Pi != 5:
+        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and fcount < max_fcount and fcount2 < max_fcount2 * max_fcount and Pi != 5 and use_ard == 0:
                 image2 = pygame.surfarray.pixels3d(image)
                 crop2 = image2[xx-histarea:xx+histarea,xy-histarea:xy+histarea]
                 pygame.draw.rect(windowSurfaceObj,redColor,Rect(xx-histarea,xy-histarea,histarea*2,histarea*2),1)
