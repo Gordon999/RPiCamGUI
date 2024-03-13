@@ -35,7 +35,7 @@ import random
 version = 4.94
 
 # if using Arducams version of libcamera set use_ard == 1
-use_ard = 0
+use_ard = 1
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
