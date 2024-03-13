@@ -32,10 +32,10 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.93
+version = 4.94
 
 # if using Arducams version of libcamera set use_ard == 1
-use_ard = 1
+use_ard = 0
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -692,9 +692,8 @@ def preview():
         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
         if v3_f_mode == 1:
             datastr += " --lens-position " + str(v3_focus/100)
-    if ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 0):
-        datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
-    elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
+    
+    if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1)) and zoom == 0 and fxx != 0 and v3_f_mode != 1:
         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
     if Pi_Cam == 3 and v3_f_speed != 0:
         datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
@@ -1266,7 +1265,7 @@ while True:
                 gw = 2
             else:
                 gw = 1
-            if Pi_Cam == 3 and fxz != 1 and zoom == 0 and rotate == 0:
+            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1)) and fxz != 1 and zoom == 0 and rotate == 0:
                 pygame.draw.rect(windowSurfaceObj,(200,0,0),Rect(int(fxx*preview_width),int(fxy*preview_height*.75),int(fxz*preview_width),int(fyz*preview_height)),1)
             if (Pi_Cam == 5 or Pi_Cam == 6) and (rotate == 0 or rotate == 2):
                 if vwidth == 1280 and vheight == 960:
@@ -1347,7 +1346,7 @@ while True:
                 os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
                 text(20,1,3,2,0,"Ctrl  : " + str(int(focus)),fv* 2,0)
                 text(20,2,3,2,0,"Focus : " + str(int(foc)),fv* 2,0)
-                time.sleep(.5)
+                time.sleep(.15)
                 fcount += 1
         
 
@@ -1370,7 +1369,7 @@ while True:
             else:
                 xy = min(xy,preview_height - histarea)
             xy = max(xy,histarea)
-            if Pi_Cam == 3 and mousex < preview_width and mousey < preview_height *.75 and zoom == 0 and (v3_f_mode == 0 or v3_f_mode == 2):
+            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1)) and mousex < preview_width and mousey < preview_height *.75 and zoom == 0 and (v3_f_mode == 0 or v3_f_mode == 2):
                 fxx = (xx - 25)/preview_width
                 xy  = min(xy,int((preview_height - 25) * .75))
                 fxy = ((xy - 20) * 1.3333)/preview_height
@@ -1378,14 +1377,14 @@ while True:
                 fyz = fxz
                 if fxz != 1:
                     text(1,7,3,1,1,"Spot",fv,7)
-            elif Pi_Cam == 3 and zoom == 0:
+            elif (Pi_Cam == 3 or (Pi_Cam == 5 and use_ard == 1)) and zoom == 0:
                 fxx = 0
                 fxy = 0
                 fxz = 1
                 fzy = 1
                 if (v3_f_mode == 0 or v3_f_mode == 2):
                     text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
-            if Pi_Cam == 3 and zoom == 0:
+            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1)) and zoom == 0:
                 restart = 1
                     
         # SWITCH CAMERA
@@ -2888,29 +2887,7 @@ while True:
                                 tdur = int(tduration - (time.monotonic() - start_timelapse))
                                 td = timedelta(seconds=tdur)
                                 text(1,10,1,1,1,str(td),fv,12)
-                            #    for event in pygame.event.get():
-                            #        if (event.type == MOUSEBUTTONUP):
-                            #            mousex, mousey = event.pos
-                            #            # stop timelapse
-                            #            if mousex > preview_width:
-                            #                button_column = int((mousex-preview_width)/bw) + 1
-                            #                button_row = int((mousey)/bh) + 1
-                            #            else:
-                            #                if mousey - preview_height < bh:
-                            #                    button_column = 1
-                            #                    button_row = int(mousex / bw) + 1
-                            #                elif mousey - preview_height < bh * 2:
-                            #                    button_column = 1
-                            #                    button_row = int(mousex / bw) + 7
-                            #                elif mousey - preview_height < bh * 3:
-                            #                    button_column = 2
-                            #                    button_row = int(mousex / bw) + 1
-                            #                elif mousey - preview_height < bh * 4:
-                            #                    button_column = 2
-                            #                    button_row = int(mousex / bw) + 7
-                            #            if button_column == 2 and button_row == 10:
-                            #                os.killpg(p.pid, signal.SIGTERM)
-                            #                stop = 1
+
                         button(1,9,0,2)
                         if tinterval != 0:
                             text(1,12,3,1,1,str(tshots),fv,12)
@@ -3397,17 +3374,16 @@ while True:
                         text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
                         time.sleep(0.25)
-                    elif (Pi_Cam == 5 or Pi_Cam == 6) and v3_f_mode == 0:
+                    elif (Pi_Cam == 5 or Pi_Cam == 6) and ((foc_man == 0 and use_ard ==0) or (v3_f_mode == 0 and use_ard ==1)):
                         focus_mode = 1
                         if use_ard == 1:
-                            v3_f_mode = 1
-                        foc_man = 1 # manual focus
+                            v3_f_mode = 1 # manual focus
+                        foc_man = 1 
                         button(1,7,1,9)
                         if os.path.exists("ctrls.txt"):
                             os.remove("ctrls.txt")
                         os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " --list-ctrls >> ctrls.txt")
                         restart = 1
-                        time.sleep(0.25)
                         ctrlstxt = []
                         with open("ctrls.txt", "r") as file:
                             line = file.readline()
@@ -3417,33 +3393,40 @@ while True:
                         foc_ctrl = ctrlstxt[3].split('value=')
                         focus = int(foc_ctrl[1])
                         if use_ard == 0:
-                            print("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
                             os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
                         text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                         draw_Vbar(1,7,dgryColor,'focus',focus)
                         text(1,7,3,1,1,"manual",fv,0)
                         time.sleep(0.25)
-
-                    elif (Pi_Cam == 5 or Pi_Cam == 6) and v3_f_mode == 2:
+                    elif (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
                         focus_mode = 0
-                        foc_man = 0 # auto focus
+                        foc_man = 0 
                         if use_ard == 1:
-                            v3_f_mode = 0 
+                            v3_f_mode = 2 # continuous focus
+                        else:
+                            v3_f_mode = 0
                         fcount = 0
                         fcount2 = 0
                         zoom = 0
+                        fxx = 0
+                        fxy = 0
+                        fxz = 1
+                        fyz = 0.75
                         button(1,7,0,9)
                         text(1,7,5,0,1,"FOCUS",ft,7)
-                        text(1,7,3,1,1,"auto",fv,7)
+                        if use_ard == 1:
+                            text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
+                        else:
+                            text(1,7,3,1,1,"auto",fv,7)
                         button(1,8,0,9)
                         text(1,8,5,0,1,"Zoom",ft,7)
                         text(1,8,3,1,1,"",fv,7)
                         text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                         time.sleep(0.25)
                         restart = 1
-                    elif (Pi_Cam == 3 or Pi_Cam == 5) and v3_f_mode == 1:
+                    elif Pi_Cam == 3  and v3_f_mode == 1:
                         focus_mode = 0
-                        v3_f_mode = 2
+                        v3_f_mode = 2 # continuous focus
                         foc_man = 0
                         zoom = 0
                         fxx = 0
@@ -3460,9 +3443,9 @@ while True:
                         text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                         time.sleep(0.25)
                         restart = 1
-                    elif (Pi_Cam == 3 or Pi_Cam == 5) and v3_f_mode == 2:
+                    elif (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1)) and v3_f_mode == 2:
                         focus_mode = 0
-                        v3_f_mode = 0
+                        v3_f_mode = 0 # auto focus
                         foc_man = 0
                         zoom = 0
                         fxx = 0
