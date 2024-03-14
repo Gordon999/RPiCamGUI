@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.94
+version = 4.95
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 1
@@ -892,7 +892,10 @@ text(1,7,5,0,1,"FOCUS",ft,7)
 if zoom == 0:
     button(1,8,0,9)
     text(1,8,5,0,1,"Zoom",ft,7)
-    text(1,8,3,1,1,"",fv,7)
+    if Pi_Cam ==3 or ((Pi_Cam ==5 or Pi_Cam == 6) and use_ard == 1):
+        text(1,8,3,1,1,v3_f_modes[v3_f_mode],fv,7)
+    else:
+        text(1,8,3,1,1," ",fv,7)
     # determine if camera native format
     vw = 0
     x = 0
@@ -1561,7 +1564,7 @@ while True:
                                 datastr += " --lens-position " + str(v3_focus/100)
                         elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                        elif Pi_Cam == 3 and zoom == 0:
+                        if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1)) and zoom == 0:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if  v3_hdr == 1:
                             datastr += " --hdr"
@@ -2246,7 +2249,7 @@ while True:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
                                 datastr += " --lens-position " + str(v3_focus/100)
-                        elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
+                        if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1)) and zoom == 0 and fxx != 0 and v3_f_mode != 1:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if Pi_Cam == 3 and v3_f_speed != 0:
                             datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
@@ -2263,7 +2266,7 @@ while True:
                             zxo = ((igw/2)-(preview_width/2))/igw
                             zyo = ((igh/2)-(preview_height/2))/igh
                             datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)                            
-                        #print (datastr)
+                        print (datastr)
                         if Pi == 5 and codecs[codec] == 'mp4':
                             os.system(datastr)
                         else:
@@ -2403,7 +2406,7 @@ while True:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
                                 datastr += " --lens-position " + str(v3_focus/100)
-                        elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
+                        if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1)) and zoom == 0 and fxx != 0 and v3_f_mode != 1:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if Pi_Cam == 3 and v3_f_speed != 0:
                             datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
@@ -2550,7 +2553,7 @@ while True:
                                     datastr += " --lens-position " + str(v3_focus/100)
                             elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
                                 datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                            elif Pi_Cam == 3 and zoom == 0:
+                            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1)) and zoom == 0:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if  v3_hdr == 1:
                                 datastr += " --hdr"
@@ -2713,7 +2716,7 @@ while True:
                                             datastr += " --lens-position " + str(v3_focus/100)
                                     elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
                                         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                                    elif Pi_Cam == 3 and zoom == 0:
+                                    if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1)) and zoom == 0:
                                         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                                     if  v3_hdr == 1:
                                         datastr += " --hdr"
@@ -2867,7 +2870,7 @@ while True:
                                 datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
                                     datastr += " --lens-position " + str(v3_focus/100)
-                            elif Pi_Cam == 3 and zoom == 0:
+                            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1)) and zoom == 0:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if Pi_Cam == 3 and v3_hdr == 1:
                                 datastr += " --hdr"
