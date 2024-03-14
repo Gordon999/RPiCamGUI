@@ -8,14 +8,16 @@ At your own risk !!. Ensure you have any required software backed up.
 
 Pi4B or Pi5B recommended, but will work on others including Zero2W
 
-Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP and 64MP Autofocus. Note current issue with v2 cameras and Pi5 https://github.com/raspberrypi/libcamera/issues/104
+Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP and 64MP Autofocus cameras. 
 
 To start streaming right mouse click on CAPTURE/Stream video button. Set streaming type in the script. 
 Time of streaming set by v_length.
 
-(Note You can use an Arducam 16/64MP camera with the default Pi Rpicam-apps... remember to add dtoverlay=imx519 to /boot/config.txt (see below for a Pi5)) Don't install Arducams libcamera apps, use the default Pi versions.
+## Arducam 16/64MP cameras on Pi4...
 
-(To make an Arducam 16/64MP (probably NOT Owlsight) work on a Pi5...
+You can use Arducam 16/64MP cameras with the default Pi Rpicam-apps (note the AF won't be the best on a Pi4 or less)... remember to add suitable dtoverlay for camera eg. dtoverlay=imx519 or dtoverlay=ov64a40 to /boot/config.txt (see below for a Pi5)). You can do the Arducams install and this will install their libcamera apps, and get better AF and Spot focussing if so modify the code to say use_ard = 1. The 64MP OWLSIGHT camera should work without needing the Arducam install just add dtoverlay=ov64a40 to /boot/config.txt. (No guarantee 16/64MP will work on less than a Pi4!)
+
+## Arducam 16MP on a Pi5 with Pi Rpicam Apps
 
 Make a copy of https://github.com/ArduCAM/libcamera/blob/arducam/src/ipa/rpi/pisp/data/imx519.json and save it to usr/share/libcamera/ipa/rpi/pisp/imx519.json.
 
