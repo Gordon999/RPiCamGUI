@@ -32,7 +32,10 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.91
+version = 4.96
+
+# if using Arducams version of libcamera set use_ard == 1
+use_ard = 0
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -49,9 +52,6 @@ fullscreen     = 0   # set to 1 for FULLSCREEN
 frame          = 1   # set to 0 for NO frame (i.e. if using Pi 7" touchscreen)
 FUP            = 21  # Pi v3 camera Focus UP GPIO button
 FDN            = 16  # Pi v3 camera Focus DN GPIO button
-
-# if using Arducams version of libcamera set use_ard == 1
-use_ard = 0
 
 # set sq_dis = 1 for a square display, 0 for normal
 sq_dis = 0
@@ -155,11 +155,11 @@ ft = int(preview_width/55)
 fv = int(preview_width/55)
 
 # data
-cameras      = ['Unknown','Pi v1','Pi v2','Pi v3','Pi HQ','Arducam 16MP','Arducam 64MP','Pi GS']
-camids       = ['','ov5647','imx219','imx708','imx477','imx519','arduc','imx296']
-max_gains    = [64,     255,      40,      64,      88,      64,      64,      64]
-max_shutters = [0,   max_v1, max_v2,   max_v3,  max_hq,max_16mp,max_64mp,  max_gs]
-mags         = [64,     255,      40,      64,      88,      64,      64,      64]
+cameras      = ['Unknown','Pi v1','Pi v2','Pi v3','Pi HQ','Arducam 16MP','Arducam Hawkeye','Pi GS','Arducam Owlsight']
+camids       = ['','ov5647','imx219','imx708','imx477','imx519','arduc','imx296','ov64a4']
+max_gains    = [64,     255,      40,      64,      88,      64,      64,      64,       64]
+max_shutters = [0,   max_v1, max_v2,   max_v3,  max_hq,max_16mp,max_64mp,  max_gs, max_64mp]
+mags         = [64,     255,      40,      64,      88,      64,      64,      64,       64]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
@@ -363,6 +363,7 @@ def Camera_Version():
                 max_gain = max_gains[Pi_Cam]
                 mag = int(max_gain/4)
                 still_limits[8] = max_gain
+    #print(Pi_Cam)
     if Pi_Cam == -1:
         print("No Camera Found")
         pygame.display.quit()
@@ -372,7 +373,7 @@ def Camera_Version():
     if max_camera == 1 and cam0 == cam1:
         same_cams = 1
     configtxt = []
-    if Pi_Cam == 5 or Pi_Cam == 6:
+    if Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8:
         # read /boot/config.txt file
         if Pi != 5:
           with open("/boot/config.txt", "r") as file:
@@ -396,9 +397,9 @@ def Camera_Version():
     max_vf_1  = 14
     max_vf_4a = 12
     max_vf_0  = 10 # default if using h264
-    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP or 64MP
+    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP or 64MP
         max_vformat = max_vf_6
-    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
+    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
         max_vformat = max_vf_5
     elif Pi_Cam == 7:               # Pi GS
         max_vformat = max_vf_7
@@ -642,18 +643,18 @@ def preview():
         os.remove(f)
     speed2 = sspeed
     speed2 = min(speed2,2000000)
-    if lver != "bookworm":
+    if lver != "bookworm" or use_ard == 1:
         datastr = "libcamera-vid"
     else:
         datastr = "rpicam-vid"
     datastr += " --camera " + str(camera) + " -n --codec mjpeg -t 0 --segment 1"
-    if (Pi_Cam == 5 or Pi_Cam == 6) and (focus_mode == 1 or zoom > 0):
+    if (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and (focus_mode == 1 or zoom > 0):
         datastr += " --width 3280 --height 2464 -o /run/shm/test%d.jpg "
     elif Pi_Cam == 7 :
         datastr += " --width 1456 --height 1088 -o /run/shm/test%d.jpg "
     elif Pi_Cam == 3 :
         datastr += " --width 2304 --height 1296 -o /run/shm/test%d.jpg "
-    elif (Pi_Cam == 5 or Pi_Cam == 6) or focus_mode == 1 :
+    elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) or focus_mode == 1 :
         datastr += " --width 1920 --height 1440 -o /run/shm/test%d.jpg "
     else:
         if preview_width == 600 and preview_height == 480:
@@ -688,13 +689,11 @@ def preview():
     datastr += " --sharpness "  + str(sharpness/10)
     datastr += " --denoise "    + denoises[denoise]
     datastr += " --quality " + str(quality)
-    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-        datastr += " --autofocus "
-    if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+    if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
         if v3_f_mode == 1:
             datastr += " --lens-position " + str(v3_focus/100)
-    elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
+    if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0 and fxx != 0 and v3_f_mode != 1:
         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
     if Pi_Cam == 3 and v3_f_speed != 0:
         datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
@@ -707,7 +706,7 @@ def preview():
             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5:
+    if Pi_Cam == 5  and foc_man == 1 and Pi == 5:
         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
     if zoom > 1 and zoom < 5:
@@ -767,7 +766,7 @@ def Menu():
     text(1,9,1,1,1,"T'lapse  2x2",ft,7)
   else:
     text(1,9,1,1,1,"Timelapse",ft,7)
-  if (Pi_Cam == 5 or Pi_Cam == 6):
+  if (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
     text(1,7,3,1,1,"auto",fv,7)
     if foc_man == 1:
         text(1,7,3,1,1,"manual",fv,0)
@@ -825,7 +824,6 @@ def Menu():
           text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
       if vw == 1:
           text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
-      #text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
     elif zoom < 10:
       button(1,8,1,9)
       text(1,8,2,0,1,"ZOOMED",ft,0)
@@ -893,7 +891,10 @@ text(1,7,5,0,1,"FOCUS",ft,7)
 if zoom == 0:
     button(1,8,0,9)
     text(1,8,5,0,1,"Zoom",ft,7)
-    text(1,8,3,1,1,"",fv,7)
+    if Pi_Cam ==3 or ((Pi_Cam ==5 or Pi_Cam == 6) and use_ard == 1):
+        text(1,8,3,1,1,v3_f_modes[v3_f_mode],fv,7)
+    else:
+        text(1,8,3,1,1," ",fv,7)
     # determine if camera native format
     vw = 0
     x = 0
@@ -906,7 +907,6 @@ if zoom == 0:
         text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
     if vw == 1:
         text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
-    #text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
 elif zoom < 10:
     button(1,8,1,9)
     text(1,8,2,0,1,"ZOOMED",ft,0)
@@ -1030,12 +1030,12 @@ preview()
 foc_sub3 = -1
 foc_sub5 = -1
 for x in range(0,10):
-    if os.path.exists("ctrls.txt"):
-        os.remove("ctrls.txt")
-    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(x) + " --list-ctrls >> ctrls.txt")
+    if os.path.exists("ctrls1.txt"):
+        os.remove("ctrls1.txt")
+    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(x) + " --list-ctrls >> ctrls1.txt")
     time.sleep(0.25)
     ctrlstxt = []
-    with open("ctrls.txt", "r") as file:
+    with open("ctrls1.txt", "r") as file:
         line = file.readline()
         while line:
             ctrlstxt.append(line.strip())
@@ -1045,7 +1045,7 @@ for x in range(0,10):
             foc_sub5 = x
         if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=1023":
             foc_sub3 = x
-            print(foc_sub3)
+
 
 # main loop
 while True:
@@ -1072,6 +1072,7 @@ while True:
                     pmax = video_limits[f+2]
             focus_mode = 1
             foc_man = 1 # manual focus
+            v3_f_mode = 1
             zoom = 0
             button(1,7,1,9)
         if buttonFDN.is_pressed:
@@ -1080,7 +1081,11 @@ while True:
             focus += 10
         focus = max(pmin,focus)
         focus = min(pmax,focus)
-        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
+        v3_focus = focus
+        if use_ard == 0 and (Pi_Cam == 5 or Pi_Cam == 6):
+            os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
+        else:
+            restart = 1
         text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
         draw_Vbar(1,7,dgryColor,'focus',focus)
         text(1,7,3,1,1,"manual",fv,0)
@@ -1266,9 +1271,9 @@ while True:
                 gw = 2
             else:
                 gw = 1
-            if Pi_Cam == 3 and fxz != 1 and zoom == 0 and rotate == 0:
+            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and fxz != 1 and zoom == 0 and rotate == 0:
                 pygame.draw.rect(windowSurfaceObj,(200,0,0),Rect(int(fxx*preview_width),int(fxy*preview_height*.75),int(fxz*preview_width),int(fyz*preview_height)),1)
-            if (Pi_Cam == 5 or Pi_Cam == 6) and (rotate == 0 or rotate == 2):
+            if (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and (rotate == 0 or rotate == 2):
                 if vwidth == 1280 and vheight == 960:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.20),int(preview_height * 0.22),int(preview_width * 0.62),int(preview_height * 0.57)),gw)
                 elif vwidth == 1280 and vheight == 720:
@@ -1347,7 +1352,7 @@ while True:
                 os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
                 text(20,1,3,2,0,"Ctrl  : " + str(int(focus)),fv* 2,0)
                 text(20,2,3,2,0,"Focus : " + str(int(foc)),fv* 2,0)
-                time.sleep(.5)
+                time.sleep(.15)
                 fcount += 1
         
 
@@ -1370,7 +1375,7 @@ while True:
             else:
                 xy = min(xy,preview_height - histarea)
             xy = max(xy,histarea)
-            if Pi_Cam == 3 and mousex < preview_width and mousey < preview_height *.75 and zoom == 0 and (v3_f_mode == 0 or v3_f_mode == 2):
+            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and mousex < preview_width and mousey < preview_height *.75 and zoom == 0 and (v3_f_mode == 0 or v3_f_mode == 2):
                 fxx = (xx - 25)/preview_width
                 xy  = min(xy,int((preview_height - 25) * .75))
                 fxy = ((xy - 20) * 1.3333)/preview_height
@@ -1378,14 +1383,14 @@ while True:
                 fyz = fxz
                 if fxz != 1:
                     text(1,7,3,1,1,"Spot",fv,7)
-            elif Pi_Cam == 3 and zoom == 0:
+            elif (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam ==6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                 fxx = 0
                 fxy = 0
                 fxz = 1
                 fzy = 1
                 if (v3_f_mode == 0 or v3_f_mode == 2):
                     text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
-            if Pi_Cam == 3 and zoom == 0:
+            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                 restart = 1
                     
         # SWITCH CAMERA
@@ -1512,14 +1517,14 @@ while True:
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         if extns[extn] != 'raw':
                             fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
-                            if lver != "bookworm":
+                            if lver != "bookworm" or use_ard == 1:
                                 datastr = "libcamera-still"
                             else:
-                                 datastr = "rpicam-still"
+                                datastr = "rpicam-still"
                             datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -n -t 5000 -o " + fname
                         else:
                             fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
-                            if lver != "bookworm":
+                            if lver != "bookworm" or use_ard == 1:
                                 datastr = "libcamera-still"
                             else:
                                  datastr = "rpicam-still"
@@ -1553,18 +1558,16 @@ while True:
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                            datastr += " --autofocus "
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                        if (Pi_Cam == 5 or Pi_Cam == 6 ) and foc_man == 1 and Pi == 5 and use_ard == 0:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                  datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0) or Pi_Cam == 8:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
                                 datastr += " --lens-position " + str(v3_focus/100)
                         elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                        elif Pi_Cam == 3 and zoom == 0:
+                        if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if  v3_hdr == 1:
                             datastr += " --hdr"
@@ -2186,7 +2189,7 @@ while True:
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
                         if codecs2[codec] != 'raw':
-                            if lver != "bookworm":
+                            if lver != "bookworm" or use_ard == 1:
                                 datastr = "libcamera-vid"
                             else:
                                 datastr = "rpicam-vid"
@@ -2204,7 +2207,7 @@ while True:
                                 #datastr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
                                 datastr += " --level " + str(prof[1])
                         else:
-                            if lver != "bookworm":
+                            if lver != "bookworm" or use_ard == 1:
                                 datastr = "libcamera-raw"
                             else:
                                  datastr = "rpicam-raw"
@@ -2242,16 +2245,14 @@ while True:
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                            datastr += " --autofocus "
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
                                 datastr += " --lens-position " + str(v3_focus/100)
-                        elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
+                        if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0 and fxx != 0 and v3_f_mode != 1:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if Pi_Cam == 3 and v3_f_speed != 0:
                             datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
@@ -2350,7 +2351,7 @@ while True:
                         now = datetime.datetime.now()
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
-                        if lver != "bookworm":
+                        if lver != "bookworm" or use_ard == 1:
                             datastr = "libcamera-vid "
                         else:
                             datastr = "rpicam-vid "
@@ -2401,16 +2402,14 @@ while True:
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                        if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                            datastr += " --autofocus "
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
                                 datastr += " --lens-position " + str(v3_focus/100)
-                        elif Pi_Cam == 3 and zoom == 0 and fxx != 0 and v3_f_mode != 1:
+                        if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8)  and zoom == 0 and fxx != 0 and v3_f_mode != 1:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if Pi_Cam == 3 and v3_f_speed != 0:
                             datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
@@ -2510,7 +2509,7 @@ while True:
                             timestamp = now.strftime("%y%m%d%H%M%S")
                             count = 0
                             fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
-                            if lver != "bookworm":
+                            if lver != "bookworm" or use_ard == 1:
                                 datastr = "libcamera-still"
                             else:
                                 datastr = "rpicam-still"
@@ -2548,18 +2547,16 @@ while True:
                                     datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
                                 if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
                                     datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                                datastr += " --autofocus "
-                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
+                            if (Pi_Cam == 5 or Pi_Cam == 6 ) and foc_man == 1 and Pi == 5 and use_ard == 0:
                                 if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                     datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
                                 datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
                                     datastr += " --lens-position " + str(v3_focus/100)
                             elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
                                 datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                            elif Pi_Cam == 3 and zoom == 0:
+                            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if  v3_hdr == 1:
                                 datastr += " --hdr"
@@ -2585,7 +2582,7 @@ while True:
                             old_count = 0
                             while count < tshots and stop == 0:
                                 if time.monotonic() - start2 >= tinterval:
-                                    if lver != "bookworm":
+                                    if lver != "bookworm" or use_ard == 1:
                                         os.system('pkill -SIGUSR1 libcamera-still')
                                     else:
                                         os.system('pkill -SIGUSR1 rpicam-still')
@@ -2679,7 +2676,7 @@ while True:
                                         poll = p.poll()
                                         time.sleep(0.1)
                                     fname =  pic_dir + str(timestamp) + "_" + str(count) + "." + extns2[extn]
-                                    if lver != "bookworm":
+                                    if lver != "bookworm" or use_ard == 1:
                                         datastr = "libcamera-still"
                                     else:
                                         datastr = "rpicam-still"
@@ -2713,18 +2710,16 @@ while True:
                                             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
                                         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
                                             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                                    if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                                        datastr += " --autofocus "
                                     if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                                         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                                    if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                                    if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
                                         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                         if v3_f_mode == 1:
                                             datastr += " --lens-position " + str(v3_focus/100)
                                     elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
                                         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                                    elif Pi_Cam == 3 and zoom == 0:
+                                    if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8)  and zoom == 0:
                                         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                                     if  v3_hdr == 1:
                                         datastr += " --hdr"
@@ -2831,14 +2826,14 @@ while True:
                             timestamp = now.strftime("%y%m%d%H%M%S")
                             fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
                             if codecs2[codec] != 'raw':
-                                if lver != "bookworm":
+                                if lver != "bookworm" or use_ard == 1:
                                     datastr = "libcamera-vid"
                                 else:
                                     datastr = "rpicam-vid"
                                 datastr += " --camera " + str(camera) + " -n --codec mjpeg -t " + str(tduration*1000) + " --segment 1 -o " + fname
                             else:
                                 fname =  pic_dir + str(timestamp) + '_%04d.' + codecs2[codec]
-                                if lver != "bookworm":
+                                if lver != "bookworm" or use_ard == 1:
                                     datastr = "libcamera-raw"
                                 else:
                                     datastr = "rpicam-raw"
@@ -2871,16 +2866,14 @@ while True:
                                     datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
                                 if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
                                     datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-                            if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 1:
-                                datastr += " --autofocus " 
                             if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                                 if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                     datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0):
+                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
                                 datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
                                     datastr += " --lens-position " + str(v3_focus/100)
-                            elif Pi_Cam == 3 and zoom == 0:
+                            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if Pi_Cam == 3 and v3_hdr == 1:
                                 datastr += " --hdr"
@@ -2900,29 +2893,7 @@ while True:
                                 tdur = int(tduration - (time.monotonic() - start_timelapse))
                                 td = timedelta(seconds=tdur)
                                 text(1,10,1,1,1,str(td),fv,12)
-                            #    for event in pygame.event.get():
-                            #        if (event.type == MOUSEBUTTONUP):
-                            #            mousex, mousey = event.pos
-                            #            # stop timelapse
-                            #            if mousex > preview_width:
-                            #                button_column = int((mousex-preview_width)/bw) + 1
-                            #                button_row = int((mousey)/bh) + 1
-                            #            else:
-                            #                if mousey - preview_height < bh:
-                            #                    button_column = 1
-                            #                    button_row = int(mousex / bw) + 1
-                            #                elif mousey - preview_height < bh * 2:
-                            #                    button_column = 1
-                            #                    button_row = int(mousex / bw) + 7
-                            #                elif mousey - preview_height < bh * 3:
-                            #                    button_column = 2
-                            #                    button_row = int(mousex / bw) + 1
-                            #                elif mousey - preview_height < bh * 4:
-                            #                    button_column = 2
-                            #                    button_row = int(mousex / bw) + 7
-                            #            if button_column == 2 and button_row == 10:
-                            #                os.killpg(p.pid, signal.SIGTERM)
-                            #                stop = 1
+
                         button(1,9,0,2)
                         if tinterval != 0:
                             text(1,12,3,1,1,str(tshots),fv,12)
@@ -3001,9 +2972,9 @@ while True:
                         pmax = video_limits[f+2]
                 
                 if (mousex > preview_width and mousey < ((button_row-1)*bh) + int(bh/3)):
-                    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
+                    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
                         max_vformat = max_vf_6
-                    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
+                    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
                         max_vformat = max_vf_5
                     elif Pi_Cam == 7: # PI GS
                         max_vformat = max_vf_7
@@ -3022,9 +2993,9 @@ while True:
                     pmax = max_vformat
                     vformat = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin))
                 elif (mousey > preview_height  + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)):
-                    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
+                    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
                         max_vformat = max_vf_6
-                    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
+                    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
                         max_vformat = max_vf_5
                     elif Pi_Cam == 7: # PI GS
                         max_vformat = max_vf_7
@@ -3045,9 +3016,9 @@ while True:
                 else:
                     if (sq_dis == 0 and mousex < preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 0):
                         vformat -=1
-                        if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
+                        if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
                             max_vformat = max_vf_6
-                        elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
+                        elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
                             max_vformat = max_vf_5
                         elif Pi_Cam == 7: # PI GS
                             max_vformat = max_vf_7
@@ -3067,9 +3038,9 @@ while True:
                         vformat = max(vformat,pmin)
                     else:
                         vformat +=1
-                        if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
+                        if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
                             max_vformat = max_vf_6
-                        elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
+                        elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
                             max_vformat = max_vf_5
                         elif Pi_Cam == 7: # PI GS
                             max_vformat = max_vf_7
@@ -3143,9 +3114,9 @@ while True:
                     else:
                         codec  +=1
                         codec = min(codec ,pmax)
-                if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
+                if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
                     max_vformat = max_vf_6
-                elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
+                elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
                     max_vformat = max_vf_5
                 elif Pi_Cam == 7: # PI GS
                     max_vformat = max_vf_7
@@ -3283,41 +3254,57 @@ while True:
                         if video_limits[f] == 'v3_focus':
                             pmin = video_limits[f+1]
                             pmax = video_limits[f+2]
-                if Pi_Cam == 5 or Pi_Cam == 6:
+                if Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8:
                     for f in range(0,len(video_limits)-1,3):
                         if video_limits[f] == 'focus':
                             pmin = video_limits[f+1]
                             pmax = video_limits[f+2]
-                if (mousex > preview_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
+                if (mousex > preview_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and foc_man == 1:
                     focus = int(((mousex-preview_width-bw) / bw) * pmax)
                     draw_Vbar(1,7,dgryColor,'focus',focus)
-                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
+                    if use_ard == 0 and (Pi_Cam == 5 or Pi_Cam == 6):
+                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
+                    else:
+                        v3_focus = focus
+                        restart = 1
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
-                elif mousex > preview_width + bw and mousey > ((button_row-1)*bh) + (bh/3) and mousey < ((button_row-1)*bh) + (bh/1.5) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
+                elif mousex > preview_width + bw and mousey > ((button_row-1)*bh) + (bh/3) and mousey < ((button_row-1)*bh) + (bh/1.5) and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and foc_man == 1:
                     if button_pos == 2:
                         focus -= 10
+                        focus = max(focus,pmin)
                     elif button_pos == 3:
                         focus += 10
+                        focus = min(focus,pmax)
                     draw_Vbar(1,7,dgryColor,'focus',focus)
-                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
+                    if use_ard == 0 and (Pi_Cam == 5 or Pi_Cam == 6):
+                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
+                    else:
+                        v3_focus = focus
+                        restart = 1
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
 
-                elif (mousey > preview_height + (bh*3) and mousey < preview_height + (bh*3) + (bh/3)) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
+                elif (mousey > preview_height + (bh*3) and mousey < preview_height + (bh*3) + (bh/3)) and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and foc_man == 1:
                     focus = int(((mousex-((button_row - 8)*bw)) / bw)* pmax)
                     draw_Vbar(1,7,dgryColor,'focus',focus)
-                    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
+                    if use_ard == 0 and (Pi_Cam == 5 or Pi_Cam == 6):
+                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
+                    else:
+                        v3_focus = focus
+                        restart = 1
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
-                elif mousey > preview_height + (bh*3) and mousey > preview_height + (bh*3) + (bh/3) and mousey < preview_height + (bh*3) + (bh/1.5) and (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
+                elif mousey > preview_height + (bh*3) and mousey > preview_height + (bh*3) + (bh/3) and mousey < preview_height + (bh*3) + (bh/1.5) and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and foc_man == 1:
                     if button_pos == 0:
                         focus -= 10
                     elif button_pos == 1:
                         focus += 10
                     draw_Vbar(1,7,dgryColor,'focus',focus)
-                    if cam0 == "imx519" and camera == 0:
-                        os.system("v4l2-ctl -d /dev/v4l-subdev1 -c focus_absolute=" + str(focus))
-                    if cam1 == "imx519" and camera == 1:
-                        os.system("v4l2-ctl -d /dev/v4l-subdev6 -c focus_absolute=" + str(focus))
+                    if use_ard == 0 and (Pi_Cam == 5 or Pi_Cam == 6):
+                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
+                    else:
+                        v3_focus = focus
+                        restart = 1
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
+                    
                 # new v3
                 elif (mousex > preview_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and Pi_Cam == 3 and foc_man == 1:
                     v3_focus = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin)) + pmin
@@ -3391,15 +3378,19 @@ while True:
                         text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
                         time.sleep(0.25)
-                    elif (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0:
+                    elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ((foc_man == 0 and use_ard ==0) or (v3_f_mode == 0 and use_ard ==1)):
                         focus_mode = 1
-                        foc_man = 1 # manual focus
+                        if use_ard == 1 or Pi_Cam == 8:
+                            v3_f_mode = 1 # manual focus
+                        foc_man = 1 
                         button(1,7,1,9)
                         if os.path.exists("ctrls.txt"):
                             os.remove("ctrls.txt")
-                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " --list-ctrls >> ctrls.txt")
+                        if Pi_Cam == 5 or Pi_Cam == 6:
+                            os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " --list-ctrls >> ctrls.txt")
+                        if Pi_Cam == 8:
+                            os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub3) + " --list-ctrls >> ctrls.txt")
                         restart = 1
-                        time.sleep(0.25)
                         ctrlstxt = []
                         with open("ctrls.txt", "r") as file:
                             line = file.readline()
@@ -3408,29 +3399,41 @@ while True:
                                 line = file.readline()
                         foc_ctrl = ctrlstxt[3].split('value=')
                         focus = int(foc_ctrl[1])
-                        os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
+                        if use_ard == 0 and (Pi_Cam == 5 or Pi_Cam == 6):
+                            os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
                         text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                         draw_Vbar(1,7,dgryColor,'focus',focus)
                         text(1,7,3,1,1,"manual",fv,0)
                         time.sleep(0.25)
-                    elif (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1:
+                    elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and foc_man == 1:
                         focus_mode = 0
-                        foc_man = 0 # auto focus
+                        foc_man = 0 
+                        if use_ard == 1 or Pi_Cam == 8:
+                            v3_f_mode = 2 # continuous focus
+                        else:
+                            v3_f_mode = 0
                         fcount = 0
                         fcount2 = 0
                         zoom = 0
+                        fxx = 0
+                        fxy = 0
+                        fxz = 1
+                        fyz = 0.75
                         button(1,7,0,9)
                         text(1,7,5,0,1,"FOCUS",ft,7)
-                        text(1,7,3,1,1,"auto",fv,7)
+                        if use_ard == 1:
+                            text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
+                        else:
+                            text(1,7,3,1,1,"auto",fv,7)
                         button(1,8,0,9)
                         text(1,8,5,0,1,"Zoom",ft,7)
                         text(1,8,3,1,1,"",fv,7)
                         text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                         time.sleep(0.25)
                         restart = 1
-                    elif Pi_Cam == 3 and v3_f_mode == 1:
+                    elif Pi_Cam == 3  and v3_f_mode == 1:
                         focus_mode = 0
-                        v3_f_mode = 2
+                        v3_f_mode = 2 # continuous focus
                         foc_man = 0
                         zoom = 0
                         fxx = 0
@@ -3447,9 +3450,9 @@ while True:
                         text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                         time.sleep(0.25)
                         restart = 1
-                    elif Pi_Cam == 3 and v3_f_mode == 2:
+                    elif (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and use_ard == 1)) and v3_f_mode == 2:
                         focus_mode = 0
-                        v3_f_mode = 0
+                        v3_f_mode = 0 # auto focus
                         foc_man = 0
                         zoom = 0
                         fxx = 0
@@ -3723,6 +3726,7 @@ while True:
                 os.killpg(p.pid, signal.SIGTERM)
             if rotate == 0:
                 text(0,0,6,2,1,"Waiting for preview ...",int(fv*1.7),1)
+            #print("restart")
             preview()
 
 
