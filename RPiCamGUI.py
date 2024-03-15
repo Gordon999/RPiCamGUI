@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.96
+version = 4.97
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -109,6 +109,7 @@ max_v3      = 112
 max_hq      = 650
 max_16mp    = 200
 max_64mp    = 435
+max_64owl   = 435
 max_gs      = 15
 
 # inital parameters
@@ -158,19 +159,19 @@ fv = int(preview_width/55)
 cameras      = ['Unknown','Pi v1','Pi v2','Pi v3','Pi HQ','Arducam 16MP','Arducam Hawkeye','Pi GS','Arducam Owlsight']
 camids       = ['','ov5647','imx219','imx708','imx477','imx519','arduc','imx296','ov64a4']
 max_gains    = [64,     255,      40,      64,      88,      64,      64,      64,       64]
-max_shutters = [0,   max_v1, max_v2,   max_v3,  max_hq,max_16mp,max_64mp,  max_gs, max_64mp]
+max_shutters = [0,   max_v1, max_v2,   max_v3,  max_hq,max_16mp,max_64mp,  max_gs,max_64owl]
 mags         = [64,     255,      40,      64,      88,      64,      64,      64,       64]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
-vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,2028,2028,2304,2592,3280,3840,4032,4056,4608,4656,9152]
-vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1080,1520,1296,1944,2464,2160,3024,3040,2592,3496,6944]
-v_max_fps    = [200,120, 40,  40,  40,  30,  30,  30,  30,  30,  30,  40,  40,  25,  20,  20,  20,  20,  10,  20,  20,  20]
-v3_max_fps   = [200,120,125,  66,  50,  46,  30,  30,  47,  30,  30,  30,  25,  25,  20,  20,  20,  20,  20,  15,  20,  20]
+vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,2028,2028,2304,2592,3280,3840,4032,4056,4608,4656,8000,9152,9248]
+vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1080,1520,1296,1944,2464,2160,3024,3040,2592,3496,6000,6944,6944]
+v_max_fps    = [200,120, 40,  40,  40,  30,  30,  30,  30,  30,  30,  40,  40,  25,  20,  20,  20,  20,  10,  20,  20,  20,  20, 20]
+v3_max_fps   = [200,120,125,  66,  50,  46,  30,  30,  47,  30,  30,  30,  25,  25,  20,  20,  20,  20,  20,  15,  20,  20,  20, 20]
 zwidths      = [640,800,1280,2592,3280,4056,4656,9152]
 zheights     = [480,600, 960,1944,2464,3040,3496,6944]
-zws          = [864,1080,1728,2592,1093,1367,2187,3280,1536,1920,3072,4608,1352,1690,2704,4056,1552,1940,3104,4656,3050,3813,6101,9152]
-zhs          = [648, 810,1296,1944, 821,1027,1643,2464, 864,1080,1728,2592,1013,1267,2027,3040,1165,1457,2331,3496,2288,2860,4576,6944]
+zws          = [864,1080,1728,2592,1093,1367,2187,3280,1536,1920,3072,4608,1352,1690,2704,4056,1552,1940,3104,4656,3050,3813,6101,9152,485,606,970,1456,3082,3850,6165,9248]
+zhs          = [648, 810,1296,1944, 821,1027,1643,2464, 864,1080,1728,2592,1013,1267,2027,3040,1165,1457,2331,3496,2288,2860,4576,6944,362,453,725,1088,2314,2893,4629,6944]
 shutters     = [-4000,-2000,-1600,-1250,-1000,-800,-640,-500,-400,-320,-288,-250,-240,-200,-160,-144,-125,-120,-100,-96,-80,-60,-50,-48,-40,-30,-25,-20,-15,-13,-10,-8,-6,-5,-4,-3,
                 0.4,0.5,0.6,0.8,1,1.1,1.2,2,3,4,5,6,7,8,9,10,11,15,20,25,30,40,50,60,75,100,112,120,150,200,220,230,239,435,500,600,650,660,670]
 codecs       = ['h264','mjpeg','yuv420','raw']
@@ -278,7 +279,7 @@ if codec > len(codecs)-1:
     
 def Camera_Version():
     # Check for Pi Camera version
-    global camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0
+    global camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('libcams.txt'):
         os.rename('libcams.txt', 'oldlibcams.txt')
@@ -388,6 +389,7 @@ def Camera_Version():
                 configtxt.append(line.strip())
                 line = file.readline()
     # max video formats (not for h264)
+    max_vf_8  = 20
     max_vf_7  = 7
     max_vf_6  = 20
     max_vf_5  = 14
@@ -397,10 +399,12 @@ def Camera_Version():
     max_vf_1  = 14
     max_vf_4a = 12
     max_vf_0  = 10 # default if using h264
-    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP or 64MP
+    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP or 64MP
         max_vformat = max_vf_6
-    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
+    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP Hawkeye
         max_vformat = max_vf_5
+    elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
+        max_vformat = max_vf_8
     elif Pi_Cam == 7:               # Pi GS
         max_vformat = max_vf_7
     elif codec > 0 and Pi_Cam == 4: # Pi HQ
@@ -2972,10 +2976,12 @@ while True:
                         pmax = video_limits[f+2]
                 
                 if (mousex > preview_width and mousey < ((button_row-1)*bh) + int(bh/3)):
-                    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
+                    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP Hawkeye
                         max_vformat = max_vf_6
-                    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
+                    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP Hawkeye
                         max_vformat = max_vf_5
+                    elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
+                        max_vformat = max_vf_8
                     elif Pi_Cam == 7: # PI GS
                         max_vformat = max_vf_7
                     elif codec > 0 and Pi_Cam == 4:
@@ -2993,10 +2999,12 @@ while True:
                     pmax = max_vformat
                     vformat = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin))
                 elif (mousey > preview_height  + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)):
-                    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
+                    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 ) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
                         max_vformat = max_vf_6
-                    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
+                    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 ): # Arducam IMX519 16MP or 64MP
                         max_vformat = max_vf_5
+                    elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
+                        max_vformat = max_vf_8
                     elif Pi_Cam == 7: # PI GS
                         max_vformat = max_vf_7
                     elif codec > 0 and Pi_Cam == 4:
@@ -3016,10 +3024,12 @@ while True:
                 else:
                     if (sq_dis == 0 and mousex < preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 0):
                         vformat -=1
-                        if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
+                        if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
                             max_vformat = max_vf_6
-                        elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
+                        elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
                             max_vformat = max_vf_5
+                        elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
+                            max_vformat = max_vf_8
                         elif Pi_Cam == 7: # PI GS
                             max_vformat = max_vf_7
                         elif codec > 0 and Pi_Cam == 4:
@@ -3038,10 +3048,12 @@ while True:
                         vformat = max(vformat,pmin)
                     else:
                         vformat +=1
-                        if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
+                        if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
                             max_vformat = max_vf_6
-                        elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
+                        elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
                             max_vformat = max_vf_5
+                        elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
+                            max_vformat = max_vf_8
                         elif Pi_Cam == 7: # PI GS
                             max_vformat = max_vf_7
                         elif codec > 0 and Pi_Cam == 4:
@@ -3094,7 +3106,6 @@ while True:
                     text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                 if vw == 1:
                     text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
-                
                 time.sleep(.25)
 
             elif button_row == 5:
@@ -3114,10 +3125,12 @@ while True:
                     else:
                         codec  +=1
                         codec = min(codec ,pmax)
-                if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
+                if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
                     max_vformat = max_vf_6
-                elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
+                elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
                     max_vformat = max_vf_5
+                elif Pi_Cam == 8:               # Arducam 64MP Owlsight
+                    max_vformat = max_vf_8
                 elif Pi_Cam == 7: # PI GS
                     max_vformat = max_vf_7
                 elif codec > 0 and Pi_Cam == 4: # PI HQ
@@ -3728,11 +3741,3 @@ while True:
                 text(0,0,6,2,1,"Waiting for preview ...",int(fv*1.7),1)
             #print("restart")
             preview()
-
-
-
-
-
-
-                      
-
