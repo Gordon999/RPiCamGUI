@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.97
+version = 4.98
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -279,7 +279,7 @@ if codec > len(codecs)-1:
     
 def Camera_Version():
     # Check for Pi Camera version
-    global camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8
+    global lver,v3_af,camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('libcams.txt'):
         os.rename('libcams.txt', 'oldlibcams.txt')
@@ -370,13 +370,12 @@ def Camera_Version():
         pygame.display.quit()
         sys.exit()
             
-    pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + cameras[Pi_Cam] + " Camera" )
     if max_camera == 1 and cam0 == cam1:
         same_cams = 1
     configtxt = []
-    if Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8:
+    if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8:
         # read /boot/config.txt file
-        if Pi != 5:
+        if lver != "bookworm":
           with open("/boot/config.txt", "r") as file:
             line = file.readline()
             while line:
@@ -388,6 +387,7 @@ def Camera_Version():
             while line:
                 configtxt.append(line.strip())
                 line = file.readline()
+    pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + cameras[Pi_Cam] + " Camera" )               
     # max video formats (not for h264)
     max_vf_8  = 20
     max_vf_7  = 7
@@ -399,6 +399,10 @@ def Camera_Version():
     max_vf_1  = 14
     max_vf_4a = 12
     max_vf_0  = 10 # default if using h264
+    v3_af = 1
+    if Pi_Cam == 3 and "dtoverlay=imx708" in configtxt:
+        v3_af = 0
+        pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + "imx708 Camera" )
     if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP or 64MP
         max_vformat = max_vf_6
     elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP Hawkeye
@@ -479,7 +483,6 @@ else:
         windowSurfaceObj = pygame.display.set_mode((preview_width + (bw*2),dis_height), pygame.NOFRAME, 24)
     else:
         windowSurfaceObj = pygame.display.set_mode((preview_width,dis_height), pygame.NOFRAME, 24)
-pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + cameras[Pi_Cam] + " Camera" )
 
 global greyColor, redColor, greenColor, blueColor, dgryColor, lgrnColor, blackColor, whiteColor, purpleColor, yellowColor,lpurColor,lyelColor
 bredColor =   pygame.Color(255,   0,   0)
@@ -656,7 +659,7 @@ def preview():
         datastr += " --width 3280 --height 2464 -o /run/shm/test%d.jpg "
     elif Pi_Cam == 7 :
         datastr += " --width 1456 --height 1088 -o /run/shm/test%d.jpg "
-    elif Pi_Cam == 3 :
+    elif (Pi_Cam == 3 and v3_af == 1) :
         datastr += " --width 2304 --height 1296 -o /run/shm/test%d.jpg "
     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) or focus_mode == 1 :
         datastr += " --width 1920 --height 1440 -o /run/shm/test%d.jpg "
@@ -672,7 +675,7 @@ def preview():
         datastr += " --exposure " + str(modes[mode]) 
     if zoom > 4 and (Pi_Cam < 5 or Pi_Cam == 7) and Pi_Cam != 3 and mode != 0:
         datastr += " --framerate " + str(focus_fps)
-    elif (zoom < 5 or Pi_Cam == 3) and mode != 0:
+    elif (zoom < 5 or (Pi_Cam == 3 and v3_af == 1)) and mode != 0:
         datastr += " --framerate " + str(prev_fps)
     elif mode == 0:
         speed3 = 1000000/speed2
@@ -693,17 +696,17 @@ def preview():
     datastr += " --sharpness "  + str(sharpness/10)
     datastr += " --denoise "    + denoises[denoise]
     datastr += " --quality " + str(quality)
-    if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
+    if (((Pi_Cam == 3 and v3_af == 1) and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
         if v3_f_mode == 1:
             datastr += " --lens-position " + str(v3_focus/100)
-    if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0 and fxx != 0 and v3_f_mode != 1:
+    if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0 and fxx != 0 and v3_f_mode != 1:
         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-    if Pi_Cam == 3 and v3_f_speed != 0:
+    if (Pi_Cam == 3 and v3_af == 1) and v3_f_speed != 0:
         datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
-    if Pi_Cam == 3 and v3_f_range != 0:
+    if (Pi_Cam == 3 and v3_af == 1) and v3_f_range != 0:
         datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-    if Pi_Cam == 3 and v3_hdr == 1:
+    if (Pi_Cam == 3 and v3_af == 1) and v3_hdr == 1:
         datastr += " --hdr"
     if Pi_Cam == 4 and scientific == 1:
         if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
@@ -725,7 +728,7 @@ def preview():
     #print(datastr)
     restart = 0
     time.sleep(0.2)
-    if Pi_Cam == 3 and rotate == 0:
+    if (Pi_Cam == 3 and v3_af == 1) and rotate == 0:
         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,int(preview_height *.24) ))
 
 def v3_focus_manual():
@@ -776,7 +779,7 @@ def Menu():
         text(1,7,3,1,1,"manual",fv,0)
    
   draw_Vbar(1,3,lpurColor,'vformat',vformat)
-  if Pi_Cam == 3:
+  if (Pi_Cam == 3 and v3_af == 1):
     button(0,15,0,5)
     button(1,15,0,5)
     button(0,13,6,4)
@@ -1055,7 +1058,7 @@ for x in range(0,10):
 while True:
     time.sleep(0.01)
     # focus UP
-    if Pi_Cam == 3:
+    if (Pi_Cam == 3 and v3_af == 1):
       if buttonFUP.is_pressed:
         if v3_f_mode != 1:
             v3_focus_manual()
@@ -1096,7 +1099,7 @@ while True:
         time.sleep(0.25)
 
     # focus DOWN
-    if Pi_Cam == 3:
+    if (Pi_Cam == 3 and v3_af == 1):
       if buttonFDN.is_pressed:
         if v3_f_mode != 1:
             v3_focus_manual()
@@ -1116,7 +1119,7 @@ while True:
                  os.remove(pics[tt])
         except pygame.error:
             pass
-        if Pi_Cam == 3 and zoom < 5:
+        if (Pi_Cam == 3 and v3_af == 1) and zoom < 5:
             if rotate == 0:
                 image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
             else:
@@ -1275,7 +1278,7 @@ while True:
                 gw = 2
             else:
                 gw = 1
-            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and fxz != 1 and zoom == 0 and rotate == 0:
+            if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and fxz != 1 and zoom == 0 and rotate == 0:
                 pygame.draw.rect(windowSurfaceObj,(200,0,0),Rect(int(fxx*preview_width),int(fxy*preview_height*.75),int(fxz*preview_width),int(fyz*preview_height)),1)
             if (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and (rotate == 0 or rotate == 2):
                 if vwidth == 1280 and vheight == 960:
@@ -1297,15 +1300,15 @@ while True:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.2),int(preview_height * 0.28),int(preview_width * 0.60),int(preview_height * 0.45)),gw)
                 elif Pi_Cam == 2 and ((vwidth == 640 and vheight == 480) or (vwidth == 720 and vheight == 540)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.30),int(preview_height * 0.30),int(preview_width * 0.41),int(preview_height * 0.41)),gw)
-                elif Pi_Cam == 3 and ((vwidth == 640 and vheight == 480) or (vwidth == 1296 and vheight == 972) or (vwidth == 1280 and vheight == 960)):
+                elif (Pi_Cam == 3 and v3_af == 1) and ((vwidth == 640 and vheight == 480) or (vwidth == 1296 and vheight == 972) or (vwidth == 1280 and vheight == 960)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.25),int(preview_height * 0.17),int(preview_width * 0.50),int(preview_height * 0.46)),gw)
-                elif Pi_Cam == 3 and ((vwidth == 800 and vheight == 600) or (vwidth == 720 and vheight == 540)):
+                elif (Pi_Cam == 3 and v3_af == 1) and ((vwidth == 800 and vheight == 600) or (vwidth == 720 and vheight == 540)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.25),int(preview_height * 0.17),int(preview_width * 0.50),int(preview_height * 0.46)),gw)
-                elif Pi_Cam == 3 and ((vwidth == 1280 and vheight == 720) or (vwidth == 1536 and vheight == 864)):
+                elif (Pi_Cam == 3 and v3_af == 1) and ((vwidth == 1280 and vheight == 720) or (vwidth == 1536 and vheight == 864)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.175),int(preview_height * 0.15),int(preview_width * 0.66),int(preview_height * 0.48)),gw)
-                elif Pi_Cam == 3 and vwidth == 1640 and vheight == 1232:
+                elif (Pi_Cam == 3 and v3_af == 1) and vwidth == 1640 and vheight == 1232:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.12),0,int(preview_width * 0.75),int(preview_height * 0.75)),gw)
-                elif Pi_Cam == 3 and vwidth == 1456 and vheight == 1088:
+                elif (Pi_Cam == 3 and v3_af == 1) and vwidth == 1456 and vheight == 1088:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.12),0,int(preview_width * 0.75),int(preview_height * 0.75)),gw)
                 elif Pi_Cam == 7 and ((vwidth == 1920 and vheight == 1080) or (vwidth == 1280 and vheight == 720)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(0,int(preview_height * 0.12),int(preview_width),int(preview_height * 0.75)),gw)
@@ -1374,12 +1377,12 @@ while True:
             xx = min(xx,preview_width - histarea)
             xx = max(xx,histarea)
             xy = mousey
-            if Pi_Cam == 3 and zoom < 5:
+            if (Pi_Cam == 3 and v3_af == 1) and zoom < 5:
                 xy = min(xy,int(preview_height * .75) - histarea)
             else:
                 xy = min(xy,preview_height - histarea)
             xy = max(xy,histarea)
-            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and mousex < preview_width and mousey < preview_height *.75 and zoom == 0 and (v3_f_mode == 0 or v3_f_mode == 2):
+            if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and mousex < preview_width and mousey < preview_height *.75 and zoom == 0 and (v3_f_mode == 0 or v3_f_mode == 2):
                 fxx = (xx - 25)/preview_width
                 xy  = min(xy,int((preview_height - 25) * .75))
                 fxy = ((xy - 20) * 1.3333)/preview_height
@@ -1387,14 +1390,14 @@ while True:
                 fyz = fxz
                 if fxz != 1:
                     text(1,7,3,1,1,"Spot",fv,7)
-            elif (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam ==6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
+            elif ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam ==6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                 fxx = 0
                 fxy = 0
                 fxz = 1
                 fzy = 1
                 if (v3_f_mode == 0 or v3_f_mode == 2):
                     text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
-            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
+            if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                 restart = 1
                     
         # SWITCH CAMERA
@@ -1405,6 +1408,9 @@ while True:
             poll = p.poll()
             if poll == None:
                 os.killpg(p.pid, signal.SIGTERM)
+            focus_mode = 0
+            v3_f_mode = 0 
+            foc_man = 0
             if same_cams == 0:
                 Camera_Version()
                 Menu()
@@ -1565,13 +1571,13 @@ while True:
                         if (Pi_Cam == 5 or Pi_Cam == 6 ) and foc_man == 1 and Pi == 5 and use_ard == 0:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                  datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0) or Pi_Cam == 8:
+                        if ((Pi_Cam == 3 and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 0 and use_ard == 0) or Pi_Cam == 8:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
                                 datastr += " --lens-position " + str(v3_focus/100)
-                        elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
+                        elif (Pi_Cam == 3 and v3_af == 1) and v3_f_mode == 0 and fxz == 1:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                        if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
+                        if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if  v3_hdr == 1:
                             datastr += " --hdr"
@@ -1598,7 +1604,7 @@ while True:
                             if rotate != 0:
                                 image = pygame.transform.rotate(image, int(rotate * 90))
                                 pygame.image.save(image,fname[:-4]+"r." + extns2[extn])
-                            if Pi_Cam == 3 and zoom < 5:
+                            if (Pi_Cam == 3 and v3_af == 1) and zoom < 5:
                                 if rotate == 0:
                                     image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
                                 else:
@@ -2091,7 +2097,7 @@ while True:
                 time.sleep(.25)
                 restart = 1
 
-            elif button_row == 14 and Pi_Cam == 3:
+            elif button_row == 14 and (Pi_Cam == 3 and v3_af == 1):
                 # PI V3 CAMERA HDR
                 if (sq_dis == 0 and mousex < preview_width + (bw/2)) or (sq_dis == 1 and button_pos == 0):
                     v3_hdr -=1
@@ -2146,7 +2152,7 @@ while True:
                 draw_bar(0,14,greyColor,'histogram',histogram)
                 time.sleep(.25)
 
-            elif button_row == 16 and Pi_Cam == 3:
+            elif button_row == 16 and (Pi_Cam == 3 and v3_af == 1):
                 # V3 FOCUS SPEED 
                 for f in range(0,len(still_limits)-1,3):
                     if still_limits[f] == 'v3_f_speed':
@@ -2223,9 +2229,9 @@ while True:
                             datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
                         elif Pi_Cam == 4 and vwidth == 2028:
                             datastr += " --mode 2028:1520:12"
-                        elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
+                        elif (Pi_Cam == 3 and v3_af == 1) and vwidth == 2304 and codec == 0:
                             datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
-                        elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
+                        elif (Pi_Cam == 3 and v3_af == 1) and vwidth == 2028 and codec == 0:
                             datastr += " --mode 2028:1520:10 --width 2028 --height 1520"
                         else:
                             datastr += " --width " + str(vwidth) + " --height " + str(vheight)
@@ -2252,17 +2258,17 @@ while True:
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
+                        if ((Pi_Cam == 3 and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
                                 datastr += " --lens-position " + str(v3_focus/100)
-                        if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0 and fxx != 0 and v3_f_mode != 1:
+                        if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0 and fxx != 0 and v3_f_mode != 1:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                        if Pi_Cam == 3 and v3_f_speed != 0:
+                        if (Pi_Cam == 3 and v3_af == 1) and v3_f_speed != 0:
                             datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
-                        if Pi_Cam == 3 and v3_f_range != 0:
+                        if (Pi_Cam == 3 and v3_af == 1) and v3_f_range != 0:
                             datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-                        if Pi_Cam == 3 and v3_hdr == 1:
+                        if (Pi_Cam == 3 and v3_af == 1) and v3_hdr == 1:
                             datastr += " --hdr"
                         datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
                         if zoom > 0 and zoom < 5:
@@ -2380,9 +2386,9 @@ while True:
                             datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
                         elif Pi_Cam == 4 and vwidth == 2028:
                             datastr += " --mode 2028:1520:12"
-                        elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
+                        elif (Pi_Cam == 3 and v3_af == 1) and vwidth == 2304 and codec == 0:
                             datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
-                        elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
+                        elif (Pi_Cam == 3 and v3_af == 1) and vwidth == 2028 and codec == 0:
                             datastr += " --mode 2028:1520:10 --width 2028 --height 1520"
                         else:
                             datastr += " --width " + str(vwidth) + " --height " + str(vheight)
@@ -2409,17 +2415,17 @@ while True:
                         if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                        if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
+                        if ((Pi_Cam == 3 and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                             if v3_f_mode == 1:
                                 datastr += " --lens-position " + str(v3_focus/100)
-                        if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8)  and zoom == 0 and fxx != 0 and v3_f_mode != 1:
+                        if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8)  and zoom == 0 and fxx != 0 and v3_f_mode != 1:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                        if Pi_Cam == 3 and v3_f_speed != 0:
+                        if (Pi_Cam == 3 and v3_af == 1) and v3_f_speed != 0:
                             datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
-                        if Pi_Cam == 3 and v3_f_range != 0:
+                        if (Pi_Cam == 3 and v3_af == 1) and v3_f_range != 0:
                             datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-                        if Pi_Cam == 3 and v3_hdr == 1:
+                        if (Pi_Cam == 3 and v3_af == 1) and v3_hdr == 1:
                             datastr += " --hdr"
                         datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
                         if zoom > 0 and zoom < 5:
@@ -2554,13 +2560,13 @@ while True:
                             if (Pi_Cam == 5 or Pi_Cam == 6 ) and foc_man == 1 and Pi == 5 and use_ard == 0:
                                 if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                     datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
+                            if ((Pi_Cam == 3 and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
                                 datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
                                     datastr += " --lens-position " + str(v3_focus/100)
-                            elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
+                            elif (Pi_Cam == 3 and v3_af == 1) and v3_f_mode == 0 and fxz == 1:
                                 datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
+                            if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if  v3_hdr == 1:
                                 datastr += " --hdr"
@@ -2717,13 +2723,13 @@ while True:
                                     if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                                         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                                    if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
+                                    if ((Pi_Cam == 3 and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
                                         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                         if v3_f_mode == 1:
                                             datastr += " --lens-position " + str(v3_focus/100)
-                                    elif Pi_Cam == 3 and v3_f_mode == 0 and fxz == 1:
+                                    elif (Pi_Cam == 3 and v3_af == 1) and v3_f_mode == 0 and fxz == 1:
                                         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
-                                    if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8)  and zoom == 0:
+                                    if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8)  and zoom == 0:
                                         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                                     if  v3_hdr == 1:
                                         datastr += " --hdr"
@@ -2755,7 +2761,7 @@ while True:
                                         counts.sort()
                                         if (extns2[extn] == 'jpg' or extns2[extn] == 'bmp' or extns2[extn] == 'png') and count > 0 and show == 0:
                                             image = pygame.image.load(counts[count-1])
-                                            if (Pi_Cam != 3) or (Pi_Cam == 3 and zoom == 5):
+                                            if (Pi_Cam != 3) or ((Pi_Cam == 3 and v3_af == 1) and zoom == 5):
                                                 catSurfacesmall = pygame.transform.scale(image, (preview_width,preview_height))
                                             else:
                                                 catSurfacesmall = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
@@ -2873,13 +2879,13 @@ while True:
                             if (Pi_Cam == 5 or Pi_Cam == 6) and foc_man == 1 and Pi == 5 and use_ard == 0:
                                 if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx519mf.json'):
                                     datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json"
-                            if (Pi_Cam == 3 and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
+                            if ((Pi_Cam == 3 and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
                                 datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
                                     datastr += " --lens-position " + str(v3_focus/100)
-                            if (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
+                            if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                            if Pi_Cam == 3 and v3_hdr == 1:
+                            if (Pi_Cam == 3 and v3_af == 1) and v3_hdr == 1:
                                 datastr += " --hdr"
                             if zoom > 0 and zoom < 5 :
                                 zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
@@ -3009,7 +3015,7 @@ while True:
                         max_vformat = max_vf_7
                     elif codec > 0 and Pi_Cam == 4:
                         max_vformat = max_vf_4
-                    elif codec > 0 and Pi_Cam == 3:
+                    elif codec > 0 and Pi_Cam == 3 :
                         max_vformat = max_vf_3
                     elif codec > 0 and Pi_Cam == 2:
                         max_vformat = max_vf_2
@@ -3058,7 +3064,7 @@ while True:
                             max_vformat = max_vf_7
                         elif codec > 0 and Pi_Cam == 4:
                             max_vformat = max_vf_4
-                        elif codec > 0 and Pi_Cam == 3:
+                        elif codec > 0 and Pi_Cam == 3 :
                             max_vformat = max_vf_3
                         elif codec > 0 and Pi_Cam == 2:
                             max_vformat = max_vf_2
@@ -3072,7 +3078,7 @@ while True:
                 draw_Vbar(1,3,lpurColor,'vformat',vformat)
                 vwidth  = vwidths[vformat]
                 vheight = vheights[vformat]
-                if Pi_Cam == 3:
+                if (Pi_Cam == 3 and v3_af == 1):
                     vfps = v3_max_fps[vformat]
                     if vwidth == 1920 and codec == 0:
                         prof = h264profiles[profile].split(" ")
@@ -3135,7 +3141,7 @@ while True:
                     max_vformat = max_vf_7
                 elif codec > 0 and Pi_Cam == 4: # PI HQ
                     max_vformat = max_vf_4
-                elif codec > 0 and Pi_Cam == 3: # PI V3
+                elif codec > 0 and Pi_Cam == 3 : # PI V3
                     max_vformat = max_vf_3
                 elif codec > 0 and Pi_Cam == 2: # PI V2
                     max_vformat = max_vf_2
@@ -3151,7 +3157,7 @@ while True:
                 draw_Vbar(1,3,lpurColor,'vformat',vformat)
                 vwidth  = vwidths[vformat]
                 vheight = vheights[vformat]
-                if Pi_Cam == 3:
+                if (Pi_Cam == 3 and v3_af == 1):
                     vfps = v3_max_fps[vformat]
                     if vwidth == 1920 and codec == 0:
                         prof = h264profiles[profile].split(" ")
@@ -3197,7 +3203,7 @@ while True:
                 draw_Vbar(1,5,lpurColor,'profile',profile)
                 vwidth  = vwidths[vformat]
                 vheight = vheights[vformat]
-                if Pi_Cam == 3:
+                if (Pi_Cam == 3 and v3_af == 1):
                     vfps = v3_max_fps[vformat]
                     if vwidth == 1920 and codec == 0:
                         prof = h264profiles[profile].split(" ")
@@ -3236,7 +3242,7 @@ while True:
                     text(1,6,3,1,1,"ON ",fv,11)
                 vwidth  = vwidths[vformat]
                 vheight = vheights[vformat]
-                if Pi_Cam == 3:
+                if (Pi_Cam == 3 and v3_af == 1):
                     vfps = v3_max_fps[vformat]
                     if vwidth == 1920 and codec == 0:
                         prof = h264profiles[profile].split(" ")
@@ -3262,7 +3268,7 @@ while True:
 
             elif button_row == 8:
                 # FOCUS
-                if Pi_Cam == 3:
+                if (Pi_Cam == 3 and v3_af == 1):
                     for f in range(0,len(video_limits)-1,3):
                         if video_limits[f] == 'v3_focus':
                             pmin = video_limits[f+1]
@@ -3319,13 +3325,13 @@ while True:
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                     
                 # new v3
-                elif (mousex > preview_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and Pi_Cam == 3 and foc_man == 1:
+                elif (mousex > preview_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and (Pi_Cam == 3 and v3_af == 1) and foc_man == 1:
                     v3_focus = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin)) + pmin
                     draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
                     fd = 1/(v3_focus/100)
                     text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
-                elif mousex > preview_width + bw and mousey > ((button_row-1)*bh) + (bh/3) and mousey < ((button_row-1)*bh) + (bh/1.5) and Pi_Cam == 3  and foc_man == 1:
+                elif mousex > preview_width + bw and mousey > ((button_row-1)*bh) + (bh/3) and mousey < ((button_row-1)*bh) + (bh/1.5) and (Pi_Cam == 3 and v3_af == 1)  and foc_man == 1:
                     if button_pos == 2:
                         v3_focus -= 1
                         v3_focus = max(v3_focus,pmin)
@@ -3336,13 +3342,13 @@ while True:
                     fd = 1/(v3_focus/100)
                     text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
-                elif (mousey > preview_height + (bh*3) and mousey < preview_height + (bh*3) + (bh/3)) and Pi_Cam == 3 and foc_man == 1:
+                elif (mousey > preview_height + (bh*3) and mousey < preview_height + (bh*3) + (bh/3)) and (Pi_Cam == 3 and v3_af == 1) and foc_man == 1:
                     v3_focus = int(((mousex-((button_row - 8)*bw)) / bw)* pmax)
                     draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
                     fd = 1/(v3_focus/100)
                     text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
-                elif mousey > preview_height + (bh*3) and mousey > preview_height + (bh*3) + (bh/3) and mousey < preview_height + (bh*3) + (bh/1.5) and Pi_Cam == 3 and foc_man == 1:
+                elif mousey > preview_height + (bh*3) and mousey > preview_height + (bh*3) + (bh/3) and mousey < preview_height + (bh*3) + (bh/1.5) and (Pi_Cam == 3 and v3_af == 1) and foc_man == 1:
                     if button_pos == 0:
                         v3_focus -= 1
                         v3_focus = max(v3_focus,0.0)
@@ -3354,7 +3360,7 @@ while True:
                     restart = 1
                     
                 elif ((sq_dis == 0 and button_pos > 1) or (sq_dis == 1 and button_pos == 0)):
-                    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7) and focus_mode == 0:
+                    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 0:
                         zoom = 4
                         focus_mode = 1
                         button(1,7,1,9)
@@ -3366,7 +3372,7 @@ while True:
                         draw_Vbar(1,8,dgryColor,'zoom',zoom)
                         time.sleep(0.25)
                         restart = 1
-                    elif (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7) and focus_mode == 1:
+                    elif (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 1:
                         zoom = 0
                         focus_mode = 0
                         button(1,7,0,9)
@@ -3378,7 +3384,7 @@ while True:
                         text(1,8,3,1,1,"",fv,7)
                         draw_Vbar(1,8,greyColor,'zoom',zoom)
                         restart = 1
-                    elif Pi_Cam == 3 and v3_f_mode == 0:
+                    elif (Pi_Cam == 3 and v3_af == 1) and v3_f_mode == 0:
                         focus_mode = 1
                         v3_f_mode = 1 # manual focus
                         foc_man = 1 
@@ -3444,7 +3450,7 @@ while True:
                         text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                         time.sleep(0.25)
                         restart = 1
-                    elif Pi_Cam == 3  and v3_f_mode == 1:
+                    elif (Pi_Cam == 3 and v3_af == 1)  and v3_f_mode == 1:
                         focus_mode = 0
                         v3_f_mode = 2 # continuous focus
                         foc_man = 0
@@ -3463,7 +3469,7 @@ while True:
                         text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                         time.sleep(0.25)
                         restart = 1
-                    elif (Pi_Cam == 3 or ((Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and use_ard == 1)) and v3_f_mode == 2:
+                    elif ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and use_ard == 1)) and v3_f_mode == 2:
                         focus_mode = 0
                         v3_f_mode = 0 # auto focus
                         foc_man = 0
@@ -3492,18 +3498,18 @@ while True:
                         pmax = video_limits[f+2]
                 if (mousex > preview_width and mousey < ((button_row-1)*bh) + int(bh/3)):
                     zoom = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin))
-                    if zoom != 5 and Pi_Cam == 3:
+                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1):
                         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height))
                 elif (mousey > preview_height + (bh*3)  and mousey < preview_height + (bh*3) + int(bh/3)):
                     zoom = int(((mousex-((button_row -8)*bw)) / bw) * (pmax+1-pmin))
-                    if zoom != 5 and Pi_Cam == 3:
+                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1):
                         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height))
                 elif ((sq_dis == 0 and mousex > preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 1)) and zoom != 5:
                     zoom +=1
                     zoom = min(zoom,pmax)
                 elif ((sq_dis == 0 and mousex < preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 0)) and zoom > 0:
                     zoom -=1
-                    if zoom != 5 and Pi_Cam == 3:
+                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1):
                         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height))
                 if zoom == 0:
                     button(1,8,0,9)
@@ -3523,7 +3529,7 @@ while True:
                     fxz = 1
                     fyz = 1
                     #fcount = 0
-                    if Pi_Cam == 3 and v3_f_mode == 0:
+                    if (Pi_Cam == 3 and v3_af == 1) and v3_f_mode == 0:
                         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
                 restart = 1
                 time.sleep(.2)
@@ -3656,14 +3662,14 @@ while True:
                     histarea = old_histarea
                 if xy + histarea > preview_height or xx + histarea > preview_width:
                     histarea = old_histarea
-                if Pi_Cam == 3 and (xy + histarea > preview_height * 0.75 or xx + histarea > preview_width):
+                if (Pi_Cam == 3 and v3_af == 1) and (xy + histarea > preview_height * 0.75 or xx + histarea > preview_width):
                     histarea = old_histarea
                 text(1,14,3,1,1,str(histarea),fv,7)
                 draw_Vbar(1,14,greyColor,'histarea',histarea)
                 old_histarea = histarea
                 time.sleep(.25)
 
-            elif button_row == 16 and Pi_Cam == 3:
+            elif button_row == 16 and (Pi_Cam == 3 and v3_af == 1):
                 # V3 FOCUS RANGE 
                 for f in range(0,len(video_limits)-1,3):
                     if video_limits[f] == 'v3_f_range':
