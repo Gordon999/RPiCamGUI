@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.98
+version = 4.99
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
