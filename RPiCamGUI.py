@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 4.99
+version = 5.00
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -520,11 +520,11 @@ def button(col,row, bkgnd_Color,border_Color):
         else:
             bx = (row - 7) * bw
             by = preview_height + (bh*3)
-    pygame.draw.rect(windowSurfaceObj,Color,Rect(bx,by,bw-1,bh))
-    pygame.draw.line(windowSurfaceObj,colors[border_Color],(bx,by),(bx+bw,by))
-    pygame.draw.line(windowSurfaceObj,greyColor,(bx+bw-1,by),(bx+bw-1,by+bh))
-    pygame.draw.line(windowSurfaceObj,colors[border_Color],(bx,by),(bx,by+bh-1))
-    pygame.draw.line(windowSurfaceObj,dgryColor,(bx,by+bh-1),(bx+bw-1,by+bh-1))
+    pygame.draw.rect(windowSurfaceObj,Color,Rect(bx+1,by,bw-2,bh))
+    #pygame.draw.line(windowSurfaceObj,colors[border_Color],(bx,by),(bx+bw,by),1)
+    pygame.draw.line(windowSurfaceObj,whiteColor,(bx+bw-1,by),(bx+bw-1,by+bh),2)
+    #pygame.draw.line(windowSurfaceObj,colors[border_Color],(bx,by),(bx,by+bh-1))
+    pygame.draw.line(windowSurfaceObj,blackColor,(bx,by+bh-1),(bx+bw-1,by+bh-1),2)
     pygame.display.update(bx, by, bw, bh)
     return
 
@@ -664,7 +664,7 @@ def preview():
     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) or focus_mode == 1 :
         datastr += " --width 1920 --height 1440 -o /run/shm/test%d.jpg "
     else:
-        if preview_width == 600 and preview_height == 480:
+        if preview_width == 640 and preview_height == 480:
             datastr += " --width 720 --height 540 -o /run/shm/test%d.jpg "
         else:
             datastr += " --width 1920 --height 1440 -o /run/shm/test%d.jpg "
@@ -696,7 +696,7 @@ def preview():
     datastr += " --sharpness "  + str(sharpness/10)
     datastr += " --denoise "    + denoises[denoise]
     datastr += " --quality " + str(quality)
-    if (((Pi_Cam == 3 and v3_af == 1) and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
+    if ((Pi_Cam == 3 and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8:
         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
         if v3_f_mode == 1:
             datastr += " --lens-position " + str(v3_focus/100)
@@ -899,9 +899,9 @@ if zoom == 0:
     button(1,8,0,9)
     text(1,8,5,0,1,"Zoom",ft,7)
     if Pi_Cam ==3 or ((Pi_Cam ==5 or Pi_Cam == 6) and use_ard == 1):
-        text(1,8,3,1,1,v3_f_modes[v3_f_mode],fv,7)
+        text(1,7,3,1,1,v3_f_modes[v3_f_mode],fv,7)
     else:
-        text(1,8,3,1,1," ",fv,7)
+        text(1,7,3,1,1," ",fv,7)
     # determine if camera native format
     vw = 0
     x = 0
@@ -1280,7 +1280,7 @@ while True:
                 gw = 1
             if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and fxz != 1 and zoom == 0 and rotate == 0:
                 pygame.draw.rect(windowSurfaceObj,(200,0,0),Rect(int(fxx*preview_width),int(fxy*preview_height*.75),int(fxz*preview_width),int(fyz*preview_height)),1)
-            if (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and (rotate == 0 or rotate == 2):
+            if (Pi_Cam == 5 or Pi_Cam == 6) and (rotate == 0 or rotate == 2):
                 if vwidth == 1280 and vheight == 960:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.20),int(preview_height * 0.22),int(preview_width * 0.62),int(preview_height * 0.57)),gw)
                 elif vwidth == 1280 and vheight == 720:
@@ -1293,6 +1293,16 @@ while True:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.30),int(preview_height * 0.30),int(preview_width * 0.41),int(preview_height * 0.41)),gw)
                 elif (vwidth == 1920 and vheight == 1080) or (vwidth == 3840 and vheight == 2160):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.09),int(preview_height * 0.20),int(preview_width * 0.82),int(preview_height * 0.62)),gw)
+            elif Pi_Cam == 8 and (rotate == 0 or rotate == 2):
+                if (vwidth == 1920 and vheight == 1080) or (vwidth == 3840 and vheight == 2160) or (vwidth == 1280 and vheight == 720) or (vwidth == 4608 and vheight == 2592) or (vwidth == 4624 and vheight == 3472) or (vwidth == 2304 and vheight == 1296) or (vwidth == 2028 and vheight == 1080):
+                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.09),int(preview_height * 0.20),int(preview_width * 0.82),int(preview_height * 0.62)),gw)
+                elif vwidth == 1280 and vheight == 960:
+                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.20),int(preview_height * 0.22),int(preview_width * 0.62),int(preview_height * 0.57)),gw)
+                elif vwidth == 1296 and vheight == 972:
+                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.19),int(preview_height * 0.16),int(preview_width * 0.62),int(preview_height * 0.64)),gw)
+                elif (vwidth == 800 and vheight == 600) or (vwidth == 640 and vheight == 480) or (vwidth == 720 and vheight == 540):
+                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.19),int(preview_height * 0.20),int(preview_width * 0.62),int(preview_height * 0.62)),gw)
+
             elif rotate == 0 or rotate == 2:
                 if Pi_Cam == 1 and ((vwidth == 1920 and vheight == 1080) or (vwidth == 1280 and vheight == 720) or (vwidth == 1536 and vheight == 864)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.13),int(preview_height * 0.22),int(preview_width * 0.74),int(preview_height * 0.57)),gw)
