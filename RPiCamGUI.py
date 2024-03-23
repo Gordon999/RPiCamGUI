@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 5.00
+version = 5.01
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -490,7 +490,7 @@ lgrnColor =   pygame.Color(162, 192, 162)
 lpurColor =   pygame.Color(192, 162, 192)
 lyelColor =   pygame.Color(192, 192, 162)
 blackColor =  pygame.Color(  0,   0,   0)
-whiteColor =  pygame.Color(200, 200, 200)
+whiteColor =  pygame.Color(210, 210, 210)
 greyColor =   pygame.Color(128, 128, 128)
 dgryColor =   pygame.Color( 64,  64,  64)
 greenColor =  pygame.Color(  0, 255,   0)
@@ -521,10 +521,8 @@ def button(col,row, bkgnd_Color,border_Color):
             bx = (row - 7) * bw
             by = preview_height + (bh*3)
     pygame.draw.rect(windowSurfaceObj,Color,Rect(bx+1,by,bw-2,bh))
-    #pygame.draw.line(windowSurfaceObj,colors[border_Color],(bx,by),(bx+bw,by),1)
-    pygame.draw.line(windowSurfaceObj,whiteColor,(bx+bw-1,by),(bx+bw-1,by+bh),2)
-    #pygame.draw.line(windowSurfaceObj,colors[border_Color],(bx,by),(bx,by+bh-1))
-    pygame.draw.line(windowSurfaceObj,blackColor,(bx,by+bh-1),(bx+bw-1,by+bh-1),2)
+    pygame.draw.line(windowSurfaceObj,whiteColor,(bx,by),(bx,by+bh),2)
+    pygame.draw.line(windowSurfaceObj,dgryColor,(bx,by+bh-1),(bx+bw-1,by+bh-1),1)
     pygame.display.update(bx, by, bw, bh)
     return
 
@@ -557,13 +555,13 @@ def text(col,row,fColor,top,upd,msg,fsize,bkgnd_Color):
     msgSurfaceObj = fontObj.render(msg, False, Color)
     msgRectobj = msgSurfaceObj.get_rect()
     if top == 0:
-        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+1,by+int(bh/3),bw-2,int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/3),bw-3,int(bh/3)))
         msgRectobj.topleft = (bx + 5, by + int(bh/3)-int(preview_width/640))
     elif msg == "Config":
-        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+1,by+int(bh/1.5),int(bw/2),int(bh/3)-1))
+        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/1.5),int(bw/2)-1,int(bh/3)-1))
         msgRectobj.topleft = (bx+5,  by + int(bh/1.5)-1)
     elif top == 1:
-        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+20,by+int(bh/1.5)-1,int(bw-21),int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+20,by+int(bh/1.5)-1,int(bw-21)-1,int(bh/3)))
         msgRectobj.topleft = (bx + 20, by + int(bh/1.5)-int(preview_width/640)-1) 
     elif top == 2:
         if bkgnd_Color == 1:
