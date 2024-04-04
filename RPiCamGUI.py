@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 import random
 
-version = 5.01
+version = 5.02
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -110,6 +110,7 @@ max_hq      = 650
 max_16mp    = 200
 max_64mp    = 435
 max_64owl   = 435
+max_v9      = 100
 max_gs      = 15
 
 # inital parameters
@@ -156,22 +157,23 @@ ft = int(preview_width/55)
 fv = int(preview_width/55)
 
 # data
-cameras      = ['Unknown','Pi v1','Pi v2','Pi v3','Pi HQ','Arducam 16MP','Arducam Hawkeye','Pi GS','Arducam Owlsight']
-camids       = ['','ov5647','imx219','imx708','imx477','imx519','arduc','imx296','ov64a4']
-max_gains    = [64,     255,      40,      64,      88,      64,      64,      64,       64]
-max_shutters = [0,   max_v1, max_v2,   max_v3,  max_hq,max_16mp,max_64mp,  max_gs,max_64owl]
-mags         = [64,     255,      40,      64,      88,      64,      64,      64,       64]
+cameras      = ['Unknown','Pi v1','Pi v2','Pi v3','Pi HQ','Arducam 16MP','Arducam Hawkeye','Pi GS','Arducam Owlsight',"imx290"]
+camids       = ['','ov5647','imx219','imx708','imx477','imx519','arduc','imx296','ov64a4','imx290']
+max_gains    = [64,     255,      40,      64,      88,      64,      64,      64,     64,      64]
+max_shutters = [0,   max_v1, max_v2,   max_v3,  max_hq,max_16mp,max_64mp,  max_gs,max_64owl,max_v9]
+mags         = [64,     255,      40,      64,      88,      64,      64,      64,     64,      64]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
 vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,2028,2028,2304,2592,3280,3840,4032,4056,4608,4656,8000,9152,9248]
 vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1080,1520,1296,1944,2464,2160,3024,3040,2592,3496,6000,6944,6944]
-v_max_fps    = [200,120, 40,  40,  40,  30,  30,  30,  30,  30,  30,  40,  40,  25,  20,  20,  20,  20,  10,  20,  20,  20,  20, 20]
+v_max_fps    = [200,120, 40,  40,  40,  30,  60,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  10,  20,  20,  20,  20, 20]
 v3_max_fps   = [200,120,125,  66,  50,  46,  30,  30,  47,  30,  30,  30,  25,  25,  20,  20,  20,  20,  20,  15,  20,  20,  20, 20]
+v9_max_fps   = [60,  60, 60,  60,  60,  60,  60,  60,  60,  60,  60]
 zwidths      = [640,800,1280,2592,3280,4056,4656,9152]
 zheights     = [480,600, 960,1944,2464,3040,3496,6944]
-zws          = [864,1080,1728,2592,1093,1367,2187,3280,1536,1920,3072,4608,1352,1690,2704,4056,1552,1940,3104,4656,3050,3813,6101,9152,485,606,970,1456,3082,3850,6165,9248]
-zhs          = [648, 810,1296,1944, 821,1027,1643,2464, 864,1080,1728,2592,1013,1267,2027,3040,1165,1457,2331,3496,2288,2860,4576,6944,362,453,725,1088,2314,2893,4629,6944]
+zws          = [864,1080,1728,2592,1093,1367,2187,3280,1536,1920,3072,4608,1352,1690,2704,4056,1552,1940,3104,4656,3050,3813,6101,9152,485,606,970,1456,3082,3850,6165,9248,640,800,1280,1920]
+zhs          = [648, 810,1296,1944, 821,1027,1643,2464, 864,1080,1728,2592,1013,1267,2027,3040,1165,1457,2331,3496,2288,2860,4576,6944,362,453,725,1088,2314,2893,4629,6944,360,450,720,1080]
 shutters     = [-4000,-2000,-1600,-1250,-1000,-800,-640,-500,-400,-320,-288,-250,-240,-200,-160,-144,-125,-120,-100,-96,-80,-60,-50,-48,-40,-30,-25,-20,-15,-13,-10,-8,-6,-5,-4,-3,
                 0.4,0.5,0.6,0.8,1,1.1,1.2,2,3,4,5,6,7,8,9,10,11,15,20,25,30,40,50,60,75,100,112,120,150,200,220,230,239,435,500,600,650,660,670]
 codecs       = ['h264','mjpeg','yuv420','raw']
@@ -279,7 +281,9 @@ if codec > len(codecs)-1:
     
 def Camera_Version():
     # Check for Pi Camera version
-    global lver,v3_af,camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8
+    global lver,v3_af,camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams
+    global cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits
+    global speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8,max_vf_9
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('libcams.txt'):
         os.rename('libcams.txt', 'oldlibcams.txt')
@@ -389,6 +393,7 @@ def Camera_Version():
                 line = file.readline()
     pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + cameras[Pi_Cam] + " Camera" )               
     # max video formats (not for h264)
+    max_vf_9  = 10
     max_vf_8  = 20
     max_vf_7  = 7
     max_vf_6  = 20
@@ -409,6 +414,8 @@ def Camera_Version():
         max_vformat = max_vf_5
     elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
         max_vformat = max_vf_8
+    elif codec > 0 and Pi_Cam == 9:               # Waveshare IMX290-83
+        max_vformat = max_vf_9
     elif Pi_Cam == 7:               # Pi GS
         max_vformat = max_vf_7
     elif codec > 0 and Pi_Cam == 4: # Pi HQ
@@ -490,7 +497,7 @@ lgrnColor =   pygame.Color(162, 192, 162)
 lpurColor =   pygame.Color(192, 162, 192)
 lyelColor =   pygame.Color(192, 192, 162)
 blackColor =  pygame.Color(  0,   0,   0)
-whiteColor =  pygame.Color(210, 210, 210)
+whiteColor =  pygame.Color(220, 220, 220)
 greyColor =   pygame.Color(128, 128, 128)
 dgryColor =   pygame.Color( 64,  64,  64)
 greenColor =  pygame.Color(  0, 255,   0)
@@ -521,8 +528,10 @@ def button(col,row, bkgnd_Color,border_Color):
             bx = (row - 7) * bw
             by = preview_height + (bh*3)
     pygame.draw.rect(windowSurfaceObj,Color,Rect(bx+1,by,bw-2,bh))
-    pygame.draw.line(windowSurfaceObj,whiteColor,(bx,by),(bx,by+bh),2)
+    pygame.draw.line(windowSurfaceObj,whiteColor,(bx,by),(bx,by+bh-1),2)
+    pygame.draw.line(windowSurfaceObj,whiteColor,(bx,by),(bx+bw-1,by),1)
     pygame.draw.line(windowSurfaceObj,dgryColor,(bx,by+bh-1),(bx+bw-1,by+bh-1),1)
+    pygame.draw.line(windowSurfaceObj,dgryColor,(bx+bw-2,by),(bx+bw-2,by+bh),2)
     pygame.display.update(bx, by, bw, bh)
     return
 
@@ -555,7 +564,7 @@ def text(col,row,fColor,top,upd,msg,fsize,bkgnd_Color):
     msgSurfaceObj = fontObj.render(msg, False, Color)
     msgRectobj = msgSurfaceObj.get_rect()
     if top == 0:
-        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/3),bw-3,int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/3),bw-4,int(bh/3)))
         msgRectobj.topleft = (bx + 5, by + int(bh/3)-int(preview_width/640))
     elif msg == "Config":
         pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/1.5),int(bw/2)-1,int(bh/3)-1))
@@ -582,7 +591,7 @@ def draw_bar(col,row,color,msg,value):
     if msg == "speed":
         pmax = max_speed
     if sq_dis == 0:
-        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw,row * bh,bw-1,int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw,(row * bh) + 1,bw-2,int(bh/3)))
     else:
         if row < 6:
             pygame.draw.rect(windowSurfaceObj,color,Rect(row*bw,preview_height ,bw-1,int(bh/3)))
@@ -595,11 +604,10 @@ def draw_bar(col,row,color,msg,value):
         j = int(bw/2) + (value / (pmax - pmin)  * bw)
     j = min(j,bw-5)
     if sq_dis == 0:
-        
-        pygame.draw.rect(windowSurfaceObj,(0,200,0),Rect(int(preview_width + int(col*bw) + 2),int(row * bh),int(j+1),int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,(0,200,0),Rect(int(preview_width + int(col*bw) + 2),int(row * bh)+1,int(j+1),int(bh/3)))
         if msg == "gain" and value > mag:
            pygame.draw.rect(windowSurfaceObj,(200,200,0),Rect(int(preview_width + int(col*bw) + 2 + jag),int(row * bh),int(j+1 - jag),int(bh/3)))
-        pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width + int(col*bw) + j ),int(row * bh),3,int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width + int(col*bw) + j ),int(row * bh)+1,3,int(bh/3)))
     else:
         if row < 6:
             pygame.draw.rect(windowSurfaceObj,(150,120,150),Rect(int((row*bw) + 2),preview_height ,int(j+1),int(bh/3)))
@@ -618,7 +626,7 @@ def draw_Vbar(col,row,color,msg,value):
     if msg == "vformat":
         pmax = max_vformat
     if sq_dis == 0:
-        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw,row * bh,bw-1,int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw,(row * bh) +1,bw-2,int(bh/3)))
     else:
         if row < 7:
             pygame.draw.rect(windowSurfaceObj,color,Rect(row*bw,preview_height + (bh*2),bw-1,int(bh/3)))
@@ -630,8 +638,8 @@ def draw_Vbar(col,row,color,msg,value):
         j = int(bw/2) + (value / (pmax - pmin)  * bw)
     j = min(j,bw-5)
     if sq_dis == 0:
-        pygame.draw.rect(windowSurfaceObj,(150,120,150),Rect(int(preview_width + (col*bw) + 2),int(row * bh),int(j+1),int(bh/3)))
-        pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width + (col*bw) + j ),int(row * bh),3,int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,(150,120,150),Rect(int(preview_width + (col*bw) + 2),int(row * bh)+1,int(j+1),int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width + (col*bw) + j ),int(row * bh)+1,3,int(bh/3)))
     else:
         if row < 7:
             pygame.draw.rect(windowSurfaceObj,(150,120,150),Rect(int((row*bw) + 2),int(preview_height + (bh*2)),int(j+1),int(bh/3)))
@@ -2507,6 +2515,7 @@ while True:
             elif button_row == 10:
                         # TAKE TIMELAPSE
                         os.killpg(p.pid, signal.SIGTERM)
+                        restart = 1
                         button(1,9,1,2)
                         text(1,9,3,0,1,"STOP",ft,0)
                         text(1,9,3,1,1,"Timelapse",ft,0)
@@ -2591,7 +2600,7 @@ while True:
                                 zyo = ((igh/2)-(preview_height/2))/igh
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
                             p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
-                            #print (datastr)
+                            print (datastr)
                             start_timelapse = time.monotonic()
                             start2 = time.monotonic()
                             stop = 0
@@ -2674,7 +2683,11 @@ while True:
                                             text(1,12,3,1,1,str(tshots),fv,12)
                                             stop = 1
                                             count = tshots
-
+                            #time.sleep(1)
+                            if lver != "bookworm" or use_ard == 1:
+                                os.system('pkill -SIGUSR2 libcamera-still')
+                            else:
+                                os.system('pkill -SIGUSR2 rpicam-still')
                         elif tinterval > 0 and mode == 0:
                             text(1,9,3,0,1,"STOP",ft,0)
                             text(1,9,3,1,1,"Timelapse",ft,0)
@@ -2996,6 +3009,8 @@ while True:
                         max_vformat = max_vf_5
                     elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
                         max_vformat = max_vf_8
+                    elif codec > 0 and Pi_Cam == 9:               # Waveshare IMX290-83
+                        max_vformat = max_vf_9
                     elif Pi_Cam == 7: # PI GS
                         max_vformat = max_vf_7
                     elif codec > 0 and Pi_Cam == 4:
@@ -3019,6 +3034,8 @@ while True:
                         max_vformat = max_vf_5
                     elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
                         max_vformat = max_vf_8
+                    elif codec > 0 and Pi_Cam == 9:               # Waveshare IMX290-83
+                        max_vformat = max_vf_9
                     elif Pi_Cam == 7: # PI GS
                         max_vformat = max_vf_7
                     elif codec > 0 and Pi_Cam == 4:
@@ -3044,6 +3061,8 @@ while True:
                             max_vformat = max_vf_5
                         elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
                             max_vformat = max_vf_8
+                        elif codec > 0 and Pi_Cam == 9:               # Waveshare IMX290-83
+                            max_vformat = max_vf_9
                         elif Pi_Cam == 7: # PI GS
                             max_vformat = max_vf_7
                         elif codec > 0 and Pi_Cam == 4:
@@ -3068,6 +3087,8 @@ while True:
                             max_vformat = max_vf_5
                         elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
                             max_vformat = max_vf_8
+                        elif codec > 0 and Pi_Cam == 9:               # Waveshare IMX290-83
+                            max_vformat = max_vf_9
                         elif Pi_Cam == 7: # PI GS
                             max_vformat = max_vf_7
                         elif codec > 0 and Pi_Cam == 4:
@@ -3086,7 +3107,7 @@ while True:
                 draw_Vbar(1,3,lpurColor,'vformat',vformat)
                 vwidth  = vwidths[vformat]
                 vheight = vheights[vformat]
-                if (Pi_Cam == 3 and v3_af == 1):
+                if Pi_Cam == 3:
                     vfps = v3_max_fps[vformat]
                     if vwidth == 1920 and codec == 0:
                         prof = h264profiles[profile].split(" ")
@@ -3102,6 +3123,8 @@ while True:
                                 vfps = 60
                             else:
                                 vfps = 90
+                elif Pi_Cam == 9:
+                    vfps = v9_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
@@ -3145,6 +3168,8 @@ while True:
                     max_vformat = max_vf_5
                 elif Pi_Cam == 8:               # Arducam 64MP Owlsight
                     max_vformat = max_vf_8
+                elif codec > 0 and Pi_Cam == 9:               # Waveshare IMX290-83
+                    max_vformat = max_vf_9
                 elif Pi_Cam == 7: # PI GS
                     max_vformat = max_vf_7
                 elif codec > 0 and Pi_Cam == 4: # PI HQ
@@ -3165,7 +3190,7 @@ while True:
                 draw_Vbar(1,3,lpurColor,'vformat',vformat)
                 vwidth  = vwidths[vformat]
                 vheight = vheights[vformat]
-                if (Pi_Cam == 3 and v3_af == 1):
+                if Pi_Cam == 3:
                     vfps = v3_max_fps[vformat]
                     if vwidth == 1920 and codec == 0:
                         prof = h264profiles[profile].split(" ")
@@ -3181,13 +3206,26 @@ while True:
                                 vfps = 60
                             else:
                                 vfps = 90
+                elif Pi_Cam == 9:
+                    vfps = v9_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
                 video_limits[5] = vfps
                 text(1,2,3,1,1,str(fps),fv,11)
                 draw_Vbar(1,2,lpurColor,'fps',fps)
-                text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                # determine if camera native format
+                vw = 0
+                x = 0
+                while x < len(vwidths2) and vw == 0:
+                    if vwidth == vwidths2[x]:
+                        if vheight == vheights2[x]:
+                            vw = 1
+                    x += 1
+                if vw == 0:
+                    text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                if vw == 1:
+                    text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                 time.sleep(.25)
 
             elif button_row == 6:
@@ -3211,7 +3249,7 @@ while True:
                 draw_Vbar(1,5,lpurColor,'profile',profile)
                 vwidth  = vwidths[vformat]
                 vheight = vheights[vformat]
-                if (Pi_Cam == 3 and v3_af == 1):
+                if Pi_Cam == 3:
                     vfps = v3_max_fps[vformat]
                     if vwidth == 1920 and codec == 0:
                         prof = h264profiles[profile].split(" ")
@@ -3227,6 +3265,8 @@ while True:
                                 vfps = 60
                             else:
                                 vfps = 90
+                elif Pi_Cam == 9:
+                    vfps = v9_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
@@ -3250,7 +3290,7 @@ while True:
                     text(1,6,3,1,1,"ON ",fv,11)
                 vwidth  = vwidths[vformat]
                 vheight = vheights[vformat]
-                if (Pi_Cam == 3 and v3_af == 1):
+                if Pi_Cam == 3:
                     vfps = v3_max_fps[vformat]
                     if vwidth == 1920 and codec == 0:
                         prof = h264profiles[profile].split(" ")
@@ -3266,6 +3306,8 @@ while True:
                                 vfps = 60
                             else:
                                 vfps = 90
+                elif Pi_Cam == 9:
+                    vfps = v9_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
@@ -3331,7 +3373,7 @@ while True:
                         v3_focus = focus
                         restart = 1
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
-                    
+                   
                 # new v3
                 elif (mousex > preview_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and (Pi_Cam == 3 and v3_af == 1) and foc_man == 1:
                     v3_focus = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin)) + pmin
