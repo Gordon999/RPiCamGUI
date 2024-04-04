@@ -8,7 +8,7 @@ At your own risk !!. Ensure you have any required software backed up.
 
 Pi4B or Pi5B recommended, but will work on others including Zero2W
 
-Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP and 64MP Autofocus cameras. 
+Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP and 64MP Autofocus cameras or Waveshare imx290-83 camera. 
 
 To start streaming right mouse click on CAPTURE/Stream video button. Set streaming type in the script. 
 Time of streaming set by v_length.
@@ -26,6 +26,10 @@ edit imx519.json by modifying line 3691 "rpi.af" to "rpi.mf" and save as imx519m
 ln /boot/firmware/config.txt #camera_auto_detect=1, and add dtoverlay=imx519,cam0 or dtoverlay=imx519,cam1 as appropriate. If you have a 2nd camera add a dtoverlay for that as well.)
 
 Switching will work with different models of cameras, right click on the image.
+
+## Waveshare imx290-83
+add dtoverlay=imx290,clock-frequency=37125000 to config.txt , add cam0 or cam1 if using a Pi5.
+You may need to add https://drive.google.com/file/d/1dRddao1-wdpd40zETrsnbiiuUJrbWMjx/view as imx290.json to /usr/share/libcamera/ipa/rpi/pisp if using a Pi5
 
 ## Screenshot
 
