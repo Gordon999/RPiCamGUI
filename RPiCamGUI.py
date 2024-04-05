@@ -33,7 +33,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.03
+version = 5.04
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -3614,7 +3614,18 @@ while True:
                     button(1,8,0,9)
                     text(1,8,5,0,1,"Zoom",ft,7)
                     text(1,8,3,1,1,"",fv,7)
-                    text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                    # determine if camera native format
+                    vw = 0
+                    x = 0
+                    while x < len(vwidths2) and vw == 0:
+                        if vwidth == vwidths2[x]:
+                             if vheight == vheights2[x]:
+                                vw = 1
+                        x += 1
+                    if vw == 0:
+                        text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                    if vw == 1:
+                        text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                     draw_Vbar(1,8,greyColor,'zoom',zoom)
                 else:
                     button(1,8,1,9)
