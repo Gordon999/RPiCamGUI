@@ -33,7 +33,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.05
+version = 5.06
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -89,7 +89,7 @@ histarea    = 50      # set histogram size
 v3_f_mode   = 0       # v3 focus mode
 v3_f_range  = 0       # v3 focus range
 v3_f_speed  = 0       # v3 focus speed
-IRF         = 0       # Waveshare imx290-83 Ir filter, 1 = ON
+IRF         = 0       # Waveshare imx290-83 IR filter, 1 = ON
 # NOTE if you change any of the above defaults you need to delete the con_file and restart.
 
 # default directories and files
@@ -1647,7 +1647,7 @@ while True:
                             if rotate != 0:
                                 image = pygame.transform.rotate(image, int(rotate * 90))
                                 pygame.image.save(image,fname[:-4]+"r." + extns2[extn])
-                            if (Pi_Cam == 3 and v3_af == 1) and zoom < 5:
+                            if (Pi_Cam == 3 or Pi_Cam == 9) and zoom < 5:
                                 if rotate == 0:
                                     image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
                                 else:
@@ -2646,7 +2646,7 @@ while True:
                                 zyo = ((igh/2)-(preview_height/2))/igh
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
                             p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
-                            print (datastr)
+                            #print (datastr)
                             start_timelapse = time.monotonic()
                             start2 = time.monotonic()
                             stop = 0
@@ -3456,6 +3456,14 @@ while True:
                     restart = 1
                     
                 elif ((sq_dis == 0 and button_pos > 1) or (sq_dis == 1 and button_pos == 0)):
+                    # determine if camera native format
+                    vw = 0
+                    x = 0
+                    while x < len(vwidths2) and vw == 0:
+                        if vwidth == vwidths2[x]:
+                             if vheight == vheights2[x]:
+                                vw = 1
+                        x += 1
                     if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 0:
                         zoom = 4
                         focus_mode = 1
@@ -3474,14 +3482,6 @@ while True:
                         button(1,7,0,9)
                         text(1,7,5,0,1,"FOCUS",ft,7)
                         text(1,7,3,1,1,"",fv,7)
-                        # determine if camera native format
-                        vw = 0
-                        x = 0
-                        while x < len(vwidths2) and vw == 0:
-                            if vwidth == vwidths2[x]:
-                                 if vheight == vheights2[x]:
-                                    vw = 1
-                            x += 1
                         if vw == 0:
                             text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                         if vw == 1:
@@ -3554,7 +3554,10 @@ while True:
                         button(1,8,0,9)
                         text(1,8,5,0,1,"Zoom",ft,7)
                         text(1,8,3,1,1,"",fv,7)
-                        text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                        if vw == 0:
+                            text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                        if vw == 1:
+                            text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                         time.sleep(0.25)
                         restart = 1
                     elif (Pi_Cam == 3 and v3_af == 1)  and v3_f_mode == 1:
@@ -3573,7 +3576,10 @@ while True:
                         button(1,8,0,9)
                         text(1,8,5,0,1,"Zoom",ft,7)
                         text(1,8,3,1,1,"",fv,7)
-                        text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                        if vw == 0:
+                            text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                        if vw == 1:
+                            text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                         time.sleep(0.25)
                         restart = 1
                     elif ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and use_ard == 1)) and v3_f_mode == 2:
@@ -3592,7 +3598,10 @@ while True:
                         button(1,8,0,9)
                         text(1,8,5,0,1,"Zoom",ft,7)
                         text(1,8,3,1,1,"",fv,7)
-                        text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                        if vw == 0:
+                            text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                        if vw == 1:
+                            text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                         time.sleep(0.25)
                         restart = 1
                 time.sleep(.25)
@@ -3622,6 +3631,8 @@ while True:
                     button(1,8,0,9)
                     text(1,8,5,0,1,"Zoom",ft,7)
                     text(1,8,3,1,1,"",fv,7)
+                    button(1,7,0,9)
+                    text(1,7,5,0,1,"FOCUS",ft,7)
                     # determine if camera native format
                     vw = 0
                     x = 0
