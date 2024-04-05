@@ -33,7 +33,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.04
+version = 5.05
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -327,7 +327,6 @@ def Camera_Version():
                     vheights2.append(int(qheight))
                 if forms[q][0:1] == "[" and "x" not in forms[q]:
                     vfps2.append(int(float(forms[q][1:3])))
-     
         if camstxt[x][0:4] == "1 : ":
             cam1 = camstxt[x][4:10]
         if cam0 != "0" and cam1 != "1" and camera == 1:
@@ -454,7 +453,12 @@ def Camera_Version():
         vformat = max_vformat
     vwidth    = vwidths[vformat]
     vheight   = vheights[vformat]
-    vfps      = v_max_fps[vformat]
+    if Pi_Cam == 3:
+        vfps = v3_max_fps[vformat]
+    elif Pi_Cam == 9:
+        vfps = v9_max_fps[vformat]
+    else:
+        vfps = v_max_fps[vformat]
     video_limits[5] = vfps
     if tinterval > 0:
         tduration = tinterval * tshots
@@ -677,10 +681,12 @@ def preview():
         datastr += " --width 3280 --height 2464 -o /run/shm/test%d.jpg "
     elif Pi_Cam == 7 :
         datastr += " --width 1456 --height 1088 -o /run/shm/test%d.jpg "
-    elif (Pi_Cam == 3 and v3_af == 1) :
+    elif Pi_Cam == 3:
         datastr += " --width 2304 --height 1296 -o /run/shm/test%d.jpg "
     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) or focus_mode == 1 :
         datastr += " --width 1920 --height 1440 -o /run/shm/test%d.jpg "
+    elif Pi_Cam == 9:
+        datastr += " --width 1920 --height 1080 -o /run/shm/test%d.jpg "
     else:
         if preview_width == 640 and preview_height == 480:
             datastr += " --width 720 --height 540 -o /run/shm/test%d.jpg "
@@ -693,7 +699,7 @@ def preview():
         datastr += " --exposure " + str(modes[mode]) 
     if zoom > 4 and (Pi_Cam < 5 or Pi_Cam == 7) and Pi_Cam != 3 and mode != 0:
         datastr += " --framerate " + str(focus_fps)
-    elif (zoom < 5 or (Pi_Cam == 3 and v3_af == 1)) and mode != 0:
+    elif (zoom < 5 or Pi_Cam == 3) and mode != 0:
         datastr += " --framerate " + str(prev_fps)
     elif mode == 0:
         speed3 = 1000000/speed2
@@ -724,7 +730,7 @@ def preview():
         datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
     if (Pi_Cam == 3 and v3_af == 1) and v3_f_range != 0:
         datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-    if (Pi_Cam == 3 and v3_af == 1) and v3_hdr == 1:
+    if Pi_Cam == 3 and v3_hdr == 1:
         datastr += " --hdr"
     if Pi_Cam == 4 and scientific == 1:
         if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
@@ -746,7 +752,7 @@ def preview():
     #print(datastr)
     restart = 0
     time.sleep(0.2)
-    if (Pi_Cam == 3 and v3_af == 1) and rotate == 0:
+    if (Pi_Cam == 3 or Pi_Cam == 9) and rotate == 0:
         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,int(preview_height *.24) ))
 
 def v3_focus_manual():
@@ -1144,7 +1150,7 @@ while True:
                  os.remove(pics[tt])
         except pygame.error:
             pass
-        if (Pi_Cam == 3 and v3_af == 1) and zoom < 5:
+        if Pi_Cam == 3 or Pi_Cam == 9  and zoom < 5:
             if rotate == 0:
                 image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
             else:
@@ -1325,9 +1331,11 @@ while True:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.20),int(preview_height * 0.22),int(preview_width * 0.62),int(preview_height * 0.57)),gw)
                 elif vwidth == 1296 and vheight == 972:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.19),int(preview_height * 0.16),int(preview_width * 0.62),int(preview_height * 0.64)),gw)
-                elif (vwidth == 800 and vheight == 600) or (vwidth == 640 and vheight == 480) or (vwidth == 720 and vheight == 540):
-                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.19),int(preview_height * 0.20),int(preview_width * 0.62),int(preview_height * 0.62)),gw)
-
+            elif Pi_Cam == 9:
+                if (vwidth == 800 and vheight == 600) or (vwidth == 640 and vheight == 480) or (vwidth == 720 and vheight == 540):
+                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.25),int(preview_height * 0.13),int(preview_width * 0.50),int(preview_height * 0.49)),gw)
+                elif (vwidth == 1280 and vheight == 720):
+                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.17),int(preview_height * 0.12),int(preview_width * 0.67),int(preview_height * 0.48)),gw)
             elif rotate == 0 or rotate == 2:
                 if Pi_Cam == 1 and ((vwidth == 1920 and vheight == 1080) or (vwidth == 1280 and vheight == 720) or (vwidth == 1536 and vheight == 864)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.13),int(preview_height * 0.22),int(preview_width * 0.74),int(preview_height * 0.57)),gw)
