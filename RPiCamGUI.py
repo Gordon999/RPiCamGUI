@@ -30,9 +30,10 @@ from datetime import timedelta
 import numpy as np
 import math
 from gpiozero import Button
+from gpiozero import LED
 import random
 
-version = 5.02
+version = 5.03
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -52,6 +53,7 @@ fullscreen     = 0   # set to 1 for FULLSCREEN
 frame          = 1   # set to 0 for NO frame (i.e. if using Pi 7" touchscreen)
 FUP            = 21  # Pi v3 camera Focus UP GPIO button
 FDN            = 16  # Pi v3 camera Focus DN GPIO button
+sw_ir          = 26  # Waveshare IR Filter switch
 
 # set sq_dis = 1 for a square display, 0 for normal
 sq_dis = 0
@@ -87,12 +89,13 @@ histarea    = 50      # set histogram size
 v3_f_mode   = 0       # v3 focus mode
 v3_f_range  = 0       # v3 focus range
 v3_f_speed  = 0       # v3 focus speed
+IRF         = 0       # Waveshare imx290-83 Ir filter, 1 = ON
 # NOTE if you change any of the above defaults you need to delete the con_file and restart.
 
 # default directories and files
 pic         = "Pictures"
 vid         = "Videos"
-con_file    = "PiLCConfig12.txt"
+con_file    = "PiLCConfig14.txt"
 
 # setup directories
 Home_Files  = []
@@ -141,6 +144,8 @@ zwidth      = igw
 zheight     = igh
 buttonFUP   = Button(FUP)
 buttonFDN   = Button(FDN)
+led_sw_ir   = LED(sw_ir)
+
 if tinterval > 0:
     tduration  = tshots * tinterval
 else:
@@ -149,6 +154,7 @@ if sq_dis == 1:
     dis_height = preview_width
 else:
     dis_height = preview_height
+
 
 # set button sizes
 bw = int(preview_width/8)
@@ -230,7 +236,7 @@ video_limits = ['vlen',0,3600,'fps',1,40,'focus',0,2500,'vformat',0,7,'0',0,0,'z
 # check config_file exists, if not then write default values
 if not os.path.exists(config_file):
     points = [mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation,
-              meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate]
+              meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF]
     with open(config_file, 'w') as f:
         for item in points:
             f.write("%s\n" % item)
@@ -275,6 +281,7 @@ histarea    = config[28]
 v3_f_speed  = config[29]
 v3_f_range  = config[30]
 #rotate      = config[31]
+IRF         = config[32]
 
 if codec > len(codecs)-1:
     codec = 0
@@ -283,7 +290,7 @@ def Camera_Version():
     # Check for Pi Camera version
     global lver,v3_af,camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams
     global cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits
-    global speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8,max_vf_9
+    global speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8,max_vf_9,IRF
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('libcams.txt'):
         os.rename('libcams.txt', 'oldlibcams.txt')
@@ -377,6 +384,11 @@ def Camera_Version():
     if max_camera == 1 and cam0 == cam1:
         same_cams = 1
     configtxt = []
+    if Pi_Cam == 9:
+        if IRF == 0:
+            led_sw_ir.off()
+        else:
+            led_sw_ir.on()
     if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8:
         # read /boot/config.txt file
         if lver != "bookworm":
@@ -412,9 +424,9 @@ def Camera_Version():
         max_vformat = max_vf_6
     elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP Hawkeye
         max_vformat = max_vf_5
-    elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
+    elif codec > 0 and Pi_Cam == 8: # Arducam 64MP Owlsight
         max_vformat = max_vf_8
-    elif codec > 0 and Pi_Cam == 9:               # Waveshare IMX290-83
+    elif codec > 0 and Pi_Cam == 9: # Waveshare IMX290-83
         max_vformat = max_vf_9
     elif Pi_Cam == 7:               # Pi GS
         max_vformat = max_vf_7
@@ -848,6 +860,13 @@ def Menu():
     button(0,13,6,4)
     text(0,13,5,0,1,"Scientific",fv,10)
     if scientific == 0:
+        text(0,13,3,1,1,"Off",fv,10)
+    else:
+        text(0,13,3,1,1,"ON ",fv,10)
+  if Pi_Cam == 9:
+    button(0,13,6,4)
+    text(0,13,5,0,1,"IR Filter",fv,10)
+    if IRF == 0:
         text(0,13,3,1,1,"Off",fv,10)
     else:
         text(0,13,3,1,1,"ON ",fv,10)
@@ -2147,6 +2166,25 @@ while True:
                 time.sleep(0.25)
                 restart = 1
 
+            elif button_row == 14 and Pi_Cam == 9:
+                # Waveshare imx290 IR Filter
+                if (sq_dis == 0 and mousex < preview_width + (bw/2)) or (sq_dis == 1 and button_pos == 0):
+                    IRF -=1
+                    IRF = max(IRF ,0)
+                else:
+                    IRF  +=1
+                    IRF = min(IRF ,1)
+
+                #text(0,13,5,0,1,"Scientific",fv,10)
+                if IRF == 0:
+                    text(0,13,3,1,1,"Off",fv,10)
+                    led_sw_ir.off()
+                else:
+                    text(0,13,3,1,1,"ON ",fv,10)
+                    led_sw_ir.on()
+                time.sleep(0.25)
+                restart = 1
+
             elif button_row == 15:
                 # HISTOGRAM 
                 for f in range(0,len(still_limits)-1,3):
@@ -3410,7 +3448,7 @@ while True:
                     restart = 1
                     
                 elif ((sq_dis == 0 and button_pos > 1) or (sq_dis == 1 and button_pos == 0)):
-                    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 0:
+                    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 0:
                         zoom = 4
                         focus_mode = 1
                         button(1,7,1,9)
@@ -3422,13 +3460,24 @@ while True:
                         draw_Vbar(1,8,dgryColor,'zoom',zoom)
                         time.sleep(0.25)
                         restart = 1
-                    elif (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 1:
+                    elif (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 1:
                         zoom = 0
                         focus_mode = 0
                         button(1,7,0,9)
                         text(1,7,5,0,1,"FOCUS",ft,7)
                         text(1,7,3,1,1,"",fv,7)
-                        text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                        # determine if camera native format
+                        vw = 0
+                        x = 0
+                        while x < len(vwidths2) and vw == 0:
+                            if vwidth == vwidths2[x]:
+                                 if vheight == vheights2[x]:
+                                    vw = 1
+                            x += 1
+                        if vw == 0:
+                            text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                        if vw == 1:
+                            text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                         button(1,8,0,9)
                         text(1,8,5,0,1,"Zoom",ft,7)
                         text(1,8,3,1,1,"",fv,7)
@@ -3778,6 +3827,7 @@ while True:
                    config[29] = v3_f_speed
                    config[30] = v3_f_range
                    config[31] = rotate
+                   config[32] = IRF
                    with open(config_file, 'w') as f:
                        for item in config:
                            f.write("%s\n" % item)
