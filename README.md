@@ -30,6 +30,7 @@ Switching will work with different models of cameras, right click on the image.
 ## Waveshare imx290-83
 add dtoverlay=imx290,clock-frequency=37125000 to config.txt , add cam0 or cam1 if using a Pi5.
 You may need to add https://drive.google.com/file/d/1dRddao1-wdpd40zETrsnbiiuUJrbWMjx/view as imx290.json to /usr/share/libcamera/ipa/rpi/pisp if using a Pi5
+To add IR Filter switching put a wire between GPIO26 (pin37) on the Pi and the GPIO 'hole' on the camera.
 
 ## Screenshot
 
