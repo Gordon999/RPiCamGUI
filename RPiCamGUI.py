@@ -33,7 +33,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.08
+version = 5.09
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -55,49 +55,49 @@ FUP            = 21  # Pi v3 camera Focus UP GPIO button
 FDN            = 16  # Pi v3 camera Focus DN GPIO button
 sw_ir          = 26  # Waveshare IR Filter switch
 STR            = 12  # external trigger for capture
-str_cap        = 0   # 0 = STILL,1 = VIDEO, 2 = STREAM, 3 = TIMELAPSE
 
 # set sq_dis = 1 for a square display, 0 for normal
 sq_dis = 0
 
 # set default values (see limits below)
-rotate      = 0       # rotate preview ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
-camera      = 0       # choose camera to use, usually 0 unless using a Pi5 or multiswitcher
-mode        = 1       # set camera mode ['manual','normal','sport'] 
-speed       = 16      # position in shutters list (16 = 1/125th)
-gain        = 0       # set gain 
-brightness  = 0       # set camera brightness
-contrast    = 70      # set camera contrast 
-ev          = 0       # eV correction 
-blue        = 12      # blue balance 
-red         = 15      # red balance 
-extn        = 0       # still file type  (0 = jpg)
-vlen        = 10      # video length in seconds
-fps         = 25      # video fps
-vformat     = 10      # set video format (10 = 1920x1080)
-codec       = 0       # set video codec  (0 = h264)
-tinterval   = 60      # time between timelapse shots in seconds
-tshots      = 10      # number of timelapse shots
-saturation  = 10      # picture colour saturation
-meter       = 2       # metering mode (2 = average)
-awb         = 1       # auto white balance mode, off, auto etc (1 = auto)
-sharpness   = 15      # set sharpness level
-denoise     = 1       # set denoise level
-quality     = 93      # set quality level
-profile     = 0       # set h264 profile
-level       = 0       # set h264 level
-histogram   = 0       # OFF = 0
-histarea    = 50      # set histogram size
-v3_f_mode   = 0       # v3 focus mode
-v3_f_range  = 0       # v3 focus range
-v3_f_speed  = 0       # v3 focus speed
-IRF         = 0       # Waveshare imx290-83 IR filter, 1 = ON
+rotate      = 0   # rotate preview ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
+camera      = 0   # choose camera to use, usually 0 unless using a Pi5 or multiswitcher
+mode        = 1   # set camera mode ['manual','normal','sport'] 
+speed       = 16  # position in shutters list (16 = 1/125th)
+gain        = 0   # set gain 
+brightness  = 0   # set camera brightness
+contrast    = 70  # set camera contrast 
+ev          = 0   # eV correction 
+blue        = 12  # blue balance 
+red         = 15  # red balance 
+extn        = 0   # still file type  (0 = jpg)
+vlen        = 10  # video length in seconds
+fps         = 25  # video fps
+vformat     = 10  # set video format (10 = 1920x1080)
+codec       = 0   # set video codec  (0 = h264)
+tinterval   = 60  # time between timelapse shots in seconds
+tshots      = 10  # number of timelapse shots
+saturation  = 10  # picture colour saturation
+meter       = 2   # metering mode (2 = average)
+awb         = 1   # auto white balance mode, off, auto etc (1 = auto)
+sharpness   = 15  # set sharpness level
+denoise     = 1   # set denoise level
+quality     = 93  # set quality level
+profile     = 0   # set h264 profile
+level       = 0   # set h264 level
+histogram   = 0   # OFF = 0
+histarea    = 50  # set histogram size
+v3_f_mode   = 0   # v3 focus mode
+v3_f_range  = 0   # v3 focus range
+v3_f_speed  = 0   # v3 focus speed
+IRF         = 0   # Waveshare imx290-83 IR filter, 1 = ON
+str_cap     = 0   # 0 = STILL,1 = VIDEO, 2 = STREAM, 3 = TIMELAPSE
 # NOTE if you change any of the above defaults you need to delete the con_file and restart.
 
 # default directories and files
 pic         = "Pictures"
 vid         = "Videos"
-con_file    = "PiLCConfig14.txt"
+con_file    = "PiLCConfig15.txt"
 
 # setup directories
 Home_Files  = []
@@ -159,7 +159,6 @@ if sq_dis == 1:
 else:
     dis_height = preview_height
 
-
 # set button sizes
 bw = int(preview_width/8)
 bh = int(preview_height/16)
@@ -197,6 +196,7 @@ v3_f_modes   = ['auto','manual','continuous']
 v3_f_ranges  = ['normal','macro','full']
 v3_f_speeds  = ['normal','fast']
 histograms   = ["OFF","Red","Green","Blue","Lum","ALL"]
+strs         = ["Still","Video","Stream","Timelapse"]
 
 #check linux version.
 if os.path.exists ("/run/shm/lv.txt"): 
@@ -236,12 +236,13 @@ still_limits = ['mode',0,len(modes)-1,'speed',0,len(shutters)-1,'gain',0,30,'bri
                 'denoise',0,len(denoises)-1,'quality',0,100,'red',1,80,'extn',0,len(extns)-1,'saturation',0,20,'meter',0,len(meters)-1,'awb',0,len(awbs)-1,
                 'histogram',0,len(histograms)-1,'v3_f_speed',0,len(v3_f_speeds)-1]
 video_limits = ['vlen',0,3600,'fps',1,40,'focus',0,2500,'vformat',0,7,'0',0,0,'zoom',0,5,'Focus',0,1,'tduration',1,9999,'tinterval',0,999,'tshots',1,999,
-                'flicker',0,3,'codec',0,len(codecs)-1,'profile',0,len(h264profiles)-1,'v3_focus',0,1023,'histarea',10,50,'v3_f_range',0,len(v3_f_ranges)-1]
+                'flicker',0,3,'codec',0,len(codecs)-1,'profile',0,len(h264profiles)-1,'v3_focus',0,1023,'histarea',10,50,'v3_f_range',0,len(v3_f_ranges)-1,
+                'str_cap',0,len(strs)-1]
 
 # check config_file exists, if not then write default values
 if not os.path.exists(config_file):
     points = [mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation,
-              meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF]
+              meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap]
     with open(config_file, 'w') as f:
         for item in points:
             f.write("%s\n" % item)
@@ -287,6 +288,7 @@ v3_f_speed  = config[29]
 v3_f_range  = config[30]
 #rotate      = config[31]
 IRF         = config[32]
+str_cap     = config[33]
 
 if codec > len(codecs)-1:
     codec = 0
@@ -844,6 +846,9 @@ def Menu():
   else:
     button(0,15,0,5)
     button(1,15,0,5)
+    text(1,15,2,0,1,"Ext Trig: " + str(STR),ft,7)
+    text(1,15,3,1,1,strs[str_cap],fv,7)
+    draw_Vbar(1,15,greyColor,'str_cap',str_cap)
     button(0,13,0,5)
     button(1,7,0,9)
     text(1,7,5,0,1,"FOCUS",ft,7)
@@ -3860,6 +3865,28 @@ while True:
                 restart = 1
                 time.sleep(.25)
 
+            elif button_row == 16 and Pi_Cam != 3:
+                # EXT TRIGGER (NOT v3 camera)
+                for f in range(0,len(video_limits)-1,3):
+                    if video_limits[f] == 'str_cap':
+                        pmin = video_limits[f+1]
+                        pmax = video_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row-1)*bh) + int(bh/3)):
+                    str_cap = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + bh  and mousey < preview_height + (bh*3) + int(bh/3)):
+                    str_cap = int(((mousex-((button_row - 8)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (sq_dis == 0 and mousex < preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 0):
+                        str_cap -=1
+                        str_cap = max(str_cap,pmin)
+                    else:
+                        str_cap +=1
+                        str_cap = min(str_cap,pmax)
+                text(1,15,3,1,1,strs[str_cap],fv,7)
+                draw_Vbar(1,15,greyColor,'str_cap',str_cap)
+                restart = 1
+                time.sleep(.25)
+
                
             elif button_row == 14:
                 if (sq_dis == 0 and mousex < preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 0):
@@ -3898,6 +3925,7 @@ while True:
                    config[30] = v3_f_range
                    config[31] = rotate
                    config[32] = IRF
+                   config[33] = str_cap
                    with open(config_file, 'w') as f:
                        for item in config:
                            f.write("%s\n" % item)
