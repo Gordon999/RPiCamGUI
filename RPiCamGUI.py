@@ -55,7 +55,7 @@ FUP            = 21  # Pi v3 camera Focus UP GPIO button
 FDN            = 16  # Pi v3 camera Focus DN GPIO button
 sw_ir          = 26  # Waveshare IR Filter switch
 STR            = 12  # external trigger for capture
-str_cap        = 1   # 0 = STILL,1 = VIDEO, 2 = STREAM, 3 = TIMELAPSE
+str_cap        = 3   # 0 = STILL,1 = VIDEO, 2 = STREAM, 3 = TIMELAPSE
 
 # set sq_dis = 1 for a square display, 0 for normal
 sq_dis = 0
@@ -1573,8 +1573,8 @@ while True:
                   button_column = 2
                   button_row = 1
               elif str_cap == 3:
-                  button_column = 10
-                  button_row = 1
+                  button_column = 2
+                  button_row = 10
               str_btn = 0
           print(button_column,button_row)
           
