@@ -33,7 +33,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.07
+version = 5.08
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -54,7 +54,8 @@ frame          = 1   # set to 0 for NO frame (i.e. if using Pi 7" touchscreen)
 FUP            = 21  # Pi v3 camera Focus UP GPIO button
 FDN            = 16  # Pi v3 camera Focus DN GPIO button
 sw_ir          = 26  # Waveshare IR Filter switch
-STR            = 12  # external trigger for stills 
+STR            = 12  # external trigger for capture
+str_cap        = 1   # 0 = STILL,1 = VIDEO, 2 = STREAM, 3 = TIMELAPSE
 
 # set sq_dis = 1 for a square display, 0 for normal
 sq_dis = 0
@@ -1416,7 +1417,10 @@ while True:
 
     if buttonSTR.is_pressed:
         type = pygame.MOUSEBUTTONUP
-        click_event = pygame.event.Event(type, {"button": 1, "pos": (0,0)})
+        if str_cap == 2:
+            click_event = pygame.event.Event(type, {"button": 3, "pos": (0,0)})
+        else:
+            click_event = pygame.event.Event(type, {"button": 1, "pos": (0,0)})
         pygame.event.post(click_event)
     
     #check for any mouse button presses
@@ -1455,7 +1459,7 @@ while True:
                 restart = 1
                     
         # SWITCH CAMERA
-        if mousex < preview_width and mousey < preview_height and event.button == 3:
+        if mousex < preview_width and mousey < preview_height and mousex != 0 and mousey != 0 and event.button == 3:
             camera += 1
             if camera > max_camera:
                 camera = 0
@@ -1515,11 +1519,6 @@ while True:
             str_btn = 1
         # determine button pressed
         if (mousex > preview_width or (sq_dis == 1 and mousey > preview_height)) or str_btn == 1:
-          # take still on STR button press
-          if str_btn == 1:
-              button_column = 1
-              button_row = 1
-              str_btn = 0
           # normal layout(buttons on right)
           if mousex > preview_width:
               button_column = int((mousex-preview_width)/bw) + 1
@@ -1563,9 +1562,25 @@ while True:
                       button_pos = 1
                   else:
                       button_pos = 0
+                      
+          # capture on STR button press
+          if str_btn == 1:
+              print(str_cap)
+              if str_cap == 0:
+                  button_column = 1
+                  button_row = 1
+              elif str_cap == 1 or str_cap == 2:
+                  button_column = 2
+                  button_row = 1
+              elif str_cap == 3:
+                  button_column = 10
+                  button_row = 1
+              str_btn = 0
+          print(button_column,button_row)
           
           if button_column == 1:
             if button_row == 1 :
+                     
                         # TAKE STILL
                         os.killpg(p.pid, signal.SIGTERM)
                         button(0,0,1,4)
@@ -2202,8 +2217,6 @@ while True:
                 else:
                     IRF  +=1
                     IRF = min(IRF ,1)
-
-                #text(0,13,5,0,1,"Scientific",fv,10)
                 if IRF == 0:
                     text(0,13,3,1,1,"Off",fv,10)
                     led_sw_ir.off()
