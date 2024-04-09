@@ -33,7 +33,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.06
+version = 5.07
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -54,6 +54,7 @@ frame          = 1   # set to 0 for NO frame (i.e. if using Pi 7" touchscreen)
 FUP            = 21  # Pi v3 camera Focus UP GPIO button
 FDN            = 16  # Pi v3 camera Focus DN GPIO button
 sw_ir          = 26  # Waveshare IR Filter switch
+STR            = 12  # external trigger for stills 
 
 # set sq_dis = 1 for a square display, 0 for normal
 sq_dis = 0
@@ -144,7 +145,9 @@ zwidth      = igw
 zheight     = igh
 buttonFUP   = Button(FUP)
 buttonFDN   = Button(FDN)
+buttonSTR   = Button(STR)
 led_sw_ir   = LED(sw_ir)
+str_btn     = 0
 
 if tinterval > 0:
     tduration  = tshots * tinterval
@@ -174,12 +177,13 @@ extns2       = ['jpg','png','bmp','data','data','dng']
 vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,2028,2028,2304,2592,3280,3840,4032,4056,4608,4656,8000,9152,9248]
 vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1080,1520,1296,1944,2464,2160,3024,3040,2592,3496,6000,6944,6944]
 v_max_fps    = [200,120, 40,  40,  40,  30,  60,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  10,  20,  20,  20,  20, 20]
-v3_max_fps   = [200,120,125,  66,  50,  46,  30,  30,  47,  30,  30,  30,  25,  25,  20,  20,  20,  20,  20,  15,  20,  20,  20, 20]
+v3_max_fps   = [200,120,125,  66,  50,  46,  30,  30,  47,  30, 100,  30,  25,  25,  20,  20,  20,  20,  20,  15,  20,  20,  20, 20]
 v9_max_fps   = [60,  60, 60,  60,  60,  60,  60,  60,  60,  60,  60]
 zwidths      = [640,800,1280,2592,3280,4056,4656,9152]
 zheights     = [480,600, 960,1944,2464,3040,3496,6944]
-zws          = [864,1080,1728,2592,1093,1367,2187,3280,1536,1920,3072,4608,1352,1690,2704,4056,1552,1940,3104,4656,3050,3813,6101,9152,485,606,970,1456,3082,3850,6165,9248,640,800,1280,1920]
-zhs          = [648, 810,1296,1944, 821,1027,1643,2464, 864,1080,1728,2592,1013,1267,2027,3040,1165,1457,2331,3496,2288,2860,4576,6944,362,453,725,1088,2314,2893,4629,6944,360,450,720,1080]
+x_sens       = [0,2592,3280,4608,4056,4656,9152,1456,9248,1920]
+y_sens       = [0,1944,2464,2592,3040,3496,6944,1088,6944,1080]
+zfs          = [1,1,0.666666,0.4166666,0.333333]
 shutters     = [-4000,-2000,-1600,-1250,-1000,-800,-640,-500,-400,-320,-288,-250,-240,-200,-160,-144,-125,-120,-100,-96,-80,-60,-50,-48,-40,-30,-25,-20,-15,-13,-10,-8,-6,-5,-4,-3,
                 0.4,0.5,0.6,0.8,1,1.1,1.2,2,3,4,5,6,7,8,9,10,11,15,20,25,30,40,50,60,75,100,112,120,150,200,220,230,239,435,500,600,650,660,670]
 codecs       = ['h264','mjpeg','yuv420','raw']
@@ -288,7 +292,7 @@ if codec > len(codecs)-1:
     
 def Camera_Version():
     # Check for Pi Camera version
-    global lver,v3_af,camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams
+    global lver,v3_af,camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,x_sens,y_sens,igw,igh
     global cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits
     global speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8,max_vf_9,IRF
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
@@ -379,6 +383,9 @@ def Camera_Version():
         print("No Camera Found")
         pygame.display.quit()
         sys.exit()
+
+    igw = x_sens[Pi_Cam]
+    igh = y_sens[Pi_Cam]
             
     if max_camera == 1 and cam0 == cam1:
         same_cams = 1
@@ -752,7 +759,7 @@ def preview():
     #print(datastr)
     restart = 0
     time.sleep(0.2)
-    if (Pi_Cam == 3 or Pi_Cam == 9) and rotate == 0:
+    if (Pi_Cam == 3 or Pi_Cam == 9) and rotate == 0 and zoom != 5:
         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,int(preview_height *.24) ))
 
 def v3_focus_manual():
@@ -1150,7 +1157,7 @@ while True:
                  os.remove(pics[tt])
         except pygame.error:
             pass
-        if Pi_Cam == 3 or Pi_Cam == 9  and zoom < 5:
+        if (Pi_Cam == 3 or Pi_Cam == 9)  and zoom < 5:
             if rotate == 0:
                 image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
             else:
@@ -1404,9 +1411,13 @@ while True:
                 text(20,2,3,2,0,"Focus : " + str(int(foc)),fv* 2,0)
                 time.sleep(.15)
                 fcount += 1
-        
 
         pygame.display.update()
+
+    if buttonSTR.is_pressed:
+        type = pygame.MOUSEBUTTONUP
+        click_event = pygame.event.Event(type, {"button": 1, "pos": (0,0)})
+        pygame.event.post(click_event)
     
     #check for any mouse button presses
     for event in pygame.event.get():
@@ -1415,7 +1426,7 @@ while True:
           pygame.quit()
       elif (event.type == MOUSEBUTTONUP):
         mousex, mousey = event.pos
-        if mousex < preview_width and mousey < preview_height and rotate == 0 and event.button != 3:
+        if mousex < preview_width and mousey < preview_height and mousex != 0 and mousey != 0 and rotate == 0 and event.button != 3:
             xx = mousex
             xx = min(xx,preview_width - histarea)
             xx = max(xx,histarea)
@@ -1499,9 +1510,16 @@ while True:
                     else:
                         button_pos = 0
             y = button_row-1
-                
+
+        if mousex == 0 and mousey == 0:
+            str_btn = 1
         # determine button pressed
-        if mousex > preview_width or (sq_dis == 1 and mousey > preview_height):
+        if (mousex > preview_width or (sq_dis == 1 and mousey > preview_height)) or str_btn == 1:
+          # take still on STR button press
+          if str_btn == 1:
+              button_column = 1
+              button_row = 1
+              str_btn = 0
           # normal layout(buttons on right)
           if mousex > preview_width:
               button_column = int((mousex-preview_width)/bw) + 1
@@ -1545,7 +1563,7 @@ while True:
                       button_pos = 1
                   else:
                       button_pos = 0
-  
+          
           if button_column == 1:
             if button_row == 1 :
                         # TAKE STILL
@@ -1605,7 +1623,7 @@ while True:
                         datastr += " --saturation " + str(saturation/10)
                         datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --quality " + str(quality)
-                        datastr += " --denoise " + denoises[denoise] # + " --width 2304 --height 1296"
+                        datastr += " --denoise " + denoises[denoise]
                         if Pi_Cam == 4 and scientific == 1:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
@@ -1628,10 +1646,12 @@ while True:
                             datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                         elif Pi_Cam == 6:
                             datastr += " --width 9152 --height 6944"
-                        if zoom > 0 and zoom < 5:
-                            zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
-                            zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                        if zoom > 1 and zoom < 5:
+                            zws = int(igw * zfs[zoom])
+                            zhs = int(igh * zfs[zoom])
+                            zxo = ((igw-zws)/2)/igw
+                            zyo = ((igh-zhs)/2)/igh
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                         if zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
                             zyo = ((igh/2)-(preview_height/2))/igh
@@ -2638,9 +2658,11 @@ while True:
                             elif Pi_Cam == 6:
                                 datastr += " --width 9152 --height 6944"
                             if zoom > 0 and zoom < 5:
-                                zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
-                                zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                                zws = int(igw * zfs[zoom])
+                                zhs = int(igh * zfs[zoom])
+                                zxo = ((igw-zws)/2)/igw
+                                zyo = ((igh-zhs)/2)/igh
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                             if zoom == 5:
                                 zxo = ((igw/2)-(preview_width/2))/igw
                                 zyo = ((igh/2)-(preview_height/2))/igh
@@ -2805,9 +2827,11 @@ while True:
                                     elif Pi_Cam == 6:
                                         datastr += " --width 9152 --height 6944"
                                     if zoom > 0 and zoom < 5:
-                                        zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
-                                        zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                                        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                                        zws = int(igw * zfs[zoom])
+                                        zhs = int(igh * zfs[zoom])
+                                        zxo = ((igw-zws)/2)/igw
+                                        zyo = ((igh-zhs)/2)/igh
+                                        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                                     if zoom == 5:
                                         zxo = ((igw/2)-(preview_width/2))/igw
                                         zyo = ((igh/2)-(preview_height/2))/igh
@@ -2955,9 +2979,11 @@ while True:
                             if (Pi_Cam == 3 and v3_af == 1) and v3_hdr == 1:
                                 datastr += " --hdr"
                             if zoom > 0 and zoom < 5 :
-                                zxo = ((igw-zws[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igw
-                                zyo = ((igh-zhs[(4-zoom) + ((Pi_Cam-1)* 4)])/2)/igh
-                                datastr += " --mode 1920:1440:10 --roi " + str(zxo) + "," + str(zyo) + "," + str(zws[(4-zoom) + ((Pi_Cam-1)* 4)]/igw) + "," + str(zhs[(4-zoom) + ((Pi_Cam-1)* 4)]/igh)
+                                zws = int(igw * zfs[zoom])
+                                zhs = int(igh * zfs[zoom])
+                                zxo = ((igw-zws)/2)/igw
+                                zyo = ((igh-zhs)/2)/igh
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                             if zoom == 5:
                                 zxo = ((igw/2)-(preview_width/2))/igw
                                 zyo = ((igh/2)-(preview_height/2))/igh
@@ -3631,8 +3657,9 @@ while True:
                     button(1,8,0,9)
                     text(1,8,5,0,1,"Zoom",ft,7)
                     text(1,8,3,1,1,"",fv,7)
-                    button(1,7,0,9)
-                    text(1,7,5,0,1,"FOCUS",ft,7)
+                    if foc_man == 0:
+                        button(1,7,0,9)
+                        text(1,7,5,0,1,"FOCUS",ft,7)
                     # determine if camera native format
                     vw = 0
                     x = 0
