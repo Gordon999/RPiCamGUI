@@ -17,6 +17,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
+
 import time
 import pygame
 from pygame.locals import *
@@ -33,7 +34,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.09
+version = 5.11
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -92,12 +93,13 @@ v3_f_range  = 0   # v3 focus range
 v3_f_speed  = 0   # v3 focus speed
 IRF         = 0   # Waveshare imx290-83 IR filter, 1 = ON
 str_cap     = 0   # 0 = STILL,1 = VIDEO, 2 = STREAM, 3 = TIMELAPSE
+v3_hdr      = 0   # HDR (v3 camera or Pi5 ONLY)
 # NOTE if you change any of the above defaults you need to delete the con_file and restart.
 
 # default directories and files
 pic         = "Pictures"
 vid         = "Videos"
-con_file    = "PiLCConfig15.txt"
+con_file    = "PiLCConfig16.txt"
 
 # setup directories
 Home_Files  = []
@@ -197,6 +199,7 @@ v3_f_ranges  = ['normal','macro','full']
 v3_f_speeds  = ['normal','fast']
 histograms   = ["OFF","Red","Green","Blue","Lum","ALL"]
 strs         = ["Still","Video","Stream","Timelapse"]
+v3_hdrs      = ["off","single-exp","auto","sensor"]
 
 #check linux version.
 if os.path.exists ("/run/shm/lv.txt"): 
@@ -227,7 +230,7 @@ if mod[3] == "Zero":
     Pi = 0
 else:
     Pi = int(mod[3])
-print(Pi)
+print("Pi: ",Pi)
 if Pi == 5:
     codecs.append('mp4')
     codecs2.append('mp4')
@@ -242,7 +245,7 @@ video_limits = ['vlen',0,3600,'fps',1,40,'focus',0,2500,'vformat',0,7,'0',0,0,'z
 # check config_file exists, if not then write default values
 if not os.path.exists(config_file):
     points = [mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation,
-              meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap]
+              meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr]
     with open(config_file, 'w') as f:
         for item in points:
             f.write("%s\n" % item)
@@ -289,6 +292,7 @@ v3_f_range  = config[30]
 #rotate      = config[31]
 IRF         = config[32]
 str_cap     = config[33]
+v3_hdr      = config[34]
 
 if codec > len(codecs)-1:
     codec = 0
@@ -297,7 +301,7 @@ def Camera_Version():
     # Check for Pi Camera version
     global lver,v3_af,camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,x_sens,y_sens,igw,igh
     global cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits
-    global speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8,max_vf_9,IRF
+    global speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8,max_vf_9,IRF,foc_sub3,foc_sub5,v3_hdr
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('libcams.txt'):
         os.rename('libcams.txt', 'oldlibcams.txt')
@@ -381,7 +385,7 @@ def Camera_Version():
                 max_gain = max_gains[Pi_Cam]
                 mag = int(max_gain/4)
                 still_limits[8] = max_gain
-    #print(Pi_Cam)
+    print("Camera: ",Pi_Cam)
     if Pi_Cam == -1:
         print("No Camera Found")
         pygame.display.quit()
@@ -398,6 +402,8 @@ def Camera_Version():
             led_sw_ir.off()
         else:
             led_sw_ir.on()
+    if Pi_Cam != 3 and v3_hdr > 0:
+        v3_hdr = 1
     if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8:
         # read /boot/config.txt file
         if lver != "bookworm":
@@ -412,6 +418,26 @@ def Camera_Version():
             while line:
                 configtxt.append(line.strip())
                 line = file.readline()
+        # determine /dev/v4l-subdevX for Pi v3 and Arducam 16/64MP cameras
+        foc_sub3 = -1
+        foc_sub5 = -1
+        if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8: 
+          for x in range(0,10):
+            if os.path.exists("ctrls1.txt"):
+                os.remove("ctrls1.txt")
+            os.system("v4l2-ctl -d /dev/v4l-subdev" + str(x) + " --list-ctrls >> ctrls1.txt")
+            time.sleep(0.25)
+            ctrlstxt = []
+            with open("ctrls1.txt", "r") as file:
+                line = file.readline()
+                while line:
+                    ctrlstxt.append(line.strip())
+                    line = file.readline()
+            for a in range(0,len(ctrlstxt)):
+                if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=4095":
+                    foc_sub5 = x
+                if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=1023":
+                    foc_sub3 = x
     pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + cameras[Pi_Cam] + " Camera" )               
     # max video formats (not for h264)
     max_vf_9  = 10
@@ -676,7 +702,10 @@ def draw_Vbar(col,row,color,msg,value):
     pygame.display.update()
 
 def preview():
-    global use_ard,lver,Pi,scientif,scientific,fxx,fxy,fxz,v3_focus,v3_hdr,v3_f_mode,v3_f_modes,prev_fps,focus_fps,focus_mode,restart,datastr,count,p, brightness,contrast,modes,mode,red,blue,gain,sspeed,ev,preview_width,preview_height,zoom,igw,igh,zx,zy,awbs,awb,saturations,saturation,meters,meter,flickers,flicker,sharpnesss,sharpness,rotate
+    global use_ard,lver,Pi,scientif,scientific,fxx,fxy,fxz,v3_focus,v3_hdr,v3_f_mode,v3_f_modes,prev_fps,focus_fps,focus_mode,restart,datastr
+    global count,p, brightness,contrast,modes,mode,red,blue,gain,sspeed,ev,preview_width,preview_height,zoom,igw,igh,zx,zy,awbs,awb,saturations
+    global saturation,meters,meter,flickers,flicker,sharpnesss,sharpness,rotate,v3_hdrs
+    
     files = glob.glob('/run/shm/*.jpg')
     for f in files:
         os.remove(f)
@@ -740,8 +769,8 @@ def preview():
         datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
     if (Pi_Cam == 3 and v3_af == 1) and v3_f_range != 0:
         datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-    if Pi_Cam == 3 and v3_hdr == 1:
-        datastr += " --hdr"
+    if Pi_Cam == 3 or Pi == 5:
+        datastr += " --hdr " + v3_hdrs[v3_hdr]
     if Pi_Cam == 4 and scientific == 1:
         if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
@@ -762,7 +791,7 @@ def preview():
     #print(datastr)
     restart = 0
     time.sleep(0.2)
-    if (Pi_Cam == 3 or Pi_Cam == 9) and rotate == 0 and zoom != 5:
+    if (Pi_Cam == 3) and rotate == 0 and zoom != 5:
         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,int(preview_height *.24) ))
 
 def v3_focus_manual():
@@ -796,9 +825,10 @@ button(1,9,0,2)
 button(1,13,0,5)
 button(1,14,0,5)
 button(0,14,0,5)
+button(0,13,6,4)
 
 def Menu():
-  global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz
+  global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz,v3_hdr,v3_hdrs
   if Pi_Cam == 6 and mode == 0:
     text(0,0,1,1,1,"STILL    2x2",ft,7)
   else:
@@ -811,22 +841,21 @@ def Menu():
     text(1,7,3,1,1,"auto",fv,7)
     if foc_man == 1:
         text(1,7,3,1,1,"manual",fv,0)
+        
+  if Pi_Cam == 3 or Pi == 5:
+      button(0,13,6,4)
+      text(0,13,5,0,1,"HDR",fv,10)
+      text(0,13,3,1,1,v3_hdrs[v3_hdr],fv,10)
    
   draw_Vbar(1,3,lpurColor,'vformat',vformat)
-  if (Pi_Cam == 3 and v3_af == 1):
+  if Pi_Cam == 3 and v3_af == 1:
     button(0,15,0,5)
     button(1,15,0,5)
-    button(0,13,6,4)
     text(0,15,2,0,1,"Focus Speed",ft,7)
     text(0,15,3,1,1,v3_f_speeds[v3_f_speed],fv,7)
     text(1,15,2,0,1,"Focus Range",ft,7)
     text(1,15,3,1,1,v3_f_ranges[v3_f_range],fv,7)
     text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
-    text(0,13,5,0,1,"HDR",fv,10)
-    if v3_hdr == 0:
-        text(0,13,3,1,1,"Off",fv,10)
-    else:
-        text(0,13,3,1,1,"ON ",fv,10)
     if v3_f_mode == 1 :
         button(1,7,1,9)
         draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
@@ -849,7 +878,6 @@ def Menu():
     text(1,15,2,0,1,"Ext Trig: " + str(STR),ft,7)
     text(1,15,3,1,1,strs[str_cap],fv,7)
     draw_Vbar(1,15,greyColor,'str_cap',str_cap)
-    button(0,13,0,5)
     button(1,7,0,9)
     text(1,7,5,0,1,"FOCUS",ft,7)
     if zoom == 0:
@@ -876,12 +904,12 @@ def Menu():
       draw_Vbar(1,8,greyColor,'zoom',zoom)
       
   if Pi_Cam == 4 and scientif == 1:
-    button(0,13,6,4)
-    text(0,13,5,0,1,"Scientific",fv,10)
+    button(0,15,6,4)
+    text(0,15,5,0,1,"Scientific",fv,10)
     if scientific == 0:
-        text(0,13,3,1,1,"Off",fv,10)
+        text(0,15,3,1,1,"Off",fv,10)
     else:
-        text(0,13,3,1,1,"ON ",fv,10)
+        text(0,15,3,1,1,"ON ",fv,10)
   if Pi_Cam == 9:
     button(0,13,6,4)
     text(0,13,5,0,1,"IR Filter",fv,10)
@@ -1077,27 +1105,6 @@ if rotate == 0:
     text(0,0,6,2,1,"Please Wait for preview...",int(fv*1.7),1)
 preview()
 
-# determine /dev/v4l-subdevX for Pi v3 and Arducam 16/64MP cameras
-foc_sub3 = -1
-foc_sub5 = -1
-for x in range(0,10):
-    if os.path.exists("ctrls1.txt"):
-        os.remove("ctrls1.txt")
-    os.system("v4l2-ctl -d /dev/v4l-subdev" + str(x) + " --list-ctrls >> ctrls1.txt")
-    time.sleep(0.25)
-    ctrlstxt = []
-    with open("ctrls1.txt", "r") as file:
-        line = file.readline()
-        while line:
-            ctrlstxt.append(line.strip())
-            line = file.readline()
-    for a in range(0,len(ctrlstxt)):
-        if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=4095":
-            foc_sub5 = x
-        if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=1023":
-            foc_sub3 = x
-
-
 # main loop
 while True:
     time.sleep(0.01)
@@ -1163,7 +1170,7 @@ while True:
                  os.remove(pics[tt])
         except pygame.error:
             pass
-        if (Pi_Cam == 3 or Pi_Cam == 9)  and zoom < 5:
+        if (Pi_Cam == 3)  and zoom < 5:
             if rotate == 0:
                 image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
             else:
@@ -1430,9 +1437,11 @@ while True:
     
     #check for any mouse button presses
     for event in pygame.event.get():
+      #QUIT
       if event.type == QUIT:
           os.killpg(p.pid, signal.SIGTERM)
           pygame.quit()
+      # MOVE HISTAREA
       elif (event.type == MOUSEBUTTONUP):
         mousex, mousey = event.pos
         if mousex < preview_width and mousey < preview_height and mousex != 0 and mousey != 0 and rotate == 0 and event.button != 3:
@@ -1570,7 +1579,6 @@ while True:
                       
           # capture on STR button press
           if str_btn == 1:
-              print(str_cap)
               if str_cap == 0:
                   button_column = 1
                   button_row = 1
@@ -1581,7 +1589,6 @@ while True:
                   button_column = 2
                   button_row = 10
               str_btn = 0
-          print(button_column,button_row)
           
           if button_column == 1:
             if button_row == 1 :
@@ -1660,8 +1667,8 @@ while True:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
                         if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                        if  v3_hdr == 1:
-                            datastr += " --hdr"
+                        if Pi_Cam == 3 or Pi == 5:
+                            datastr += " --hdr " + v3_hdrs[v3_hdr]
                         if Pi_Cam == 6 and mode == 0 and button_pos == 1:
                             datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                         elif Pi_Cam == 6:
@@ -1687,7 +1694,7 @@ while True:
                             if rotate != 0:
                                 image = pygame.transform.rotate(image, int(rotate * 90))
                                 pygame.image.save(image,fname[:-4]+"r." + extns2[extn])
-                            if (Pi_Cam == 3 or Pi_Cam == 9) and zoom < 5:
+                            if (Pi_Cam == 3) and zoom < 5:
                                 if rotate == 0:
                                     image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
                                 else:
@@ -2180,8 +2187,22 @@ while True:
                 time.sleep(.25)
                 restart = 1
 
-            elif button_row == 14 and (Pi_Cam == 3 and v3_af == 1):
+            elif button_row == 14 and Pi_Cam == 3:
                 # PI V3 CAMERA HDR
+                if (sq_dis == 0 and mousex < preview_width + (bw/2)) or (sq_dis == 1 and button_pos == 0):
+                    v3_hdr -=1
+                    v3_hdr  = max(v3_hdr ,0)
+                else:
+                    v3_hdr  +=1
+                    v3_hdr = min(v3_hdr ,3)
+
+                text(0,13,5,0,1,"HDR",fv,10)
+                text(0,13,3,1,1,v3_hdrs[v3_hdr],fv,10)
+                time.sleep(0.25)
+                restart = 1
+
+            elif button_row == 14 and Pi_Cam != 3 and Pi == 5:
+                # PI5 and NON V3 CAMERA HDR
                 if (sq_dis == 0 and mousex < preview_width + (bw/2)) or (sq_dis == 1 and button_pos == 0):
                     v3_hdr -=1
                     v3_hdr  = max(v3_hdr ,0)
@@ -2190,14 +2211,11 @@ while True:
                     v3_hdr = min(v3_hdr ,1)
 
                 text(0,13,5,0,1,"HDR",fv,10)
-                if v3_hdr == 0:
-                    text(0,13,3,1,1,"Off",fv,10)
-                else:
-                    text(0,13,3,1,1,"ON ",fv,10)
+                text(0,13,3,1,1,v3_hdrs[v3_hdr],fv,10)
                 time.sleep(0.25)
                 restart = 1
 
-            elif button_row == 14 and Pi_Cam == 4 and scientif == 1:
+            elif button_row == 16 and Pi_Cam == 4 and scientif == 1:
                 # v4 (HQ) CAMERA Scientific.json
                 if (sq_dis == 0 and mousex < preview_width + (bw/2)) or (sq_dis == 1 and button_pos == 0):
                     scientific -=1
@@ -2206,11 +2224,11 @@ while True:
                     scientific  +=1
                     scientific = min(scientific ,1)
 
-                text(0,13,5,0,1,"Scientific",fv,10)
+                text(0,15,5,0,1,"Scientific",fv,10)
                 if scientific == 0:
-                    text(0,13,3,1,1,"Off",fv,10)
+                    text(0,15,3,1,1,"Off",fv,10)
                 else:
-                    text(0,13,3,1,1,"ON ",fv,10)
+                    text(0,15,3,1,1,"ON ",fv,10)
                 time.sleep(0.25)
                 restart = 1
 
@@ -2368,8 +2386,8 @@ while True:
                             datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
                         if (Pi_Cam == 3 and v3_af == 1) and v3_f_range != 0:
                             datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-                        if (Pi_Cam == 3 and v3_af == 1) and v3_hdr == 1:
-                            datastr += " --hdr"
+                        if Pi_Cam == 3 or Pi == 5:
+                            datastr += " --hdr " + v3_hdrs[v3_hdr]
                         datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
                         if zoom > 0 and zoom < 5:
                             zxo = ((1920-zwidths[4 - zoom])/2)/1920
@@ -2525,8 +2543,8 @@ while True:
                             datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
                         if (Pi_Cam == 3 and v3_af == 1) and v3_f_range != 0:
                             datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-                        if (Pi_Cam == 3 and v3_af == 1) and v3_hdr == 1:
-                            datastr += " --hdr"
+                        if Pi_Cam == 3 or Pi == 5:
+                            datastr += " --hdr " + v3_hdrs[v3_hdr]
                         datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
                         if zoom > 0 and zoom < 5:
                             zxo = ((1920-zwidths[4 - zoom])/2)/1920
@@ -2669,8 +2687,8 @@ while True:
                                 datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
                             if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                            if  v3_hdr == 1:
-                                datastr += " --hdr"
+                            if Pi_Cam == 3 or Pi == 5:
+                                datastr += " --hdr " + v3_hdrs[v3_hdr]
                             if Pi_Cam == 6 and mode == 0 and button_pos == 2:
                                 datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                             elif Pi_Cam == 6:
@@ -2838,8 +2856,8 @@ while True:
                                         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
                                     if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8)  and zoom == 0:
                                         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                                    if  v3_hdr == 1:
-                                        datastr += " --hdr"
+                                    if Pi_Cam == 3:
+                                        datastr += " --hdr " + v3_hdrs[v3_hdr]
                                     if Pi_Cam == 6 and mode == 0 and button_pos == 2:
                                         datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                                     elif Pi_Cam == 6:
@@ -2994,8 +3012,8 @@ while True:
                                     datastr += " --lens-position " + str(v3_focus/100)
                             if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6) and use_ard == 1) or Pi_Cam == 8) and zoom == 0:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                            if (Pi_Cam == 3 and v3_af == 1) and v3_hdr == 1:
-                                datastr += " --hdr"
+                            if Pi_Cam == 3 or Pi == 5:
+                                datastr += " --hdr " + v3_hdrs[v3_hdr]
                             if zoom > 0 and zoom < 5 :
                                 zws = int(igw * zfs[zoom])
                                 zhs = int(igh * zfs[zoom])
@@ -3926,6 +3944,7 @@ while True:
                    config[31] = rotate
                    config[32] = IRF
                    config[33] = str_cap
+                   config[34] = v3_hdr
                    with open(config_file, 'w') as f:
                        for item in config:
                            f.write("%s\n" % item)
