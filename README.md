@@ -33,6 +33,10 @@ You may need to add https://drive.google.com/file/d/1dRddao1-wdpd40zETrsnbiiuUJr
 
 To add IR Filter switching put a wire between GPIO26 (pin37) on the Pi and the GPIO 'hole' on the camera.
 
+## HDR
+A Piv3 camera now has more HDR options: OFF, SINGLE EXPOSURE, AUTO, SENSOR
+On a Pi5 you can switch Single Exposure ON for any camera.
+
 ## Screenshot
 
 ![screenshot](screenshot.jpg)
