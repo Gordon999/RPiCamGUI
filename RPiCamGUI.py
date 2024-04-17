@@ -34,7 +34,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.11
+version = 5.12
 
 # if using Arducams version of libcamera set use_ard == 1
 use_ard = 0
@@ -230,7 +230,7 @@ if mod[3] == "Zero":
     Pi = 0
 else:
     Pi = int(mod[3])
-print("Pi: ",Pi)
+print("Pi:",Pi)
 if Pi == 5:
     codecs.append('mp4')
     codecs2.append('mp4')
@@ -385,7 +385,7 @@ def Camera_Version():
                 max_gain = max_gains[Pi_Cam]
                 mag = int(max_gain/4)
                 still_limits[8] = max_gain
-    print("Camera: ",Pi_Cam)
+    print("Camera:",cameras[Pi_Cam])
     if Pi_Cam == -1:
         print("No Camera Found")
         pygame.display.quit()
@@ -911,12 +911,12 @@ def Menu():
     else:
         text(0,15,3,1,1,"ON ",fv,10)
   if Pi_Cam == 9:
-    button(0,13,6,4)
-    text(0,13,5,0,1,"IR Filter",fv,10)
+    button(0,15,6,4)
+    text(0,15,5,0,1,"IR Filter",fv,10)
     if IRF == 0:
-        text(0,13,3,1,1,"Off",fv,10)
+        text(0,15,3,1,1,"Off",fv,10)
     else:
-        text(0,13,3,1,1,"ON ",fv,10)
+        text(0,15,3,1,1,"ON ",fv,10)
   
 
     
@@ -2232,7 +2232,7 @@ while True:
                 time.sleep(0.25)
                 restart = 1
 
-            elif button_row == 14 and Pi_Cam == 9:
+            elif button_row == 16 and Pi_Cam == 9:
                 # Waveshare imx290 IR Filter
                 if (sq_dis == 0 and mousex < preview_width + (bw/2)) or (sq_dis == 1 and button_pos == 0):
                     IRF -=1
@@ -2241,10 +2241,10 @@ while True:
                     IRF  +=1
                     IRF = min(IRF ,1)
                 if IRF == 0:
-                    text(0,13,3,1,1,"Off",fv,10)
+                    text(0,15,3,1,1,"Off",fv,10)
                     led_sw_ir.off()
                 else:
-                    text(0,13,3,1,1,"ON ",fv,10)
+                    text(0,15,3,1,1,"ON ",fv,10)
                     led_sw_ir.on()
                 time.sleep(0.25)
                 restart = 1
