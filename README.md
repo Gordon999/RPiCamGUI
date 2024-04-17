@@ -38,6 +38,9 @@ A Pi v3 camera now has more HDR options: OFF, SINGLE EXPOSURE, AUTO, SENSOR.
 
 On a Pi5 you can switch Single Exposure ON for any camera.
 
+## External trigger
+GPIO12 connected to gnd will trigger a capture. On any camera except Pi v3 you can set it to trigger STILL, VIDEO, STREAM or TIMELAPSE from the menu, on a Pi V3 you ned to set your choice by changing str_cap in the script
+
 ## Screenshot
 
 ![screenshot](screenshot.jpg)
