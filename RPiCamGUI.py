@@ -385,8 +385,9 @@ def Camera_Version():
                 max_gain = max_gains[Pi_Cam]
                 mag = int(max_gain/4)
                 still_limits[8] = max_gain
-    print("Camera:",cameras[Pi_Cam])
-    if Pi_Cam == -1:
+    if Pi_Cam != -1:
+        print("Camera:",cameras[Pi_Cam])
+    else:
         print("No Camera Found")
         pygame.display.quit()
         sys.exit()
