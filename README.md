@@ -13,9 +13,17 @@ Script to allow control of a Pi Camera. Will work with all Pi camera models, v1,
 To start streaming right mouse click on CAPTURE/Stream video button. Set streaming type in the script. 
 Time of streaming set by v_length.
 
-## Arducam 16/64MP cameras on Pi4...
+## Arducam 16MP AF camera on Pi4...
 
-You can use Arducam 16/64MP cameras with the default Pi Rpicam-apps (note the AF won't be the best on a Pi4 or less)... remember to add suitable dtoverlay for camera eg. dtoverlay=imx519 or dtoverlay=ov64a40 to /boot/config.txt (see below for a Pi5)). You can do the Arducams install and this will install their libcamera apps, and get better AF and Spot focussing if so modify the code to say use_ard = 1. The 64MP OWLSIGHT camera should work without needing the Arducam install just add dtoverlay=ov64a40 to /boot/config.txt. (No guarantee 16/64MP will work on less than a Pi4!)
+You can use a Arducam 16MP AF camera with the default Pi Rpicam-apps (note the AF won't be the best on a Pi4 or less)... remember to add suitable dtoverlay for camera eg. dtoverlay=imx519 to /boot/config.txt (see below for a Pi5)). You can do the Arducams install and this will install their libcamera apps, and get better AF and Spot focussing if so modify the code to say use_ard = 1. 
+
+## Arducam 64MP HAWKEYE AF camera on Pi4/Pi5...
+
+You can use a Arducam 64MP AF HAWKEYE camera. I recommend you do the Arducam install (https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/64MP-Hawkeye/) Remember to add suitable dtoverlay for camera eg. dtoverlay=arducam-64mp to /boot/config.txt or /boot/firmware/config.txt. Modify the python code to say use_ard = 1 and this will use their libcamera apps, and get better AF and Spot focussing.
+
+## Arducam 64MP OWLSIGHT camera on Pi4...
+
+The 64MP OWLSIGHT camera should work without needing the Arducam install just add dtoverlay=ov64a40 to /boot/config.txt. (No guarantee 16/64MP will work on less than a Pi4!)
 
 ## Arducam 16MP on a Pi5 with Pi Rpicam Apps
 
