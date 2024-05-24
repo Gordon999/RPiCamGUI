@@ -19,7 +19,7 @@ You can use a Arducam 16MP AF camera with the default Pi Rpicam-apps (note the A
 
 ## Arducam 64MP HAWKEYE AF camera on Pi4/Pi5...
 
-You can use a Arducam 64MP AF HAWKEYE camera. I recommend you do the Arducam install (https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/64MP-Hawkeye/) Remember to add suitable dtoverlay for camera eg. dtoverlay=arducam-64mp to /boot/config.txt or /boot/firmware/config.txt. Modify the python code to say use_ard = 1 and this will use their libcamera apps, and get better AF and Spot focussing.
+You can use a Arducam 64MP AF HAWKEYE camera. You need to do the Arducam install (https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/64MP-Hawkeye/) Remember to add suitable dtoverlay for camera eg. dtoverlay=arducam-64mp to /boot/config.txt or /boot/firmware/config.txt. Modify the python code to say use_ard = 1 and this will use their libcamera apps, and get better AF and Spot focussing.
 
 If you want to try using the default pi rpicam apps set use_ard = 0. Complete Arducams install first. 
 
