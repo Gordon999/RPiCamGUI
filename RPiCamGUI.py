@@ -34,7 +34,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.17
+version = 5.18
 
 # if using Arducams version of libcamera set use_ard == 1
 # recommended for Arducam 64mp HAWKEYE
@@ -152,6 +152,7 @@ buttonFDN   = Button(FDN)
 buttonSTR   = Button(STR)
 led_sw_ir   = LED(sw_ir)
 str_btn     = 0
+lo_res      = 1
 
 if tinterval > 0:
     tduration  = tshots * tinterval
@@ -301,7 +302,7 @@ if codec > len(codecs)-1:
 def Camera_Version():
     # Check for Pi Camera version
     global lver,v3_af,camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,x_sens,y_sens,igw,igh
-    global cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits
+    global cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,lo_res
     global speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8,max_vf_9,IRF,foc_sub3,foc_sub5,v3_hdr
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('libcams.txt'):
@@ -317,6 +318,7 @@ def Camera_Version():
             line = file.readline()
     max_camera = 0
     same_cams  = 0
+    lo_res = 1
     cam0 = "0"
     cam1 = "1"
     cam2 = "2"
@@ -460,6 +462,8 @@ def Camera_Version():
     if Pi_Cam == 3 and "dtoverlay=imx708" in configtxt:
         v3_af = 0
         pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + "imx708 Camera" )
+    if (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt):
+        lo_res = 0
     if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP or 64MP
         max_vformat = max_vf_6
     elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP Hawkeye
@@ -1701,7 +1705,10 @@ while True:
                         if Pi_Cam == 6 and mode == 0 and button_pos == 1:
                             datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                         elif Pi_Cam == 6:
-                            datastr += " --width 9152 --height 6944"
+                            if Pi != 5 and lo_res == 1:
+                                datastr += " --width 4624 --height 3472 "
+                            else:
+                                datastr += " --width 9152 --height 6944"
                         if zoom > 1 and zoom < 5:
                             zws = int(igw * zfs[zoom])
                             zhs = int(igh * zfs[zoom])
