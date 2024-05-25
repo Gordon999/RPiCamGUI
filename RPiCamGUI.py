@@ -34,7 +34,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.16
+version = 5.17
 
 # if using Arducams version of libcamera set use_ard == 1
 # recommended for Arducam 64mp HAWKEYE
@@ -439,7 +439,7 @@ def Camera_Version():
                 if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=4095":
                     foc_sub5 = x
                 if ctrlstxt[a][0:51] == "focus_absolute 0x009a090a (int)    : min=0 max=1023":
-                    if Pi_Cam == 3:
+                    if Pi_Cam == 3 or Pi_Cam == 8:
                         foc_sub3 = x
                     if Pi_Cam == 6:
                         foc_sub5 = x
