@@ -13,6 +13,10 @@ Script to allow control of a Pi Camera. Will work with all Pi camera models, v1,
 To start streaming right mouse click on CAPTURE/Stream video button. Set streaming type in the script. 
 Time of streaming set by v_length.
 
+## Screenshot
+
+![screenshot](screenshot.jpg)
+
 ## Arducam 16MP AF camera on Pi4...
 
 You can use a Arducam 16MP AF camera with the default Pi Rpicam-apps (note the AF won't be the best on a Pi4 or less)... remember to add suitable dtoverlay for camera eg. dtoverlay=imx519 to /boot/config.txt (see below for a Pi5)). You can do the Arducams install and this will install their libcamera apps, and get better AF and Spot focussing if so modify the code to say use_ard = 1. 
@@ -57,9 +61,7 @@ On a Pi5 you can switch Single Exposure ON for any camera.
 ## External trigger
 GPIO12 connected to gnd will trigger a capture. On any camera except Pi v3 you can set it to trigger STILL, VIDEO, STREAM or TIMELAPSE from the menu, on a Pi V3 you need to set your choice by changing str_cap in the script, default STILL.
 
-## Screenshot
 
-![screenshot](screenshot.jpg)
 
 With Pi V3 or Arducam 16/64MP Click on FOCUS button to focus. This will show manual which gives Manual Focusing, then click on 'slider' or the middle of the button, left <<< or right >>> for fine adjustment, to adjust Manual Focus. Click on the image where you want to focus and it will show a value for focus in the top left corner, adjust for a maximum. Click on lower part of the button to goto continuous , and again to go back to auto focus.
 
