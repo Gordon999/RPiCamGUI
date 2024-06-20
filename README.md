@@ -61,7 +61,7 @@ On a Pi5 you can switch Single Exposure ON for any camera.
 ## External trigger
 GPIO12 connected to gnd will trigger a capture. On any camera except Pi v3 you can set it to trigger STILL, VIDEO, STREAM or TIMELAPSE from the menu, on a Pi V3 you need to set your choice by changing str_cap in the script, default STILL.
 
-
+## Focus
 
 With Pi V3 or Arducam 16/64MP Click on FOCUS button to focus. This will show manual which gives Manual Focusing, then click on 'slider' or the middle of the button, left <<< or right >>> for fine adjustment, to adjust Manual Focus. Click on the image where you want to focus and it will show a value for focus in the top left corner, adjust for a maximum. Click on lower part of the button to goto continuous , and again to go back to auto focus.
 
@@ -71,7 +71,7 @@ Spot focussing (focus point) in Auto Focus - ONLY with Pi v3 camera - with Zoom 
 
 If not using a v3 camera in Manual or spot focus stills will use autofocus-at-capture
 
-HDR option for Pi v3 camera
+## other features
 
 Gain shows analog and digital gain. Green shows analog gain, when increased beyond a level will show yellow when applying digital gain.
 eg 153 : 64/2.4 means gain set to 153, analog gain is 64, digital gain is 2.4
