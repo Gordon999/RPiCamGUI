@@ -34,7 +34,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.18
+version = 5.21
 
 # if using Arducams version of libcamera set use_ard == 1
 # recommended for Arducam 64mp HAWKEYE
@@ -1321,11 +1321,11 @@ while True:
             if rotate != 0:
                 pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,int(preview_width/4.5),int(preview_height/8)),0)
             foc = cv2.Laplacian(gray, cv2.CV_64F).var()
-            text(20,0,3,2,0,"Focus: " + str(int(foc)),fv* 2,0)
+            text(20,1,3,2,0,"Focus: " + str(int(foc)),fv* 2,0)
             pygame.draw.rect(windowSurfaceObj,redColor,Rect(xx-histarea,xy-histarea,histarea*2,histarea*2),1)
             pygame.draw.line(windowSurfaceObj,(255,255,255),(xx-int(histarea/2),xy),(xx+int(histarea/2),xy),1)
             pygame.draw.line(windowSurfaceObj,(255,255,255),(xx,xy-int(histarea/2)),(xx,xy+int(histarea/2)),1)
-        else:
+        if zoom < 2:
             if rotate != 0:
                 pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,int(preview_width/4.5),int(preview_height/8)),0)
             text(0,0,6,2,0,"Preview",fv* 2,0)
