@@ -17,9 +17,13 @@ Time of streaming set by v_length.
 
 ![screenshot](screenshot.jpg)
 
-## Arducam 16MP AF camera on Pi4...
+## Arducam 16MP AF camera on Pi4 (or less)...
 
-You can use a Arducam 16MP AF camera with the default Pi Rpicam-apps (note the AF won't be the best on a Pi4 or less)... remember to add suitable dtoverlay for camera eg. dtoverlay=imx519 to /boot/config.txt (see below for a Pi5)). You can do the Arducams install and this will install their libcamera apps, and get better AF and Spot focussing if so modify the code to say use_ard = 1. 
+You can use a Arducam 16MP AF camera with the default Pi Rpicam-apps (note the AF won't be the best on a Pi4 or less)... remember to add suitable dtoverlay for camera eg. dtoverlay=imx519 to /boot/config.txt (see below for a Pi5)). You can do the Arducams install and this will install their libcamera apps, and get better AF and Spot focussing if so modify the code to say use_ard = 1.
+
+Make a copy of /usr/share/libcamera/ipa/rpi/pisp/imx519.json, edit "rpi.af" to "rpi.mf" and save as /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json
+
+Make a copy of /usr/share/libcamera/ipa/rpi/vc4/imx519.json, edit "rpi.af" to "rpi.mf" and save as /usr/share/libcamera/ipa/rpi/vc4/imx519mf.json
 
 ## Arducam 64MP HAWKEYE AF camera on Pi4/Pi5...
 
