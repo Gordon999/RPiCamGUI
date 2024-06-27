@@ -8,7 +8,7 @@ At your own risk !!. Ensure you have any required software backed up.
 
 Pi4B or Pi5B recommended, but will work on others including Zero2W
 
-Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP and 64MP Autofocus cameras or Waveshare imx290-83 camera. 
+Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 64MP Autofocus cameras or Waveshare imx290-83 camera. 
 
 To start streaming right mouse click on CAPTURE/Stream video button. Set streaming type in the script. 
 Time of streaming set by v_length.
@@ -17,39 +17,18 @@ Time of streaming set by v_length.
 
 ![screenshot](screenshot.jpg)
 
-## Arducam 16MP AF camera on Pi4 (or less)...
-
-You can use a Arducam 16MP AF camera with the default Pi Rpicam-apps (note the AF won't be the best on a Pi4 or less)... remember to add suitable dtoverlay for camera eg. dtoverlay=imx519 to /boot/config.txt (see below for a Pi5)). You can do the Arducams install and this will install their libcamera apps, and get better AF and Spot focussing if so modify the code to say use_ard = 1.
-
-Make a copy of /usr/share/libcamera/ipa/rpi/pisp/imx519.json, edit "rpi.af" to "rpi.mf" and save as /usr/share/libcamera/ipa/rpi/pisp/imx519mf.json
-
-Make a copy of /usr/share/libcamera/ipa/rpi/vc4/imx519.json, edit "rpi.af" to "rpi.mf" and save as /usr/share/libcamera/ipa/rpi/vc4/imx519mf.json
 
 ## Arducam 64MP HAWKEYE AF camera on Pi4/Pi5...
 
-You can use a Arducam 64MP AF HAWKEYE camera. You need to do the Arducam install (https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/64MP-Hawkeye/) Remember to add suitable dtoverlay for camera eg. dtoverlay=arducam-64mp to /boot/config.txt or /boot/firmware/config.txt. Modify the python code to say use_ard = 1 and this will use their libcamera apps, and get better AF and Spot focussing.
+You need to do the Arducam install (https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/64MP-Hawkeye/) 
+Remember to add suitable dtoverlay for camera eg. dtoverlay=arducam-64mp to /boot/config.txt or /boot/firmware/config.txt. Add cam0 or cam1 on a Pi5 as appropriate.
 
 On a Pi4 In /boot/firmware/config.txt add  dtoverlay=vc4-kms-v3d,cma-512 and then reboot.
 
-If you want to try using the default pi rpicam apps set use_ard = 0. Complete Arducams install first. 
-
-Make a copy of /usr/share/libcamera/ipa/rpi/pisp/arducam_64mp.json, edit "rpi.af" to "rpi.mf" and save as /usr/share/libcamera/ipa/rpi/pisp/arducam_64mf.json
-
-Make a copy of /usr/share/libcamera/ipa/rpi/vc4/arducam_64mp.json, edit "rpi.af" to "rpi.mf" and save as /usr/share/libcamera/ipa/rpi/vc4/arducam_64mff.json
 
 ## Arducam 64MP OWLSIGHT camera on Pi4...
 
 The 64MP OWLSIGHT camera should work without needing the Arducam install just add dtoverlay=ov64a40 to /boot/config.txt. (No guarantee 16/64MP will work on less than a Pi4!)
-
-## Arducam 16MP on a Pi5 with Pi Rpicam Apps
-
-Make a copy of https://github.com/ArduCAM/libcamera/blob/arducam/src/ipa/rpi/pisp/data/imx519.json and save it to usr/share/libcamera/ipa/rpi/pisp/imx519.json.
-
-edit imx519.json by modifying line 3691 "rpi.af" to "rpi.mf" and save as imx519mf.json and put it in usr/share/libcamera/ipa/rpi/pisp/, This json allows manual focussing.
-
-ln /boot/firmware/config.txt #camera_auto_detect=1, and add dtoverlay=imx519,cam0 or dtoverlay=imx519,cam1 as appropriate. If you have a 2nd camera add a dtoverlay for that as well.)
-
-Switching will work with different models of cameras, right click on the image.
 
 ## Waveshare imx290-83
 add dtoverlay=imx290,clock-frequency=37125000 to config.txt , add cam0 or cam1 if using a Pi5.
@@ -67,7 +46,7 @@ GPIO12 connected to gnd will trigger a capture. On any camera except Pi v3 you c
 
 ## Focus
 
-With Pi V3 or Arducam 16/64MP Click on FOCUS button to focus. This will show manual which gives Manual Focusing, then click on 'slider' or the middle of the button, left <<< or right >>> for fine adjustment, to adjust Manual Focus. Click on the image where you want to focus and it will show a value for focus in the top left corner, adjust for a maximum. Click on lower part of the button to goto continuous , and again to go back to auto focus.
+With Pi V3 or Arducam 64MP Click on FOCUS button to focus. This will show manual which gives Manual Focusing, then click on 'slider' or the middle of the button, left <<< or right >>> for fine adjustment, to adjust Manual Focus. Click on the image where you want to focus and it will show a value for focus in the top left corner, adjust for a maximum. Click on lower part of the button to goto continuous , and again to go back to auto focus.
 
 With the Pi V3 camera you can add 2 focus buttons to the Pi,up and down, GPIOs 21 & 26, to switch to gnd, to manually focus.
 
