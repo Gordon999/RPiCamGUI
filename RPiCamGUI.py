@@ -34,10 +34,12 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.22
+version = 5.24
+
+# NOTE: Arducam 16MP and 64MP HAWKEYE DISABLED 
 
 # if using Arducams version of libcamera set use_ard == 1
-# recommended for Arducam 64mp HAWKEYE
+
 use_ard = 0
 
 # streaming parameters
@@ -178,7 +180,7 @@ fv = int(preview_width/55)
 
 # data
 cameras      = ['Unknown','Pi v1','Pi v2','Pi v3','Pi HQ','Arducam 16MP','Arducam Hawkeye','Pi GS','Arducam Owlsight',"imx290"]
-camids       = ['','ov5647','imx219','imx708','imx477','imx519','arduca','imx296','ov64a4','imx290']
+camids       = ['','ov5647','imx219','imx708','imx477','','','imx296','ov64a4','imx290']
 max_gains    = [64,     255,      40,      64,      88,      64,      64,      64,     64,      64]
 max_shutters = [0,   max_v1, max_v2,   max_v3,  max_hq,max_16mp,max_64mp,  max_gs,max_64owl,max_v9]
 mags         = [64,     255,      40,      64,      88,      64,      64,      64,     64,      64]
