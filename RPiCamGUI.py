@@ -34,7 +34,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.26
+version = 5.27
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -1619,16 +1619,16 @@ while True:
                                 datastr = "rpicam-still"
                             datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -n "
                             if Pi_Cam == 8:
-                                datastr += "-t 8000 -o " + fname
+                                datastr += "-o " + fname
                             else:
-                                datastr += "-t 5000 -o " + fname
+                                datastr += "-o " + fname
                         else:
                             fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
                             if lver != "bookworm":
                                 datastr = "libcamera-still"
                             else:
                                  datastr = "rpicam-still"
-                            datastr += " --camera " + str(camera) + " -r -n -t 5000 -o " + fname
+                            datastr += " --camera " + str(camera) + " -r -n -o " + fname
                             if preview_width == 640 and preview_height == 480 and zoom == 4:
                                 datastr += " --rawfull"
                         datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
@@ -2665,9 +2665,9 @@ while True:
                                 datastr = "rpicam-still"
                             if extns[extn] != 'raw':
                                 
-                                datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -s -n -t 0 -o " + fname
+                                datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -s -t 0 -o " + fname + " -p 0,0,640,480 "
                             else:
-                                datastr += " --camera " + str(camera) + " -r -s -n -t 0 -o " + fname 
+                                datastr += " --camera " + str(camera) + " -r -s -t 0 -o " + fname + " -p 0,0,640,480 " 
                                 if preview_width == 640 and preview_height == 480 and zoom >= 4:
                                     datastr += " --rawfull"
                             datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
@@ -2783,7 +2783,7 @@ while True:
                                                     text(1,12,3,1,1,str(tshots),fv,12)
                                                     stop = 1
                                                     count = tshots
-                                        
+                                                                                        
                                     old_count = count
                                     text(1,12,1,1,1,str(tshots - count),fv,12)
                                     tdur = tinterval * (tshots - count)
@@ -2815,6 +2815,11 @@ while True:
                                             text(1,12,3,1,1,str(tshots),fv,12)
                                             stop = 1
                                             count = tshots
+                                        if button_column == 1 and button_row == 1:
+                                            if lver != "bookworm":
+                                                os.system('pkill -SIGUSR1 libcamera-still')
+                                            else:
+                                                os.system('pkill -SIGUSR1 rpicam-still')
                             if lver != "bookworm":
                                 os.system('pkill -SIGUSR2 libcamera-still')
                             else:
@@ -2843,9 +2848,9 @@ while True:
                                     else:
                                         datastr = "rpicam-still"
                                     if extns[extn] != 'raw':
-                                        datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -n -t 1000 -o " + fname
+                                        datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -t 1000 -o " + fname + " -p 0,0,640,480 "
                                     else:
-                                        datastr += " --camera " + str(camera) + " -r -n -t 1000 -o " + fname 
+                                        datastr += " --camera " + str(camera) + " -r -t 1000 -o " + fname + " -p 0,0,640,480 " 
                                         if preview_width == 640 and preview_height == 480 and zoom >= 4:
                                             datastr += " --rawfull"
                                     datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
@@ -2987,7 +2992,6 @@ while True:
                                             text(1,12,3,1,1,str(tshots),fv,12)
                                             stop = 1
                                             count = tshots
-
 
                         elif tinterval == 0:
                             if tduration == 0:
