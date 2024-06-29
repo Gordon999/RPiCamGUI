@@ -34,7 +34,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.27
+version = 5.28
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -153,6 +153,7 @@ ard_af      = 0
 show_cmds   = 0
 v3_af       = 1
 v5_af       = 1
+timet       = 5000
 
 if tinterval > 0:
     tduration  = tshots * tinterval
@@ -170,8 +171,8 @@ ft = int(preview_width/55)
 fv = int(preview_width/55)
 
 # data
-cameras      = ['Unknown','Pi v1','Pi v2','Pi v3','Pi HQ','','Arducam Hawkeye','Pi GS','Arducam Owlsight',"imx290"]
-camids       = ['','ov5647','imx219','imx708','imx477','','arduca','imx296','ov64a4','imx290']
+cameras      = ['Unknown','Pi v1','Pi v2','Pi v3','Pi HQ','Arducam 16MP','Arducam Hawkeye','Pi GS','Arducam Owlsight',"imx290"]
+camids       = ['','ov5647','imx219','imx708','imx477','imx519','arduca','imx296','ov64a4','imx290']
 max_gains    = [64,     255,      40,      64,      88,      64,      64,      64,     64,      64]
 max_shutters = [0,   max_v1, max_v2,   max_v3,  max_hq,max_16mp,max_64mp,  max_gs,max_64owl,max_v9]
 mags         = [64,     255,      40,      64,      88,      64,      64,      64,     64,      64]
@@ -240,7 +241,7 @@ if Pi == 5:
 still_limits = ['mode',0,len(modes)-1,'speed',0,len(shutters)-1,'gain',0,30,'brightness',-100,100,'contrast',0,200,'ev',-10,10,'blue',1,80,'sharpness',0,30,
                 'denoise',0,len(denoises)-1,'quality',0,100,'red',1,80,'extn',0,len(extns)-1,'saturation',0,20,'meter',0,len(meters)-1,'awb',0,len(awbs)-1,
                 'histogram',0,len(histograms)-1,'v3_f_speed',0,len(v3_f_speeds)-1]
-video_limits = ['vlen',0,3600,'fps',1,40,'v5_focus',10,2500,'vformat',0,7,'0',0,0,'zoom',0,5,'Focus',0,1,'tduration',1,9999,'tinterval',0,999,'tshots',1,999,
+video_limits = ['vlen',0,3600,'fps',1,40,'v5_focus',10,2500,'vformat',0,7,'0',0,0,'zoom',0,5,'Focus',0,1,'tduration',1,86400,'tinterval',0,3600,'tshots',1,999,
                 'flicker',0,3,'codec',0,len(codecs)-1,'profile',0,len(h264profiles)-1,'v3_focus',10,1020,'histarea',10,50,'v3_f_range',0,len(v3_f_ranges)-1,
                 'str_cap',0,len(strs)-1,'v6_focus',10,1020]
 
@@ -538,16 +539,16 @@ Camera_Version()
 pygame.init()
 if frame == 1:
     if sq_dis == 0 and fullscreen == 1:
-        windowSurfaceObj = pygame.display.set_mode((preview_width + (bw*2),dis_height),  pygame.FULLSCREEN, 24)
+        windowSurfaceObj = pygame.display.set_mode((preview_width + (bw*2),dis_height),pygame.FULLSCREEN, 24)
     elif sq_dis == 0 and fullscreen == 0:
-        windowSurfaceObj = pygame.display.set_mode((preview_width + (bw*2),dis_height),  0, 24)
+        windowSurfaceObj = pygame.display.set_mode((preview_width + (bw*2),dis_height),0,24)
     else:
-        windowSurfaceObj = pygame.display.set_mode((preview_width,dis_height), 0, 24)
+        windowSurfaceObj = pygame.display.set_mode((preview_width,dis_height),0,24)
 else:
     if sq_dis == 0:
-        windowSurfaceObj = pygame.display.set_mode((preview_width + (bw*2),dis_height), pygame.NOFRAME, 24)
+        windowSurfaceObj = pygame.display.set_mode((preview_width + (bw*2),dis_height), pygame.NOFRAME,24)
     else:
-        windowSurfaceObj = pygame.display.set_mode((preview_width,dis_height), pygame.NOFRAME, 24)
+        windowSurfaceObj = pygame.display.set_mode((preview_width,dis_height), pygame.NOFRAME,24)
 
 global greyColor, redColor, greenColor, blueColor, dgryColor, lgrnColor, blackColor, whiteColor, purpleColor, yellowColor,lpurColor,lyelColor
 bredColor =   pygame.Color(255,   0,   0)
@@ -804,11 +805,11 @@ def preview():
        
 # draw buttons
 for d in range(1,13):
-        button(0,d,6,4)
+    button(0,d,6,4)
 for d in range(1,7):
-        button(1,d,7,3)
+    button(1,d,7,3)
 for d in range(10,13):
-        button(1,d,8,2)
+    button(1,d,8,2)
 button(0,0,0,4)
 button(1,0,0,3)
 button(1,7,0,2)
@@ -837,6 +838,11 @@ def Menu():
       button(0,13,6,4)
       text(0,13,5,0,1,"HDR",fv,10)
       text(0,13,3,1,1,v3_hdrs[v3_hdr],fv,10)
+
+  if Pi_Cam != 3 and Pi != 5:
+      button(0,13,6,4)
+      text(0,13,5,0,1,"STILL -t",fv,10)
+      text(0,13,3,1,1,str(timet),fv,10)
    
   draw_Vbar(1,3,lpurColor,'vformat',vformat)
   if Pi_Cam == 3 and v3_af == 1:
@@ -1618,10 +1624,7 @@ while True:
                             else:
                                 datastr = "rpicam-still"
                             datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -n "
-                            if Pi_Cam == 8:
-                                datastr += "-o " + fname
-                            else:
-                                datastr += "-o " + fname
+                            datastr += "-t " + str(timet) + " -o " + fname
                         else:
                             fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
                             if lver != "bookworm":
@@ -2209,6 +2212,19 @@ while True:
                 time.sleep(0.25)
                 restart = 1
 
+            elif button_row == 14 and Pi_Cam != 3 and Pi != 5:
+                # CAMERA still -t time (NOT Pi v3 camera)
+                if (sq_dis == 0 and mousex < preview_width + (bw/2)) or (sq_dis == 1 and button_pos == 0):
+                    timet -=100
+                    timet  = max(timet ,100)
+                else:
+                    timet  +=100
+                    timet = min(timet ,10000)
+
+                text(0,13,5,0,1,"STILL -t",fv,10)
+                text(0,13,3,1,1,str(timet),fv,10)
+                time.sleep(0.05)
+
             elif button_row == 14 and Pi_Cam != 3 and Pi == 5:
                 # PI5 and NON V3 CAMERA HDR
                 if (sq_dis == 0 and mousex < preview_width + (bw/2)) or (sq_dis == 1 and button_pos == 0):
@@ -2642,13 +2658,13 @@ while True:
                         button(1,9,1,2)
                         text(1,9,3,0,1,"STOP",ft,0)
                         text(1,9,3,1,1,"Timelapse",ft,0)
-                        text(0,0,0,0,1,"CAPTURE",ft,7)
+                        text(0,0,1,0,1,"CAPTURE",ft,7)
                         text(1,0,0,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,0,1,1,"Video",ft,7)
                         if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
-                            text(0,0,0,1,1,"STILL    2x2",ft,7)
+                            text(0,0,1,1,1,"STILL    2x2",ft,7)
                         else:
-                            text(0,0,0,1,1,"Still ",ft,7)
+                            text(0,0,1,1,1,"Still ",ft,7)
                         tcount = 0
                         
                         if tinterval > 0 and mode != 0:
@@ -2664,10 +2680,17 @@ while True:
                             else:
                                 datastr = "rpicam-still"
                             if extns[extn] != 'raw':
-                                
-                                datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -s -t 0 -o " + fname + " -p 0,0,640,480 "
+                                datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -s -t 0 -o " + fname
+                                if fullscreen != 1:
+                                    datastr += " -p 0,0,640,480 "
+                                else:
+                                    datastr += " -n"
                             else:
-                                datastr += " --camera " + str(camera) + " -r -s -t 0 -o " + fname + " -p 0,0,640,480 " 
+                                datastr += " --camera " + str(camera) + " -r -s -t 0 -o " + fname 
+                                if fullsceen != 1:
+                                    datastr += " -p 0,0,640,480 "
+                                else:
+                                    datastr += " -n"
                                 if preview_width == 640 and preview_height == 480 and zoom >= 4:
                                     datastr += " --rawfull"
                             datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
@@ -2710,7 +2733,7 @@ while True:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if Pi_Cam == 3 or Pi == 5:
                                 datastr += " --hdr " + v3_hdrs[v3_hdr]
-                            print(Pi_Cam,mode,button_pos)
+                            #print(Pi_Cam,mode,button_pos)
                             if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
                                 datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                             elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
@@ -2820,10 +2843,22 @@ while True:
                                                 os.system('pkill -SIGUSR1 libcamera-still')
                                             else:
                                                 os.system('pkill -SIGUSR1 rpicam-still')
+                                            text(0,0,3,0,1,"CAPTURE",ft,7)
+                                            if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
+                                                text(0,0,3,1,1,"STILL    2x2",ft,7)
+                                            else:
+                                                text(0,0,3,1,1,"Still ",ft,7)
+                                            time.sleep(0.25)
+                                            text(0,0,1,0,1,"CAPTURE",ft,7)
+                                            if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
+                                                text(0,0,1,1,1,"STILL    2x2",ft,7)
+                                            else:
+                                                text(0,0,1,1,1,"Still ",ft,7)
                             if lver != "bookworm":
                                 os.system('pkill -SIGUSR2 libcamera-still')
                             else:
                                 os.system('pkill -SIGUSR2 rpicam-still')
+                                
                         elif tinterval > 0 and mode == 0:
                             text(1,9,3,0,1,"STOP",ft,0)
                             text(1,9,3,1,1,"Timelapse",ft,0)
@@ -2848,7 +2883,7 @@ while True:
                                     else:
                                         datastr = "rpicam-still"
                                     if extns[extn] != 'raw':
-                                        datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -t 1000 -o " + fname + " -p 0,0,640,480 "
+                                        datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -t " + str(timet) + " -o " + fname + " -p 0,0,640,480 "
                                     else:
                                         datastr += " --camera " + str(camera) + " -r -t 1000 -o " + fname + " -p 0,0,640,480 " 
                                         if preview_width == 640 and preview_height == 480 and zoom >= 4:
@@ -2890,7 +2925,7 @@ while True:
                                         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                                     if Pi_Cam == 3:
                                         datastr += " --hdr " + v3_hdrs[v3_hdr]
-                                    print(Pi_Cam,mode,button_pos)
+                                    #print(Pi_Cam,mode,button_pos)
                                     if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
                                         datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                                     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
