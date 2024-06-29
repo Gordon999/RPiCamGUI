@@ -8,7 +8,7 @@ At your own risk !!. Ensure you have any required software backed up.
 
 Pi4B or Pi5B recommended, but will work on others including Zero2W
 
-Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 64MP Autofocus cameras or Waveshare imx290-83 camera. 
+Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP or 64MP Autofocus cameras or Waveshare imx290-83 camera. 
 
 To start streaming right mouse click on CAPTURE/Stream video button. Set streaming type in the script. 
 Time of streaming set by v_length.
@@ -18,15 +18,15 @@ Time of streaming set by v_length.
 ![screenshot](screenshot.jpg)
 
 
-## Arducam 64MP HAWKEYE AF camera on Pi4/Pi5...
+## Arducam 16MP or 64MP HAWKEYE AF camera on Pi4/Pi5...
 
-You need to do the Arducam install (https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/64MP-Hawkeye/) 
-Remember to add suitable dtoverlay for camera eg. dtoverlay=arducam-64mp to /boot/config.txt or /boot/firmware/config.txt. Add cam0 or cam1 on a Pi5 as appropriate.
+You need to do the Arducam install. https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/16MP-IMX519/ or https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/64MP-Hawkeye/ 
+Remember to add suitable dtoverlay for camera eg. dtoverlay=imx519 or dtoverlay=arducam-64mp to /boot/config.txt or /boot/firmware/config.txt. Add cam0 or cam1 on a Pi5 as appropriate.
 
 On a Pi4 In /boot/firmware/config.txt add  dtoverlay=vc4-kms-v3d,cma-512 and then reboot.
 
 
-## Arducam 64MP OWLSIGHT camera on Pi4...
+## Arducam 64MP OWLSIGHT camera on Pi4/Pi5...
 
 The 64MP OWLSIGHT camera should work without needing the Arducam install just add dtoverlay=ov64a40 to /boot/config.txt. (No guarantee 16/64MP will work on less than a Pi4!)
 
