@@ -34,7 +34,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.28
+version = 5.29
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -1105,8 +1105,8 @@ preview()
 # main loop
 while True:
     time.sleep(0.01)
-    # focus UP Pi V3 / Arducam OWLSIGHT
-    if (Pi_Cam == 3 and v3_af == 1) or Pi_Cam == 8:
+    # focus UP button
+    if (Pi_Cam == 3 and v3_af == 1) or Pi_Cam == 8 or ((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6):
       if buttonFUP.is_pressed:
         if v3_f_mode != 1:
             focus_mode = 1
@@ -1135,8 +1135,8 @@ while True:
             text(0,0,6,2,1,"Waiting for preview ...",int(fv*1.7),1)
         preview()
 
-    # focus DOWN Pi V3 / Arducam OWLSIGHT
-    if (Pi_Cam == 3 and v3_af == 1) or Pi_Cam == 8:
+    # focus DOWN button
+    if (Pi_Cam == 3 and v3_af == 1) or Pi_Cam == 8 or ((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6):
       if buttonFDN.is_pressed:
         if v3_f_mode != 1:
             focus_mode = 1
@@ -1165,48 +1165,7 @@ while True:
             text(0,0,6,2,1,"Waiting for preview ...",int(fv*1.7),1)
         preview()    
 
-    # Arducam 16MP/64MP Hawkeye Manual FOCUS UP/DOWN
-    if ((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6) and (buttonFUP.is_pressed or buttonFDN.is_pressed):
-        if foc_man == 0:
-            if Pi_Cam == 5:
-              for f in range(0,len(video_limits)-1,3):
-                if video_limits[f] == 'v5_focus':
-                    pmin = video_limits[f+1]
-                    pmax = video_limits[f+2]
-            if Pi_Cam == 6:
-              for f in range(0,len(video_limits)-1,3):
-                if video_limits[f] == 'v6_focus':
-                    pmin = video_limits[f+1]
-                    pmax = video_limits[f+2]
-            focus_mode = 1
-            foc_man = 1 # manual focus
-            button(1,7,1,9)
-            text(1,7,3,1,1,"manual",fv,0)
-            v3_f_mode = 1
-            zoom = 0
-            poll = p.poll()
-            if poll == None:
-                os.killpg(p.pid, signal.SIGTERM)
-            if rotate == 0:
-                text(0,0,6,2,1,"Waiting for preview ...",int(fv*1.7),1)
-            preview()
-        if buttonFDN.is_pressed:
-            focus -= 10
-        elif buttonFUP.is_pressed:
-            focus += 10
-        focus = max(pmin,focus)
-        focus = min(pmax,focus)
-        v3_focus = focus
-        if Pi_Cam == 5 or Pi_Cam == 6:
-            os.system("v4l2-ctl -d /dev/v4l-subdev" + str(foc_sub5) + " -c focus_absolute=" + str(focus))
-        text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
-        if Pi_Cam == 5:
-            draw_Vbar(1,7,dgryColor,'v5_focus',focus)
-        if Pi_Cam == 6:
-            draw_Vbar(1,7,dgryColor,'v6_focus',focus)
-        time.sleep(0.15)
-
-        
+       
     pics = glob.glob('/run/shm/*.jpg')
     if len(pics) > 1:
         pics.sort(reverse=True)
@@ -1632,11 +1591,7 @@ while True:
                             else:
                                  datastr = "rpicam-still"
                             datastr += " --camera " + str(camera) + " -r -n -o " + fname
-                            if preview_width == 640 and preview_height == 480 and zoom == 4:
-                                datastr += " --rawfull"
                         datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
-                        if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom == 4:
-                            datastr += " -r --rawfull"
                         if mode == 0:
                             datastr += " --shutter " + str(sspeed)
                         else:
@@ -2691,11 +2646,7 @@ while True:
                                     datastr += " -p 0,0,640,480 "
                                 else:
                                     datastr += " -n"
-                                if preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                    datastr += " --rawfull"
                             datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
-                            if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                datastr += " -r --rawfull"
                             if mode == 0:
                                 datastr += " --shutter " + str(sspeed)
                             else:
@@ -2813,6 +2764,13 @@ while True:
                                     td = timedelta(seconds=tdur)
                                     text(1,10,1,1,1,str(td),fv,12)
                                 time.sleep(0.1)
+                                if buttonSTR.is_pressed:
+                                    type = pygame.MOUSEBUTTONUP
+                                    if str_cap == 2:
+                                        click_event = pygame.event.Event(type, {"button": 3, "pos": (0,0)})
+                                    else:
+                                        click_event = pygame.event.Event(type, {"button": 1, "pos": (0,0)})
+                                    pygame.event.post(click_event)
                                 for event in pygame.event.get():
                                     if (event.type == MOUSEBUTTONUP):
                                         mousex, mousey = event.pos
@@ -2886,11 +2844,7 @@ while True:
                                         datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -t " + str(timet) + " -o " + fname + " -p 0,0,640,480 "
                                     else:
                                         datastr += " --camera " + str(camera) + " -r -t 1000 -o " + fname + " -p 0,0,640,480 " 
-                                        if preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                            datastr += " --rawfull"
                                     datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
-                                    if extns[extn] == "jpg" and preview_width == 640 and preview_height == 480 and zoom >= 4:
-                                        datastr += " -r --rawfull"
                                     datastr += " --shutter " + str(sspeed)
                                     if ev != 0:
                                         datastr += " --ev " + str(ev)
