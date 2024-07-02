@@ -34,7 +34,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.31
+version = 5.32
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -552,8 +552,8 @@ yellowColor = pygame.Color(255, 255,   0)
 blueColor =   pygame.Color(  0,   0, 255)
 redColor =    pygame.Color(200,   0,   0)
 
-def button(col,row, bkgnd_Color,border_Color):
-    global preview_width,bw,bh,sq_dis
+def button(col,row,bkgnd_Color,border_Color):
+    global preview_width,bw,bh,sq_dis,preview_height
     colors = [greyColor, dgryColor,yellowColor,purpleColor,greenColor,whiteColor,lgrnColor,lpurColor,lyelColor,blueColor]
     Color = colors[bkgnd_Color]
     if sq_dis == 0:
@@ -578,8 +578,7 @@ def button(col,row, bkgnd_Color,border_Color):
     pygame.draw.line(windowSurfaceObj,whiteColor,(bx,by),(bx+bw-1,by),1)
     pygame.draw.line(windowSurfaceObj,dgryColor,(bx,by+bh-1),(bx+bw-1,by+bh-1),1)
     pygame.draw.line(windowSurfaceObj,dgryColor,(bx+bw-2,by),(bx+bw-2,by+bh),2)
-    pygame.display.update(bx, by, bw, bh)
-    return
+    pygame.display.update()
 
 def text(col,row,fColor,top,upd,msg,fsize,bkgnd_Color):
     global bh,preview_width,fv,tduration
@@ -789,9 +788,8 @@ def preview():
     if (Pi_Cam == 3) and rotate == 0 and zoom != 5:
         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,int(preview_height *.24) ))
 
-       
 # draw buttons
-for d in range(1,13):
+for d in range(0,13):
     button(0,d,6,4)
 for d in range(1,7):
     button(1,d,7,3)
@@ -902,8 +900,6 @@ def Menu():
     else:
         text(0,15,3,1,1,"ON ",fv,10)
     
-Menu()
-
 # write button texts
 text(0,0,1,0,1,"CAPTURE",ft,7)
 text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
@@ -1045,6 +1041,9 @@ if rotate == 0:
 
 text(0,0,6,2,1,"Please Wait, checking camera",int(fv* 1.7),1)
 text(0,0,6,2,1,"Found " + str(cameras[Pi_Cam]),int(fv*1.7),1)
+
+Menu()
+
 time.sleep(1)
 pygame.display.update()
 
@@ -1291,7 +1290,7 @@ while True:
             pygame.draw.rect(windowSurfaceObj,redColor,Rect(xx-histarea,xy-histarea,histarea*2,histarea*2),1)
             pygame.draw.line(windowSurfaceObj,(255,255,255),(xx-int(histarea/2),xy),(xx+int(histarea/2),xy),1)
             pygame.draw.line(windowSurfaceObj,(255,255,255),(xx,xy-int(histarea/2)),(xx,xy+int(histarea/2)),1)
-        if zoom < 2:
+        if zoom == 0:
             if rotate != 0:
                 pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,int(preview_width/4.5),int(preview_height/8)),0)
             text(0,0,6,2,0,"Preview",fv* 2,0)
@@ -1327,10 +1326,10 @@ while True:
                 elif vwidth == 1280 and vheight == 720:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.22),int(preview_height * 0.30),int(preview_width * 0.56),int(preview_height * 0.41)),gw)
                 elif (vwidth == 1296 and vheight == 972) or (vwidth == 2592 and vheight == 1944) or (vwidth == 1332 and vheight == 990) or (vwidth == 1456 and vheight == 1088):
-                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.19),int(preview_height * 0.16),int(preview_width * 0.62),int(preview_height * 0.64)),gw)
+                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.19),int(preview_height * 0.18),int(preview_width * 0.62),int(preview_height * 0.64)),gw)
                 elif (vwidth == 640 and vheight == 480) or (vwidth == 720 and vheight == 540) or (vwidth == 800 and vheight == 600):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.30),int(preview_height * 0.30),int(preview_width * 0.41),int(preview_height * 0.41)),gw)
-                elif (vwidth == 1920 and vheight == 1080) or (vwidth == 3840 and vheight == 2160) or (vwidth == 1536 and vheight == 864):
+                elif (vwidth == 1920 and vheight == 1080) or (vwidth == 3840 and vheight == 2160) or (vwidth == 1536 and vheight == 864) or (vwidth == 4608 and vheight == 2592):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.09),int(preview_height * 0.20),int(preview_width * 0.82),int(preview_height * 0.62)),gw)
             elif Pi_Cam == 8 and (rotate == 0 or rotate == 2):
                 if (vwidth == 1920 and vheight == 1080) or (vwidth == 3840 and vheight == 2160) or (vwidth == 1280 and vheight == 720) or (vwidth == 4608 and vheight == 2592) or (vwidth == 4624 and vheight == 3472) or (vwidth == 2304 and vheight == 1296) or (vwidth == 2028 and vheight == 1080):
@@ -1372,7 +1371,6 @@ while True:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_height * 0.51),int(preview_width * 0.15),int(preview_height * 0.33),int(preview_width * 0.45)),gw)
                 elif Pi_Cam == 2 and ((vwidth == 640 and vheight == 480) or (vwidth == 720 and vheight == 540)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_height * 0.50),int(preview_width * 0.22),int(preview_height * 0.33),int(preview_width * 0.31)),gw)
-
 
         pygame.display.update()
 
