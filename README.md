@@ -1,8 +1,8 @@
 # RPiCamGUI
 
-To work with RaspiOS based on BULLSEYE / BOOKWORM, using rpicam (NOT raspistill/raspivid).
+To work with RaspiOS based on BULLSEYE / BOOKWORM, using rpicam / libcamera (NOT raspistill/raspivid).
 
-preview uses rpicam-vid (so may not be as sharp as captured stills), stills rpicam-still, videos rpicam-vid, timelapses depends on timings and settings, rpicam-still, -vid or -raw. Note preview has a maximum shutter setting of 1 second.
+Preview uses rpicam-vid (so may not be as sharp as captured stills), stills rpicam-still, videos rpicam-vid, timelapses depends on timings and settings, rpicam-still, -vid or -raw. Note preview has a maximum shutter setting of 1 second.
 
 At your own risk !!. Ensure you have any required software backed up.
 
