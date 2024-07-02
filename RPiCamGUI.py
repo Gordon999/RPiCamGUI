@@ -34,7 +34,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.29
+version = 5.31
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -91,12 +91,13 @@ v3_f_speed  = 0   # v3 focus speed
 IRF         = 0   # Waveshare imx290-83 IR filter, 1 = ON
 str_cap     = 0   # 0 = STILL,1 = VIDEO, 2 = STREAM, 3 = TIMELAPSE
 v3_hdr      = 0   # HDR (v3 camera or Pi5 ONLY)
+timet       = 5000 # -t setting when capturing STILLS
 # NOTE if you change any of the above defaults you need to delete the con_file and restart.
 
 # default directories and files
 pic         = "Pictures"
 vid         = "Videos"
-con_file    = "PiLCConfig16.txt"
+con_file    = "PiLCConfig530.txt"
 
 # setup directories
 Home_Files  = []
@@ -153,7 +154,6 @@ ard_af      = 0
 show_cmds   = 0
 v3_af       = 1
 v5_af       = 1
-timet       = 5000
 
 if tinterval > 0:
     tduration  = tshots * tinterval
@@ -172,10 +172,11 @@ fv = int(preview_width/55)
 
 # data
 cameras      = ['Unknown','Pi v1','Pi v2','Pi v3','Pi HQ','Arducam 16MP','Arducam Hawkeye','Pi GS','Arducam Owlsight',"imx290"]
-camids       = ['','ov5647','imx219','imx708','imx477','imx519','arduca','imx296','ov64a4','imx290']
-max_gains    = [64,     255,      40,      64,      88,      64,      64,      64,     64,      64]
-max_shutters = [0,   max_v1, max_v2,   max_v3,  max_hq,max_16mp,max_64mp,  max_gs,max_64owl,max_v9]
-mags         = [64,     255,      40,      64,      88,      64,      64,      64,     64,      64]
+camids       = ['','ov5647','imx219','imx708','imx477','imx519','arduca','imx296', 'ov64a4','imx290']
+max_gains    = [64,     255,      40,      64,      88,      64,      64,      64,       64,      64]
+max_shutters = [0,   max_v1, max_v2,   max_v3,  max_hq,max_16mp,max_64mp,  max_gs,max_64owl,  max_v9]
+mags         = [64,     255,      40,      64,      88,      64,      64,      64,       64,      64]
+max_vfs      = [10,      14,      15,      19,      18,      14,      20,       7,       20,      10]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
@@ -248,7 +249,7 @@ video_limits = ['vlen',0,3600,'fps',1,40,'v5_focus',10,2500,'vformat',0,7,'0',0,
 # check config_file exists, if not then write default values
 if not os.path.exists(config_file):
     points = [mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation,
-              meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr]
+              meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet]
     with open(config_file, 'w') as f:
         for item in points:
             f.write("%s\n" % item)
@@ -296,9 +297,27 @@ v3_f_range  = config[30]
 IRF         = config[32]
 str_cap     = config[33]
 v3_hdr      = config[34]
+timet       = config[35]
 
 if codec > len(codecs)-1:
     codec = 0
+
+def setmaxvformat():
+    # set max video format
+    global codec,Pi_Cam,configtxt,max_vformat,max_vfs
+    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP or 64MP
+        max_vformat = max_vfs[6]
+    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
+        max_vformat = max_vfs[5]
+    elif codec > 0:
+        max_vformat = max_vfs[Pi_Cam]
+    elif Pi_Cam == 7:               # Pi GS
+        max_vformat = max_vfs[Pi_Cam]
+    else:
+        max_vformat = max_vfs[0]
+    if Pi_Cam == 4 and codec == 0:
+        max_vformat = 12
+    #print(max_vformat)
     
 def Camera_Version():
     # Check for Pi Camera version
@@ -448,52 +467,20 @@ def Camera_Version():
                 elif ctrlstxt[a][0:37] == "exposure 0x00980911 (int)    : min=16" and Pi_Cam == 8: # arducam owlsight 64mp
                     foc_sub3 = x + 1
     pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + cameras[Pi_Cam] + " Camera" )               
-    # max video formats (not for h264)
-    max_vf_9  = 10
-    max_vf_8  = 20
-    max_vf_7  = 7
-    max_vf_6  = 20
-    max_vf_5  = 14
-    max_vf_4  = 18
-    max_vf_3  = 19
-    max_vf_2  = 15
-    max_vf_1  = 14
-    max_vf_4a = 12
-    max_vf_0  = 10 # default if using h264
+
     if (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt):
         lo_res = 0
-    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP or 64MP
-        max_vformat = max_vf_6
-    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP Hawkeye
-        max_vformat = max_vf_5
-    elif codec > 0 and Pi_Cam == 8: # Arducam 64MP Owlsight
-        max_vformat = max_vf_8
-    elif codec > 0 and Pi_Cam == 9: # Waveshare IMX290-83
-        max_vformat = max_vf_9
-    elif Pi_Cam == 7:               # Pi GS
-        max_vformat = max_vf_7
-    elif codec > 0 and Pi_Cam == 4: # Pi HQ
-        max_vformat = max_vf_4
-        if ((Pi != 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json')) or (Pi == 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'))):
-            scientif = 1
-        else:
-            scientif = 0
-    elif codec > 0 and Pi_Cam == 3: # Pi V3
-        max_vformat = max_vf_3
-    elif codec > 0 and Pi_Cam == 2: # Pi V2
-        max_vformat = max_vf_2
-    elif codec > 0 and Pi_Cam == 1: # Pi V1
-        max_vformat = max_vf_1
-    elif Pi_Cam == 4:               # Pi HQ
-        max_vformat = max_vf_4a
-        if ((Pi != 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json')) or (Pi == 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'))):
-            scientif = 1
-        else:
-            scientif = 0
-    else:
-        max_vformat = max_vf_0
+    # set max video format
+    setmaxvformat()
     if vformat > max_vformat:
         vformat = max_vformat
+    if Pi_Cam == 4:               # Pi HQ
+        if codec == 0:
+            max_vformat = 12
+        if ((Pi != 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json')) or (Pi == 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'))):
+            scientif = 1
+        else:
+            scientif = 0
     vwidth    = vwidths[vformat]
     vheight   = vheights[vformat]
     if Pi_Cam == 3:
@@ -914,8 +901,6 @@ def Menu():
         text(0,15,3,1,1,"Off",fv,10)
     else:
         text(0,15,3,1,1,"ON ",fv,10)
-  
-
     
 Menu()
 
@@ -1341,13 +1326,11 @@ while True:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.20),int(preview_height * 0.22),int(preview_width * 0.62),int(preview_height * 0.57)),gw)
                 elif vwidth == 1280 and vheight == 720:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.22),int(preview_height * 0.30),int(preview_width * 0.56),int(preview_height * 0.41)),gw)
-                elif (vwidth == 1296 and vheight == 972) or (vwidth == 2592 and vheight == 1944):
+                elif (vwidth == 1296 and vheight == 972) or (vwidth == 2592 and vheight == 1944) or (vwidth == 1332 and vheight == 990) or (vwidth == 1456 and vheight == 1088):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.19),int(preview_height * 0.16),int(preview_width * 0.62),int(preview_height * 0.64)),gw)
-                elif vwidth == 800 and vheight == 600:
+                elif (vwidth == 640 and vheight == 480) or (vwidth == 720 and vheight == 540) or (vwidth == 800 and vheight == 600):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.30),int(preview_height * 0.30),int(preview_width * 0.41),int(preview_height * 0.41)),gw)
-                elif vwidth == 640 and vheight == 480:
-                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.30),int(preview_height * 0.30),int(preview_width * 0.41),int(preview_height * 0.41)),gw)
-                elif (vwidth == 1920 and vheight == 1080) or (vwidth == 3840 and vheight == 2160):
+                elif (vwidth == 1920 and vheight == 1080) or (vwidth == 3840 and vheight == 2160) or (vwidth == 1536 and vheight == 864):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.09),int(preview_height * 0.20),int(preview_width * 0.82),int(preview_height * 0.62)),gw)
             elif Pi_Cam == 8 and (rotate == 0 or rotate == 2):
                 if (vwidth == 1920 and vheight == 1080) or (vwidth == 3840 and vheight == 2160) or (vwidth == 1280 and vheight == 720) or (vwidth == 4608 and vheight == 2592) or (vwidth == 4624 and vheight == 3472) or (vwidth == 2304 and vheight == 1296) or (vwidth == 2028 and vheight == 1080):
@@ -1382,6 +1365,8 @@ while True:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(0,int(preview_height * 0.12),int(preview_width),int(preview_height * 0.75)),gw)
                 elif Pi_Cam == 4  and ((vwidth == 1920 and vheight == 1080) or (vwidth == 1536 and vheight == 864) or (vwidth == 1280 and vheight == 720)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(0,int(preview_height * 0.15),int(preview_width),int(preview_height * 0.75)),gw)
+                elif Pi_Cam == 4  and ((vwidth == 640 and vheight == 480) or (vwidth == 1332 and vheight == 990) or (vwidth == 2028 and vheight == 1080)) and fps > 40:
+                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width * 0.18),int(preview_height * 0.17),int(preview_width * 0.65),int(preview_height * 0.66)),gw)
             elif rotate == 1 or rotate == 3:
                 if Pi_Cam == 2 and ((vwidth == 1920 and vheight == 1080) or (vwidth == 1280 and vheight == 720) or (vwidth == 1536 and vheight == 864)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_height * 0.51),int(preview_width * 0.15),int(preview_height * 0.33),int(preview_width * 0.45)),gw)
@@ -2622,7 +2607,7 @@ while True:
                             text(0,0,1,1,1,"Still ",ft,7)
                         tcount = 0
                         
-                        if tinterval > 0 and mode != 0:
+                        if tinterval > 0 and mode != 0: # normal mode
                             text(1,9,3,0,1,"STOP",ft,0)
                             text(1,9,3,1,1,"Timelapse",ft,0)
                             text(0,0,6,2,1,"Please Wait, taking Timelapse ...",int(fv*1.7),1)
@@ -2674,7 +2659,7 @@ while True:
                             if ((Pi_Cam == 3 and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or (((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6)) or Pi_Cam == 8:
                                 datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                 if v3_f_mode == 1:
-                                    if Pi_Cam == 3:
+                                    if Pi_Cam == 3 and v3_af == 1:
                                         datastr += " --lens-position " + str(v3_focus/100)
                                     if Pi_Cam == 8 or ((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6):
                                         datastr += " --lens-position " + str(focus/100)
@@ -2684,7 +2669,6 @@ while True:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if Pi_Cam == 3 or Pi == 5:
                                 datastr += " --hdr " + v3_hdrs[v3_hdr]
-                            #print(Pi_Cam,mode,button_pos)
                             if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
                                 datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                             elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
@@ -2764,7 +2748,7 @@ while True:
                                     td = timedelta(seconds=tdur)
                                     text(1,10,1,1,1,str(td),fv,12)
                                 time.sleep(0.1)
-                                if buttonSTR.is_pressed:
+                                if buttonSTR.is_pressed: # 
                                     type = pygame.MOUSEBUTTONUP
                                     if str_cap == 2:
                                         click_event = pygame.event.Event(type, {"button": 3, "pos": (0,0)})
@@ -2774,7 +2758,7 @@ while True:
                                 for event in pygame.event.get():
                                     if (event.type == MOUSEBUTTONUP):
                                         mousex, mousey = event.pos
-                                        # stop timelapse
+                                        # stop timelapse or capture STILL 
                                         if mousex > preview_width:
                                             button_column = int((mousex-preview_width)/bw) + 1
                                             button_row = int((mousey)/bh) + 1
@@ -2817,7 +2801,7 @@ while True:
                             else:
                                 os.system('pkill -SIGUSR2 rpicam-still')
                                 
-                        elif tinterval > 0 and mode == 0:
+                        elif tinterval > 0 and mode == 0: # manual mode
                             text(1,9,3,0,1,"STOP",ft,0)
                             text(1,9,3,1,1,"Timelapse",ft,0)
                             text(0,0,6,2,1,"Please Wait, taking Timelapse ...",int(fv*1.7),1)
@@ -2828,6 +2812,7 @@ while True:
                             pics3 = []
                             count = 0
                             old_count = 0
+                            trig = 1
                             while count < tshots and stop == 0:
                                 if time.monotonic() - start2 > tinterval:
                                     start2 = time.monotonic()
@@ -2869,7 +2854,7 @@ while True:
                                     if ((Pi_Cam == 3 and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or (((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6)) or Pi_Cam == 8:
                                         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
                                         if v3_f_mode == 1:
-                                            if Pi_Cam == 3:
+                                            if Pi_Cam == 3 and v3_af == 1:
                                                 datastr += " --lens-position " + str(v3_focus/100)
                                             if Pi_Cam == 8 or ((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6):
                                                 datastr += " --lens-position " + str(focus/100)
@@ -2879,7 +2864,6 @@ while True:
                                         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                                     if Pi_Cam == 3:
                                         datastr += " --hdr " + v3_hdrs[v3_hdr]
-                                    #print(Pi_Cam,mode,button_pos)
                                     if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
                                         datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                                     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
@@ -3139,106 +3123,25 @@ while True:
                         pmax = video_limits[f+2]
                 
                 if (mousex > preview_width and mousey < ((button_row-1)*bh) + int(bh/3)):
-                    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP Hawkeye
-                        max_vformat = max_vf_6
-                    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP Hawkeye
-                        max_vformat = max_vf_5
-                    elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
-                        max_vformat = max_vf_8
-                    elif codec > 0 and Pi_Cam == 9:               # Waveshare IMX290-83
-                        max_vformat = max_vf_9
-                    elif Pi_Cam == 7: # PI GS
-                        max_vformat = max_vf_7
-                    elif codec > 0 and Pi_Cam == 4:
-                        max_vformat = max_vf_4
-                    elif codec > 0 and Pi_Cam == 3:
-                        max_vformat = max_vf_3
-                    elif codec > 0 and Pi_Cam == 2:
-                        max_vformat = max_vf_2
-                    elif codec > 0 and Pi_Cam == 1:
-                        max_vformat = max_vf_1
-                    elif Pi_Cam == 4:
-                        max_vformat = max_vf_4a
-                    else:
-                        max_vformat = max_vf_0
+                    # set max video format
+                    setmaxvformat()
                     pmax = max_vformat
                     vformat = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin))
                 elif (mousey > preview_height  + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)):
-                    if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 ) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
-                        max_vformat = max_vf_6
-                    elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 ): # Arducam IMX519 16MP or 64MP
-                        max_vformat = max_vf_5
-                    elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
-                        max_vformat = max_vf_8
-                    elif codec > 0 and Pi_Cam == 9:               # Waveshare IMX290-83
-                        max_vformat = max_vf_9
-                    elif Pi_Cam == 7: # PI GS
-                        max_vformat = max_vf_7
-                    elif codec > 0 and Pi_Cam == 4:
-                        max_vformat = max_vf_4
-                    elif codec > 0 and Pi_Cam == 3 :
-                        max_vformat = max_vf_3
-                    elif codec > 0 and Pi_Cam == 2:
-                        max_vformat = max_vf_2
-                    elif codec > 0 and Pi_Cam == 1:
-                        max_vformat = max_vf_1
-                    elif Pi_Cam == 4:
-                        max_vformat = max_vf_4a
-                    else:
-                        max_vformat = max_vf_0
+                    # set max video format    
+                    setmaxvformat()
                     pmax = max_vformat
                     vformat = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
                 else:
                     if (sq_dis == 0 and mousex < preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 0):
                         vformat -=1
-                        if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
-                            max_vformat = max_vf_6
-                        elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
-                            max_vformat = max_vf_5
-                        elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
-                            max_vformat = max_vf_8
-                        elif codec > 0 and Pi_Cam == 9:               # Waveshare IMX290-83
-                            max_vformat = max_vf_9
-                        elif Pi_Cam == 7: # PI GS
-                            max_vformat = max_vf_7
-                        elif codec > 0 and Pi_Cam == 4:
-                            max_vformat = max_vf_4
-                        elif codec > 0 and Pi_Cam == 3:
-                            max_vformat = max_vf_3
-                        elif codec > 0 and Pi_Cam == 2:
-                            max_vformat = max_vf_2
-                        elif codec > 0 and Pi_Cam == 1:
-                            max_vformat = max_vf_1
-                        elif Pi_Cam == 4:
-                            max_vformat = max_vf_4a
-                        else:
-                            max_vformat = max_vf_0
+                        # set max video format    
+                        setmaxvformat()
                         vformat = min(vformat,max_vformat)
-                        vformat = max(vformat,pmin)
                     else:
                         vformat +=1
-                        if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
-                            max_vformat = max_vf_6
-                        elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
-                            max_vformat = max_vf_5
-                        elif codec > 0 and Pi_Cam == 8:               # Arducam 64MP Owlsight
-                            max_vformat = max_vf_8
-                        elif codec > 0 and Pi_Cam == 9:               # Waveshare IMX290-83
-                            max_vformat = max_vf_9
-                        elif Pi_Cam == 7: # PI GS
-                            max_vformat = max_vf_7
-                        elif codec > 0 and Pi_Cam == 4:
-                            max_vformat = max_vf_4
-                        elif codec > 0 and Pi_Cam == 3 :
-                            max_vformat = max_vf_3
-                        elif codec > 0 and Pi_Cam == 2:
-                            max_vformat = max_vf_2
-                        elif codec > 0 and Pi_Cam == 1:
-                            max_vformat = max_vf_1
-                        elif Pi_Cam == 4:
-                            max_vformat = max_vf_4a
-                        else:
-                            max_vformat = max_vf_0
+                        # set max video format
+                        setmaxvformat()
                         vformat = min(vformat,max_vformat)
                 draw_Vbar(1,3,lpurColor,'vformat',vformat)
                 vwidth  = vwidths[vformat]
@@ -3298,28 +3201,8 @@ while True:
                     else:
                         codec  +=1
                         codec = min(codec ,pmax)
-                if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP OR 64MP
-                    max_vformat = max_vf_6
-                elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6): # Arducam IMX519 16MP or 64MP
-                    max_vformat = max_vf_5
-                elif Pi_Cam == 8:               # Arducam 64MP Owlsight
-                    max_vformat = max_vf_8
-                elif codec > 0 and Pi_Cam == 9: # Waveshare IMX290-83
-                    max_vformat = max_vf_9
-                elif Pi_Cam == 7:               # PI GS
-                    max_vformat = max_vf_7
-                elif codec > 0 and Pi_Cam == 4: # PI HQ
-                    max_vformat = max_vf_4
-                elif codec > 0 and Pi_Cam == 3 :# PI V3
-                    max_vformat = max_vf_3
-                elif codec > 0 and Pi_Cam == 2: # PI V2
-                    max_vformat = max_vf_2
-                elif codec > 0 and Pi_Cam == 1: # PI V1
-                    max_vformat = max_vf_1
-                elif Pi_Cam == 4:
-                    max_vformat = max_vf_4a
-                else:
-                    max_vformat = max_vf_0
+                # set max video format
+                setmaxvformat()
                 vformat = min(vformat,max_vformat)
                 text(1,4,3,1,1,codecs[codec],fv,11)
                 draw_Vbar(1,4,lpurColor,'codec',codec)
@@ -3972,6 +3855,7 @@ while True:
                    config[32] = IRF
                    config[33] = str_cap
                    config[34] = v3_hdr
+                   config[35] = timet
                    with open(config_file, 'w') as f:
                        for item in config:
                            f.write("%s\n" % item)
