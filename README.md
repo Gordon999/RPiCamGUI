@@ -28,7 +28,7 @@ On a Pi4 In /boot/firmware/config.txt add  dtoverlay=vc4-kms-v3d,cma-512 and the
 
 ## Arducam 64MP OWLSIGHT camera on Pi4/Pi5...
 
-The 64MP OWLSIGHT camera should work without needing the Arducam install just add dtoverlay=ov64a40 to /boot/config.txt. (No guarantee 16/64MP will work on less than a Pi4!)
+The 64MP OWLSIGHT camera should work without needing the Arducam install just add dtoverlay=ov64a40 to /boot/config.txt or /boot/firmware/config.txt as appropriate. (No guarantee 16/64MP will work on less than a Pi4!)
 
 ## Waveshare imx290-83
 add dtoverlay=imx290,clock-frequency=37125000 to config.txt , add cam0 or cam1 if using a Pi5.
