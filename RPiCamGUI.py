@@ -17,7 +17,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
-
 import time
 import pygame
 from pygame.locals import *
@@ -34,7 +33,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.32
+version = 5.33
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -117,6 +116,7 @@ max_64mp    = 435
 max_64owl   = 435
 max_v9      = 100
 max_gs      = 15
+max_v10     = 15
 
 # inital parameters
 focus       = 700
@@ -171,24 +171,24 @@ ft = int(preview_width/55)
 fv = int(preview_width/55)
 
 # data
-cameras      = ['Unknown','Pi v1','Pi v2','Pi v3','Pi HQ','Arducam 16MP','Arducam Hawkeye','Pi GS','Arducam Owlsight',"imx290"]
-camids       = ['','ov5647','imx219','imx708','imx477','imx519','arduca','imx296', 'ov64a4','imx290']
-max_gains    = [64,     255,      40,      64,      88,      64,      64,      64,       64,      64]
-max_shutters = [0,   max_v1, max_v2,   max_v3,  max_hq,max_16mp,max_64mp,  max_gs,max_64owl,  max_v9]
-mags         = [64,     255,      40,      64,      88,      64,      64,      64,       64,      64]
-max_vfs      = [10,      14,      15,      19,      18,      14,      20,       7,       20,      10]
+cameras      = ['Unknown', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Arducam 16MP','Arducam Hawkeye', 'Pi GS','Arducam Owlsight',"imx290",'imx585','imx293','imx294']
+camids       = [''       ,'ov5647','imx219','imx708','imx477',      'imx519',         'arduca','imx296',          'ov64a4','imx290','imx585','imx293','imx294']
+max_gains    = [64       ,     255,      40,      64,      88,            64,               64,      64,                64,      64,      64,      64,      64]
+max_shutters = [0        ,  max_v1,  max_v2,  max_v3,  max_hq,      max_16mp,         max_64mp,  max_gs,         max_64owl,  max_v9, max_v10, max_v10, max_v10]
+mags         = [64       ,     255,      40,      64,      88,            64,               64,      64,                64,      64,      64,      64,      64]
+max_vfs      = [10       ,      15,      16,      21,      20,            15,               22,       7,                22,      10,      18,      18,      18]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
-vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,2028,2028,2304,2592,3280,3840,4032,4056,4608,4656,8000,9152,9248]
-vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1080,1520,1296,1944,2464,2160,3024,3040,2592,3496,6000,6944,6944]
-v_max_fps    = [200,120, 40,  40,  40,  30,  60,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  10,  20,  20,  20,  20, 20]
-v3_max_fps   = [200,120,125,  66,  50,  46,  30,  30,  47,  30, 100,  30,  25,  25,  20,  20,  20,  20,  20,  15,  20,  20,  20, 20]
+vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,1928,2028,2028,2304,2592,3280,3840,3856,4032,4056,4608,4656,8000,9152,9248]
+vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1090,1080,1520,1296,1944,2464,2160,2180,3024,3040,2592,3496,6000,6944,6944]
+v_max_fps    = [200,120, 40,  40,  40,  30,  60,  30,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  20,  10,  20,  20,  20,  20,  20]
+v3_max_fps   = [200,120,125, 120, 120, 120, 120, 120, 120, 100, 100,  50, 100,  56,  56,  20,  20,  20,  20,  20,  15,  20,  20,  20,  20,  20]
 v9_max_fps   = [60,  60, 60,  60,  60,  60,  60,  60,  60,  60,  60]
 zwidths      = [640,800,1280,2592,3280,4056,4656,9152]
 zheights     = [480,600, 960,1944,2464,3040,3496,6944]
-x_sens       = [0,2592,3280,4608,4056,4656,9152,1456,9248,1920]
-y_sens       = [0,1944,2464,2592,3040,3496,6944,1088,6944,1080]
+x_sens       = [0,2592,3280,4608,4056,4656,9152,1456,9248,1920,3856,3856,4168]
+y_sens       = [0,1944,2464,2592,3040,3496,6944,1088,6944,1080,2180,2180,2824]
 zfs          = [1,1,0.666666,0.4166666,0.333333]
 shutters     = [-4000,-2000,-1600,-1250,-1000,-800,-640,-500,-400,-320,-288,-250,-240,-200,-160,-144,-125,-120,-100,-96,-80,-60,-50,-48,-40,-30,-25,-20,-15,-13,-10,-8,-6,-5,-4,-3,
                 0.4,0.5,0.6,0.8,1,1.1,1.2,2,3,4,5,6,7,8,9,10,11,15,20,25,30,40,50,60,75,100,112,120,150,200,220,230,239,435,500,600,650,660,670]
@@ -360,7 +360,7 @@ def Camera_Version():
                     vwidths2.append(int(qwidth))
                     vheights2.append(int(qheight))
                 if forms[q][0:1] == "[" and "x" not in forms[q]:
-                    vfps2.append(int(float(forms[q][1:3])))
+                    vfps2.append(int(float(forms[q][1:4])))
         if camstxt[x][0:4] == "1 : ":
             cam1 = camstxt[x][4:10]
         if cam0 != "0" and cam1 != "1" and camera == 1:
@@ -372,7 +372,7 @@ def Camera_Version():
                   vwidths2.append(int(qwidth))
                   vheights2.append(int(qheight))
                if forms[q][0:1] == "[" and "x" not in forms[q]:
-                    vfps2.append(int(float(forms[q][1:3])))
+                    vfps2.append(int(float(forms[q][1:4])))
         if camstxt[x][0:4] == "2 : ":
             cam2 = camstxt[x][4:10]
         if camstxt[x][0:4] == "3 : ":
@@ -445,7 +445,7 @@ def Camera_Version():
         # determine /dev/v4l-subdevX for Pi v3 and Arducam 16/64MP cameras
         foc_sub3 = -1
         foc_sub5 = -1
-        if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8: 
+        if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8: # AF cameras
           for x in range(0,10):
             if os.path.exists("ctrls1.txt"):
                 os.remove("ctrls1.txt")
@@ -474,7 +474,7 @@ def Camera_Version():
     setmaxvformat()
     if vformat > max_vformat:
         vformat = max_vformat
-    if Pi_Cam == 4:               # Pi HQ
+    if Pi_Cam == 4:  # Pi HQ
         if codec == 0:
             max_vformat = 12
         if ((Pi != 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json')) or (Pi == 5 and os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json'))):
@@ -724,6 +724,8 @@ def preview():
             datastr += " --width 720 --height 540 -o /run/shm/test%04d.jpg "
         else:
             datastr += " --width 1920 --height 1440 -o /run/shm/test%04d.jpg "
+    if ev != 0:
+        datastr += " --ev " + str(ev)
     datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
     if mode == 0:
         datastr += " --shutter " + str(speed2) 
@@ -737,8 +739,6 @@ def preview():
         speed3 = 1000000/speed2
         speed3 = min(speed3,25)
         datastr += " --framerate " + str(speed3)
-    if ev != 0:
-        datastr += " --ev " + str(ev)
     if sspeed > 5000000 and mode == 0:
         datastr += " --gain 1 --awbgains " + str(red/10) + "," + str(blue/10)
     else:
