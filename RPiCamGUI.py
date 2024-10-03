@@ -33,7 +33,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.33
+version = 5.34
 
 # streaming parameters
 stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -105,19 +105,6 @@ pic_dir     = "/home/" + Home_Files[0]+ "/" + pic + "/"
 vid_dir     = "/home/" + Home_Files[0]+ "/" + vid + "/"
 config_file = "/home/" + Home_Files[0]+ "/" + con_file
 
-# Camera max exposure (Note v1 is currently 1 second not the raspistill 6 seconds)
-# whatever value set it MUST be in shutters list !!
-max_v1      = 1
-max_v2      = 11
-max_v3      = 112
-max_hq      = 650
-max_16mp    = 200
-max_64mp    = 435
-max_64owl   = 435
-max_v9      = 100
-max_gs      = 15
-max_v10     = 15
-
 # inital parameters
 focus       = 700
 foc_man     = 0
@@ -174,7 +161,7 @@ fv = int(preview_width/55)
 cameras      = ['Unknown', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Arducam 16MP','Arducam Hawkeye', 'Pi GS','Arducam Owlsight',"imx290",'imx585','imx293','imx294']
 camids       = [''       ,'ov5647','imx219','imx708','imx477',      'imx519',         'arduca','imx296',          'ov64a4','imx290','imx585','imx293','imx294']
 max_gains    = [64       ,     255,      40,      64,      88,            64,               64,      64,                64,      64,      64,      64,      64]
-max_shutters = [0        ,  max_v1,  max_v2,  max_v3,  max_hq,      max_16mp,         max_64mp,  max_gs,         max_64owl,  max_v9, max_v10, max_v10, max_v10]
+max_shutters = [0        ,       1,      11,     112,     650,           200,              435,      15,               435,     100,     100,     100,     100]
 mags         = [64       ,     255,      40,      64,      88,            64,               64,      64,                64,      64,      64,      64,      64]
 max_vfs      = [10       ,      15,      16,      21,      20,            15,               22,       7,                22,      10,      18,      18,      18]
 modes        = ['manual','normal','sport']
@@ -711,8 +698,10 @@ def preview():
     datastr += " --camera " + str(camera) + " -n --codec mjpeg -t 0 --segment 1"
     if (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and (focus_mode == 1 or zoom > 0):
         datastr += " --width 3280 --height 2464 -o /run/shm/test%04d.jpg "
-    elif Pi_Cam == 7 :
+    elif Pi_Cam == 7:
         datastr += " --width 1456 --height 1088 -o /run/shm/test%04d.jpg "
+    elif Pi_Cam == 10:
+        datastr += " --width 1928 --height 1090 -o /run/shm/test%04d.jpg "
     elif Pi_Cam == 3:
         datastr += " --width 2304 --height 1296 -o /run/shm/test%04d.jpg "
     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) or focus_mode == 1 :
