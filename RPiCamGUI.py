@@ -54,7 +54,7 @@ sw_ir          = 26  # Waveshare IR Filter switch GPIO
 STR            = 12  # external GPIO trigger for capture
 
 # set sq_dis = 1 for a square display, 0 for normal
-sq_dis = 1
+sq_dis = 0
 
 # set default values (see limits below)
 rotate      = 0   # rotate preview ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
