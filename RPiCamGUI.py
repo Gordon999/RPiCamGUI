@@ -54,7 +54,7 @@ sw_ir          = 26  # Waveshare IR Filter switch GPIO
 STR            = 12  # external GPIO trigger for capture
 
 # set sq_dis = 1 for a square display, 0 for normal
-sq_dis = 0
+sq_dis = 1
 
 # set default values (see limits below)
 rotate      = 0   # rotate preview ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
@@ -774,7 +774,7 @@ def preview():
         print(datastr)
     restart = 0
     time.sleep(0.2)
-    if (Pi_Cam == 3) and rotate == 0 and zoom != 5:
+    if (Pi_Cam == 3 or Pi_Cam == 10) and rotate == 0 and zoom != 5:
         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,int(preview_height *.24) ))
 
 # draw buttons
@@ -1148,7 +1148,7 @@ while True:
                  os.remove(pics[tt])
         except pygame.error:
             pass
-        if (Pi_Cam == 3)  and zoom < 5:
+        if (Pi_Cam == 3 or Pi_Cam == 10)  and zoom < 5:
             if rotate == 0:
                 image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
             else:
@@ -1385,7 +1385,7 @@ while True:
             xx = min(xx,preview_width - histarea)
             xx = max(xx,histarea)
             xy = mousey
-            if (Pi_Cam == 3 and v3_af == 1) and zoom < 5:
+            if (Pi_Cam == 3 or Pi_Cam == 10) and zoom < 5:
                 xy = min(xy,int(preview_height * .75) - histarea)
             else:
                 xy = min(xy,preview_height - histarea)
@@ -1470,7 +1470,7 @@ while True:
         # determine button pressed
         if (mousex > preview_width or (sq_dis == 1 and mousey > preview_height)) or str_btn == 1:
           # normal layout(buttons on right)
-          if mousex > preview_width:
+          if mousex > preview_width and sq_dis == 0:
               button_column = int((mousex-preview_width)/bw) + 1
               button_row = int((mousey)/bh) + 1
               if mousex > preview_width + bw:
@@ -1632,7 +1632,7 @@ while True:
                             if rotate != 0:
                                 image = pygame.transform.rotate(image, int(rotate * 90))
                                 pygame.image.save(image,fname[:-4]+"r." + extns2[extn])
-                            if (Pi_Cam == 3) and zoom < 5:
+                            if (Pi_Cam == 3 or Pi_Cam == 10) and zoom < 5:
                                 if rotate == 0:
                                     image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
                                 else:
@@ -2298,9 +2298,9 @@ while True:
                             datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
                         elif Pi_Cam == 4 and vwidth == 2028:
                             datastr += " --mode 2028:1520:12"
-                        elif (Pi_Cam == 3 and v3_af == 1) and vwidth == 2304 and codec == 0:
+                        elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
                             datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
-                        elif (Pi_Cam == 3 and v3_af == 1) and vwidth == 2028 and codec == 0:
+                        elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
                             datastr += " --mode 2028:1520:10 --width 2028 --height 1520"
                         else:
                             datastr += " --width " + str(vwidth) + " --height " + str(vheight)
@@ -2467,9 +2467,9 @@ while True:
                             datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
                         elif Pi_Cam == 4 and vwidth == 2028:
                             datastr += " --mode 2028:1520:12"
-                        elif (Pi_Cam == 3 and v3_af == 1) and vwidth == 2304 and codec == 0:
+                        elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
                             datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
-                        elif (Pi_Cam == 3 and v3_af == 1) and vwidth == 2028 and codec == 0:
+                        elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
                             datastr += " --mode 2028:1520:10 --width 2028 --height 1520"
                         else:
                             datastr += " --width " + str(vwidth) + " --height " + str(vheight)
@@ -2887,7 +2887,7 @@ while True:
                                         counts.sort()
                                         if (extns2[extn] == 'jpg' or extns2[extn] == 'bmp' or extns2[extn] == 'png') and count > 0 and show == 0:
                                             image = pygame.image.load(counts[count-1])
-                                            if (Pi_Cam != 3) or ((Pi_Cam == 3 and v3_af == 1) and zoom == 5):
+                                            if (Pi_Cam != 3 and Pi_Cam != 10) or ((Pi_Cam == 3 or Pi_Cam == 10) and zoom == 5):
                                                 catSurfacesmall = pygame.transform.scale(image, (preview_width,preview_height))
                                             else:
                                                 catSurfacesmall = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
@@ -3573,18 +3573,18 @@ while True:
                         pmax = video_limits[f+2]
                 if (mousex > preview_width and mousey < ((button_row-1)*bh) + int(bh/3)):
                     zoom = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin))
-                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1) and sq_dis == 0:
+                    if zoom != 5 and (Pi_Cam == 3 or Pi_Cam == 10) and sq_dis == 0:
                         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height))
                 elif (mousey > preview_height + (bh*3)  and mousey < preview_height + (bh*3) + int(bh/3)):
                     zoom = int(((mousex-((button_row -8)*bw)) / bw) * (pmax+1-pmin))
-                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1) and sq_dis == 0:
+                    if zoom != 5 and (Pi_Cam == 3 or Pi_Cam == 10) and sq_dis == 0:
                         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height))
                 elif ((sq_dis == 0 and mousex > preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 1)) and zoom != 5:
                     zoom +=1
                     zoom = min(zoom,pmax)
                 elif ((sq_dis == 0 and mousex < preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 0)) and zoom > 0:
                     zoom -=1
-                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1) and sq_dis == 0:
+                    if zoom != 5 and (Pi_Cam == 3 or Pi_Cam == 10) and sq_dis == 0:
                         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height))
                 if zoom == 0:
                     button(1,8,0,9)
