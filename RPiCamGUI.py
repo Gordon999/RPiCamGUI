@@ -82,7 +82,7 @@ denoise     = 1   # set denoise level
 quality     = 93  # set quality level
 profile     = 0   # set h264 profile
 level       = 0   # set h264 level
-histogram   = 0   # OFF = 0
+histogram   = 5   # OFF = 0
 histarea    = 50  # set histogram size
 v3_f_mode   = 0   # v3 focus mode
 v3_f_range  = 0   # v3 focus range
@@ -3573,18 +3573,18 @@ while True:
                         pmax = video_limits[f+2]
                 if (mousex > preview_width and mousey < ((button_row-1)*bh) + int(bh/3)):
                     zoom = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin))
-                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1):
+                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1) and sq_dis == 0:
                         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height))
                 elif (mousey > preview_height + (bh*3)  and mousey < preview_height + (bh*3) + int(bh/3)):
                     zoom = int(((mousex-((button_row -8)*bw)) / bw) * (pmax+1-pmin))
-                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1):
+                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1) and sq_dis == 0:
                         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height))
                 elif ((sq_dis == 0 and mousex > preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 1)) and zoom != 5:
                     zoom +=1
                     zoom = min(zoom,pmax)
                 elif ((sq_dis == 0 and mousex < preview_width + bw + (bw/2)) or (sq_dis == 1 and button_pos == 0)) and zoom > 0:
                     zoom -=1
-                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1):
+                    if zoom != 5 and (Pi_Cam == 3 and v3_af == 1) and sq_dis == 0:
                         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height))
                 if zoom == 0:
                     button(1,8,0,9)
