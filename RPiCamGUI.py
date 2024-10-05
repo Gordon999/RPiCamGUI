@@ -167,7 +167,7 @@ else:
 cameras      = ['Unknown', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Arducam 16MP','Arducam Hawkeye', 'Pi GS','Arducam Owlsight',"imx290",'imx585','imx293','imx294']
 camids       = [''       ,'ov5647','imx219','imx708','imx477',      'imx519',         'arduca','imx296',          'ov64a4','imx290','imx585','imx293','imx294']
 max_gains    = [64       ,     255,      40,      64,      88,            64,               64,      64,                64,      64,      64,      64,      64]
-max_shutters = [0        ,       1,      11,     112,     650,           200,              435,      15,               435,     100,     670,     100,     100]
+max_shutters = [0        ,       1,      11,     112,     650,           200,              435,      15,               435,     100,     670,     110,     100]
 mags         = [64       ,     255,      40,      64,      88,            64,               64,      64,                64,      64,      64,      64,      64]
 max_vfs      = [10       ,      15,      16,      21,      20,            15,               22,       7,                22,      10,      18,      18,      18]
 modes        = ['manual','normal','sport']
