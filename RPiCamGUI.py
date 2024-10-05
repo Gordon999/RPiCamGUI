@@ -33,7 +33,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.36
+version = 5.37
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -167,7 +167,7 @@ else:
 cameras      = ['Unknown', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Arducam 16MP','Arducam Hawkeye', 'Pi GS','Arducam Owlsight',"imx290",'imx585','imx293','imx294']
 camids       = [''       ,'ov5647','imx219','imx708','imx477',      'imx519',         'arduca','imx296',          'ov64a4','imx290','imx585','imx293','imx294']
 max_gains    = [64       ,     255,      40,      64,      88,            64,               64,      64,                64,      64,      64,      64,      64]
-max_shutters = [0        ,       1,      11,     112,     650,           200,              435,      15,               435,     100,     670,     110,     100]
+max_shutters = [0        ,       1,      11,     112,     650,           200,              435,      15,               435,     100,     670,     100,     100]
 mags         = [64       ,     255,      40,      64,      88,            64,               64,      64,                64,      64,      64,      64,      64]
 max_vfs      = [10       ,      15,      16,      21,      20,            15,               22,       7,                22,      10,      18,      18,      18]
 modes        = ['manual','normal','sport']
@@ -832,9 +832,12 @@ def preview():
         datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
     if zoom == 5:
         zxo = ((igw/2)-(preview_width/2))/igw
-        zyo = ((igh/2)-(preview_height/2))/igh
+        if alt_dis == 2:
+            zyo = ((igh/2)-((preview_height * .75)/2))/igh
+        else:
+            zyo = ((igh/2)-(preview_height/2))/igh
         if Pi_Cam == 3 or Pi_Cam == 10:
-            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(int(preview_width / .75)/igw) + "," + str(preview_height/igh)
+            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(int(preview_width)/igw) + "," + str((preview_height * .75)/igh)
         else:
             datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
     p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
@@ -1724,9 +1727,12 @@ while True:
                             datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                         if zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
-                            zyo = ((igh/2)-(preview_height/2))/igh
                             if Pi_Cam == 3 or Pi_Cam == 10:
-                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(int(preview_width / .75)/igw) + "," + str(preview_height/igh)
+                                zyo = ((igh/2)-((preview_height * .75)/2))/igh
+                            else:
+                                zyo = ((igh/2)-(preview_height/2))/igh
+                            if Pi_Cam == 3 or Pi_Cam == 10:
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(int(preview_width)/igw) + "," + str(int(preview_height * .75)/igh)
                             else:
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
                         datastr += " --metadata - --metadata-format txt >> PiLibtext.txt"
@@ -2508,7 +2514,10 @@ while True:
                             datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
                         if zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
-                            zyo = ((igh/2)-(preview_height/2))/igh
+                            if Pi_Cam == 3 or Pi_Cam == 10:
+                                zyo = ((igh/2)-((preview_height * .75)/2))/igh
+                            else:
+                                zyo = ((igh/2)-(preview_height/2))/igh
                             if Pi_Cam == 3 or Pi_Cam == 10:
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(int(preview_width / .75)/igw) + "," + str(preview_height/igh)
                             else:
@@ -2669,7 +2678,10 @@ while True:
                             datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
                         if zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
-                            zyo = ((igh/2)-(preview_height/2))/igh
+                            if Pi_Cam == 3 or Pi_Cam == 10:
+                                zyo = ((igh/2)-((preview_height * .75)/2))/igh
+                            else:
+                                zyo = ((igh/2)-(preview_height/2))/igh
                             if Pi_Cam == 3 or Pi_Cam == 10:
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(int(preview_width / .75)/igw) + "," + str(preview_height/igh)
                             else:
@@ -2830,7 +2842,10 @@ while True:
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                             if zoom == 5:
                                 zxo = ((igw/2)-(preview_width/2))/igw
-                                zyo = ((igh/2)-(preview_height/2))/igh
+                                if Pi_Cam == 3 or Pi_Cam == 10:
+                                    zyo = ((igh/2)-((preview_height * .75)/2))/igh
+                                else:
+                                    zyo = ((igh/2)-(preview_height/2))/igh
                                 if Pi_Cam == 3 or Pi_Cam == 10:
                                     datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(int(preview_width)/igw) + "," + str(int(preview_height * .75)/igh)
                                 else:
@@ -3028,7 +3043,10 @@ while True:
                                         datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                                     if zoom == 5:
                                         zxo = ((igw/2)-(preview_width/2))/igw
-                                        zyo = ((igh/2)-(preview_height/2))/igh
+                                        if Pi_Cam == 3 or Pi_Cam == 10:
+                                            zyo = ((igh/2)-((preview_height * .75)/2))/igh
+                                        else:
+                                            zyo = ((igh/2)-(preview_height/2))/igh
                                         if Pi_Cam == 3 or Pi_Cam == 10:
                                             datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(int(preview_width)/igw) + "," + str(int(preview_height * .75)/igh)
                                         else:
@@ -3186,7 +3204,10 @@ while True:
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                             if zoom == 5:
                                 zxo = ((igw/2)-(preview_width/2))/igw
-                                zyo = ((igh/2)-(preview_height/2))/igh
+                                if Pi_Cam == 3 or Pi_Cam == 10:
+                                    zyo = ((igh/2)-((preview_height * .75)/2))/igh
+                                else:
+                                    zyo = ((igh/2)-(preview_height/2))/igh
                                 if Pi_Cam == 3 or Pi_Cam == 10:
                                     datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(int(preview_width / .75)/igw) + "," + str(preview_height/igh)
                                 else:
