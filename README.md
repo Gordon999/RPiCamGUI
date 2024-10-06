@@ -89,6 +89,10 @@ lf using a Pi HQ camera for astrophotography it might be worth a try adding "imx
 
 ![spotfocus](spotfocus.jpg)
 
+## Screenshot using alt_dis == 2, for 16x9 cameras eg pi v3 or imx585
+
+![screenshot](screenshot2.jpg)
+
 # To install(manual):
 
 Install latest RaspiOS based on Bullseye (tested with FULL 32bit and 64bit versions)
