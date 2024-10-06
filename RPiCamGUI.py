@@ -33,7 +33,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.37
+version = 5.38
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -96,7 +96,7 @@ timet       = 5000 # -t setting when capturing STILLS
 # default directories and files
 pic         = "Pictures"
 vid         = "Videos"
-con_file    = "PiLCConfig536.txt"
+con_file    = "PiLCConfig538.txt"
 
 # setup directories
 Home_Files  = []
@@ -959,6 +959,10 @@ def Menu():
         text(0,15,3,1,1,"Off",fv,10)
     else:
         text(0,15,3,1,1,"ON ",fv,10)
+  if Pi_Cam == 10 and Pi == 5:
+    button(0,15,6,4)
+    text(0,15,5,0,1," STILL -t time ",fv,10)
+    text(0,15,3,1,1,str(timet),fv,10)
     
 # write button texts
 text(0,0,1,0,1,"CAPTURE",ft,7)
@@ -1502,46 +1506,7 @@ while True:
                 Menu()
             restart = 1
                 
-        if (alt_dis == 0 and mousex > preview_width) or (alt_dis > 0 and mousey > preview_height):
-            if alt_dis == 0:
-                button_column = int((mousex-preview_width)/bw) + 1
-                button_row = int((mousey)/bh) + 1
-                if mousex > preview_width + bw + (bw/2):
-                    button_pos = 2
-                elif mousex > preview_width + (bw/2):
-                    button_pos = 1
-                else:
-                    button_pos = 0
-            else:
-                if mousey - preview_height < bh:
-                    button_column = 1
-                    button_row = int(mousex / bw) + 1
-                    if mousex > ((button_row -1) * bw) + (bw/2):
-                        button_pos = 1
-                    else:
-                        button_pos = 0
-                elif mousey - preview_height < bh * 2:
-                    button_column = 1
-                    button_row = int(mousex / bw) + 7
-                    if mousex > ((button_row - 7) * bw) + (bw/2):
-                        button_pos = 1
-                    else:
-                        button_pos = 0
-                elif mousey - preview_height < bh * 3:
-                    button_column = 2
-                    button_row = int(mousex / bw) + 1
-                    if mousex > ((button_row -1) * bw) + (bw/2):
-                        button_pos = 1
-                    else:
-                        button_pos = 0
-                elif mousey - preview_height < bh * 4:
-                    button_column = 2
-                    button_row = int(mousex / bw) + 8
-                    if mousex > ((button_row - 8) * bw) + (bw/2):
-                        button_pos = 1
-                    else:
-                        button_pos = 0
-            y = button_row-1
+
 
         if mousex == 0 and mousey == 0:
             str_btn = 1
@@ -1620,7 +1585,7 @@ while True:
                       button_pos = 1
                   else:
                       button_pos = 0
-              print(button_column,button_row,button_pos)
+              #print(button_column,button_row,button_pos)
                       
           # capture on STR button press
           if str_btn == 1:
@@ -2373,7 +2338,19 @@ while True:
                 time.sleep(0.25)
                 restart = 1
 
-            elif button_row == 16 and (Pi_Cam == 3 and v3_af == 1):
+            elif button_row == 16 and Pi_Cam == 10 and Pi == 5:
+                # imx585 timet
+                if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                    timet -=100
+                    timet  = max(timet ,100)
+                else:
+                    timet  +=100
+                    timet = min(timet ,10000)
+                text(0,15,3,1,1,str(timet),fv,10)
+                time.sleep(0.25)
+                restart = 1
+
+            elif button_row == 16 and Pi_Cam == 3 and v3_af == 1:
                 # V3 FOCUS SPEED 
                 for f in range(0,len(still_limits)-1,3):
                     if still_limits[f] == 'v3_f_speed':
