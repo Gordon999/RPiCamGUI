@@ -95,7 +95,7 @@ lf using a Pi HQ camera for astrophotography it might be worth a try adding "imx
 
 # To install(manual):
 
-Install latest RaspiOS based on Bullseye (tested with FULL 32bit and 64bit versions)
+Install latest RaspiOS,
 ```bash
 sudo apt install python3 -y
 for BUSTER & BULLSEYE but NOT BOOKWORM - python3 -m pip install -U pygame --user
