@@ -1761,7 +1761,7 @@ while True:
                           if alt_dis < 2:
                               text(0,22,6,2,1,"Ana Gain: " + str(again) + " Dig Gain: " + str(dgain) + " Exp Time: " + str(etime) +"uS",int(fv*1.5),1)
                           else:
-                              text(0,20,6,2,1,"Ana Gain: " + str(again) + " Dig Gain: " + str(dgain) + " Exp Time: " + str(etime) +"uS",int(fv*1.5),1)
+                              text(0,19,6,2,1,"Ana Gain: " + str(again) + " Dig Gain: " + str(dgain) + " Exp Time: " + str(etime) +"uS",int(fv*1.5),1)
                         text(0,0,6,2,1,fname,int(fv*1.5),1)
                         pygame.display.update()
                         time.sleep(2)
