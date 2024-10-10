@@ -33,7 +33,7 @@ from gpiozero import Button
 from gpiozero import LED
 import random
 
-version = 5.38
+version = 5.39
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -115,8 +115,8 @@ max_fcount  = 20
 max_fcount2 = 2 
 old_foc     = 0
 ran         = 0
-prev_fps    = 10 
-focus_fps   = 25 
+prev_fps    = 30 
+focus_fps   = 30 
 focus_mode  = 0
 v3_focus    = 480
 v3_hdr      = 0
@@ -959,7 +959,7 @@ def Menu():
         text(0,15,3,1,1,"Off",fv,10)
     else:
         text(0,15,3,1,1,"ON ",fv,10)
-  if Pi_Cam == 10 and Pi == 5:
+  if (Pi_Cam == 10 or Pi_Cam == 8) and Pi == 5:
     button(0,15,6,4)
     text(0,15,5,0,1," STILL -t time ",fv,10)
     text(0,15,3,1,1,str(timet),fv,10)
@@ -2338,7 +2338,7 @@ while True:
                 time.sleep(0.25)
                 restart = 1
 
-            elif button_row == 16 and Pi_Cam == 10 and Pi == 5:
+            elif button_row == 16 and (Pi_Cam == 10 or Pi_Cam == 8) and Pi == 5:
                 # imx585 timet
                 if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                     timet -=100
@@ -2347,8 +2347,8 @@ while True:
                     timet  +=100
                     timet = min(timet ,10000)
                 text(0,15,3,1,1,str(timet),fv,10)
-                time.sleep(0.25)
-                restart = 1
+                time.sleep(0.05)
+                #restart = 1
 
             elif button_row == 16 and Pi_Cam == 3 and v3_af == 1:
                 # V3 FOCUS SPEED 
