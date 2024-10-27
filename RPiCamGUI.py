@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.41
+version = 5.42
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -155,13 +155,13 @@ else:
     dis_width  = preview_width
     
 # data
-cameras      = ['Unknown', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283']
-camids       = [       '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283']
-x_sens       = [        0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472]
-y_sens       = [        0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648]
-max_gains    = [       64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64]
-max_shutters = [        0,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100]
-max_vfs      = [       10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23]
+cameras      = ['Unknown', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283','imx500']
+camids       = [       '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500']
+x_sens       = [        0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472,    4056]
+y_sens       = [        0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040]
+max_gains    = [       64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64]
+max_shutters = [        0,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100,     100]
+max_vfs      = [       10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23,      20]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
