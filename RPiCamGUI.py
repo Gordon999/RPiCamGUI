@@ -769,6 +769,8 @@ def preview():
         datastr += " --width 2048 --height 1080 -o /run/shm/test%04d.jpg "
     elif Pi_Cam == 13: # imx283
         datastr += " --width 1920 --height 1080 -o /run/shm/test%04d.jpg "
+    elif Pi_Cam == 14: # imx500
+        datastr += " --width 2028 --height 1520 -o /run/shm/test%04d.jpg "
     else:
         if preview_width == 640 and preview_height == 480:
             datastr += " --width 720 --height 540 -o /run/shm/test%04d.jpg "
