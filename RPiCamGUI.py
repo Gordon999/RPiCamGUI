@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.42
+version = 5.43
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -155,13 +155,13 @@ else:
     dis_width  = preview_width
     
 # data
-cameras      = ['Unknown', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283','imx500']
-camids       = [       '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500']
-x_sens       = [        0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472,    4056]
-y_sens       = [        0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040]
-max_gains    = [       64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64]
-max_shutters = [        0,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100,     100]
-max_vfs      = [       10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23,      20]
+cameras      = [  '', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283','imx500']
+camids       = [  '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500']
+x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472,    4056]
+y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040]
+max_gains    = [  64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64]
+max_shutters = [ 100,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100,     100]
+max_vfs      = [  10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23,      20]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
@@ -361,7 +361,7 @@ def Camera_Version():
         if camstxt[x][0:4] == "3 : ":
             cam3 = camstxt[x][4:10]
         # Determine MAXIMUM number of cameras available 
-        if camstxt[x][0:4] == "3 : " and max_camera < 3:
+        if camstxt[x][0:4]   == "3 : " and max_camera < 3:
             max_camera = 3
         elif camstxt[x][0:4] == "2 : " and max_camera < 2:
             max_camera = 2
@@ -393,6 +393,28 @@ def Camera_Version():
                 still_limits[8] = max_gain
     if Pi_Cam != -1:
         print("Camera:",cameras[Pi_Cam])
+    elif cam0 != "0" and camera == 0:
+        Pi_Cam      = 0
+        cameras[0]  = cam0
+        camids[0]   = cam0[0:6]
+        print("Camera:",cameras[Pi_Cam])
+        max_shutter = max_shutters[Pi_Cam]
+        max_gain    = max_gains[Pi_Cam]
+        mag         = int(max_gain/4)
+        still_limits[8] = max_gain
+        x_sens[0] = vwidths2[len(vwidths2)-1]
+        y_sens[0] = vheights2[len(vheights2)-1]
+    elif cam1 != "1" and camera == 1:
+        Pi_Cam      = 0
+        cameras[0]  = cam1
+        camids[0]   = cam1[0:6]
+        print("Camera:",cameras[Pi_Cam])
+        max_shutter = max_shutters[Pi_Cam]
+        max_gain    = max_gains[Pi_Cam]
+        mag         = int(max_gain/4)
+        still_limits[8] = max_gain
+        x_sens[0] = vwidths2[len(vwidths2)-1]
+        y_sens[0] = vheights2[len(vheights2)-1]
     else:
         print("No Camera Found")
         pygame.display.quit()
@@ -755,11 +777,11 @@ def preview():
         datastr += " --width 3280 --height 2464 -o /run/shm/test%04d.jpg "
     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) or focus_mode == 1 :
         datastr += " --width 1920 --height 1440 -o /run/shm/test%04d.jpg "
-    elif Pi_Cam == 3:
+    elif Pi_Cam == 3:  # Pi v3
         datastr += " --width 2304 --height 1296 -o /run/shm/test%04d.jpg "
-    elif Pi_Cam == 7:
+    elif Pi_Cam == 7:  # Pi GS
         datastr += " --width 1456 --height 1088 -o /run/shm/test%04d.jpg "
-    elif Pi_Cam == 9:
+    elif Pi_Cam == 9:  # imx290
         datastr += " --width 1920 --height 1080 -o /run/shm/test%04d.jpg "
     elif Pi_Cam == 10: # imx585
         datastr += " --width 1928 --height 1090 -o /run/shm/test%04d.jpg "
