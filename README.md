@@ -12,6 +12,8 @@ Script to allow control of a Pi Camera. Will work with all Pi camera models, v1,
 
 Note with arducam ov9281 at present https://forums.raspberrypi.com/viewtopic.php?t=380236#p2273711
 
+It should also recognise other cameras if you have a dtoverlay for it, and added in the config.txt
+
 To start streaming right mouse click on CAPTURE/Stream video button. Set streaming type in the script. 
 Time of streaming set by v_length.
 
