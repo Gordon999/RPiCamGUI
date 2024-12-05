@@ -8,7 +8,9 @@ At your own risk !!. Ensure you have any required software backed up.
 
 Pi4B or Pi5B recommended, but will work on others including Zero2W
 
-Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP or 64MP Autofocus cameras, Waveshare imx290-83 camera, imx585 or imx500.
+Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP or 64MP Autofocus cameras, Waveshare imx290-83 camera, imx585, imx500 and ov9281.
+
+Note with arducam ov9281 at present https://forums.raspberrypi.com/viewtopic.php?t=380236#p2273711
 
 To start streaming right mouse click on CAPTURE/Stream video button. Set streaming type in the script. 
 Time of streaming set by v_length.
