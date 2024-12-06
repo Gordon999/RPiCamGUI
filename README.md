@@ -8,7 +8,7 @@ At your own risk !!. Ensure you have any required software backed up.
 
 Pi4B or Pi5B recommended, but will work on others including Zero2W
 
-Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ and GS. Also Arducam 16MP or 64MP Autofocus cameras, Waveshare imx290-83 camera, imx585, imx500 and ov9281.
+Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ, GS and imx500. Also Arducam 16MP or 64MP Autofocus cameras, Waveshare imx290-83 camera, imx585 and ov9281.
 
 Note with arducam ov9281 at present https://forums.raspberrypi.com/viewtopic.php?t=380236#p2273711
 
