@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.44
+version = 5.45
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -295,7 +295,7 @@ def setmaxvformat():
         max_vformat = max_vfs[5]
     elif codec > 0:
         max_vformat = max_vfs[Pi_Cam]
-    elif Pi_Cam == 7:               # Pi GS
+    elif Pi_Cam == 7 or Pi_Cam == 15:  # Pi GS or ov9281
         max_vformat = max_vfs[Pi_Cam]
     else:
         max_vformat = max_vfs[0]
@@ -1666,7 +1666,7 @@ while True:
                             else:
                                  datastr = "rpicam-still"
                             datastr += " --camera " + str(camera) + " -r -n -o " + fname
-                        datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
+                        datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100) 
                         if mode == 0:
                             datastr += " --shutter " + str(sspeed)
                         else:
@@ -3077,7 +3077,7 @@ while True:
                                         counts.sort()
                                         if (extns2[extn] == 'jpg' or extns2[extn] == 'bmp' or extns2[extn] == 'png') and count > 0 and show == 0:
                                             image = pygame.image.load(counts[count-1])
-                                            if (Pi_Cam != 3 and Pi_Cam != 10) or (igw/igh > 1.5 and zoom == 5):
+                                            if (Pi_Cam != 3 and Pi_Cam != 10 and Pi_Cam != 15) or (igw/igh > 1.5 and zoom == 5):
                                                 catSurfacesmall = pygame.transform.scale(image, (preview_width,preview_height))
                                             else:
                                                 catSurfacesmall = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
