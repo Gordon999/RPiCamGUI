@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.45
+version = 5.46
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -169,7 +169,8 @@ vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,1928,2028,20
 vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1090,1080,1520,1296,1944,2464,2160,2180,3024,3040,2592,3496,3648,6000,6944,6944]
 v_max_fps    = [200,120, 40,  40,  40,  30,  60,  30,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  20,  10,  20,  20,  20,  20,  20,  20]
 v3_max_fps   = [200,120,125, 120, 120, 120, 120, 120, 120, 100, 100,  50, 100,  56,  56,  20,  20,  20,  20,  20,  15,  20,  20,  20  ,20,  20,  20]
-v9_max_fps   = [60,  60, 60,  60,  60,  60,  60,  60,  60,  60,  60]
+v9_max_fps   = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60]
+v15_max_fps  = [240,200,200, 130]
 zwidths      = [640,800,1280,2592,3280,4056,4656,9152]
 zheights     = [480,600, 960,1944,2464,3040,3496,6944]
 zfs          = [1,1,0.666666,0.4166666,0.333333]
@@ -471,7 +472,7 @@ def Camera_Version():
                     foc_sub3 = x + 1
                 elif ctrlstxt[a][0:37] == "exposure 0x00980911 (int)    : min=16" and Pi_Cam == 8: # arducam owlsight 64mp
                     foc_sub3 = x + 1
-    pygame.display.set_caption('RPiGUI - v' + str(version) + "  " + cameras[Pi_Cam] + " Camera" )               
+    pygame.display.set_caption('RPiCamGUI:  v' + str(version) + "  Pi: " + str(Pi) + "  Camera: "  + cameras[Pi_Cam])               
 
     if (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt):
         lo_res = 0
@@ -488,10 +489,13 @@ def Camera_Version():
             scientif = 0
     vwidth    = vwidths[vformat]
     vheight   = vheights[vformat]
+    # set max fps
     if Pi_Cam == 3:
         vfps = v3_max_fps[vformat]
     elif Pi_Cam == 9:
         vfps = v9_max_fps[vformat]
+    elif Pi_Cam == 15:
+        vfps = v15_max_fps[vformat]
     else:
         vfps = v_max_fps[vformat]
     video_limits[5] = vfps
@@ -985,7 +989,7 @@ def Menu():
         text(0,15,3,1,1,"Off",fv,10)
     else:
         text(0,15,3,1,1,"ON ",fv,10)
-  if (Pi_Cam == 10 or Pi_Cam == 8) and Pi == 5:
+  if (Pi_Cam == 10 or Pi_Cam == 8 or Pi_Cam == 15) and Pi == 5:
     button(0,15,6,4)
     text(0,15,5,0,1," STILL -t time ",fv,10)
     text(0,15,3,1,1,str(timet),fv,10)
@@ -2370,8 +2374,8 @@ while True:
                 time.sleep(0.25)
                 restart = 1
 
-            elif button_row == 16 and (Pi_Cam == 10 or Pi_Cam == 8) and Pi == 5:
-                # imx585 timet
+            elif button_row == 16 and (Pi_Cam == 10 or Pi_Cam == 8 or Pi_Cam == 15) and Pi == 5:
+                # timet
                 if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                     timet -=100
                     timet  = max(timet ,100)
@@ -2380,7 +2384,6 @@ while True:
                     timet = min(timet ,10000)
                 text(0,15,3,1,1,str(timet),fv,10)
                 time.sleep(0.05)
-                #restart = 1
 
             elif button_row == 16 and Pi_Cam == 3 and v3_af == 1:
                 # V3 FOCUS SPEED 
@@ -3364,6 +3367,8 @@ while True:
                                 vfps = 90
                 elif Pi_Cam == 9:
                     vfps = v9_max_fps[vformat]
+                elif Pi_Cam == 15:
+                    vfps = v15_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
@@ -3429,6 +3434,8 @@ while True:
                                 vfps = 90
                 elif Pi_Cam == 9:
                     vfps = v9_max_fps[vformat]
+                elif Pi_Cam == 15:
+                    vfps = v15_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
@@ -3490,6 +3497,8 @@ while True:
                                 vfps = 90
                 elif Pi_Cam == 9:
                     vfps = v9_max_fps[vformat]
+                elif Pi_Cam == 15:
+                    vfps = v15_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
@@ -3531,6 +3540,8 @@ while True:
                                 vfps = 90
                 elif Pi_Cam == 9:
                     vfps = v9_max_fps[vformat]
+                elif Pi_Cam == 15:
+                    vfps = v15_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
