@@ -13,6 +13,9 @@ Pi4B or Pi5B recommended, but will work on others including Zero2W
 To start streaming right mouse click on CAPTURE/Stream video button. Set streaming type in the script. 
 Time of streaming set by v_length.
 
+ # Always use the EXIT button to EXIT
+ ( or you will need to reboot your pi)
+
 ## Screenshot
 
 ![screenshot](screenshot.jpg)
@@ -92,7 +95,7 @@ lf using a Pi HQ camera for astrophotography it might be worth a try adding "imx
 
 ![spotfocus](spotfocus.jpg)
 
-## Screenshot using alt_dis = 2, for 16x9 cameras eg pi v3 or imx585
+## Screenshot using alt_dis = 2, for 16x9 cameras eg pi v3,imx585,ov9281
 
 ![screenshot](screenshot2.jpg)
 
