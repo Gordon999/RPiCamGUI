@@ -10,8 +10,6 @@ Pi4B or Pi5B recommended, but will work on others including Zero2W
 
 Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ, GS and imx500. Also Arducam 16MP or 64MP Autofocus cameras, Waveshare imx290-83 camera, imx585 and ov9281.
 
-Note with arducam ov9281 at present https://forums.raspberrypi.com/viewtopic.php?t=380236#p2273711
-
 It should also recognise other cameras if you have a dtoverlay for it, and added in the config.txt, but it may not be optimal.
 
 To start streaming right mouse click on CAPTURE/Stream video button. Set streaming type in the script. 
@@ -39,6 +37,9 @@ add dtoverlay=imx290,clock-frequency=37125000 to config.txt , add cam0 or cam1 i
 You may need to add https://github.com/raspberrypi/libcamera/blob/next/src/ipa/rpi/pisp/data/imx290.json as imx290.json to /usr/share/libcamera/ipa/rpi/pisp if using a Pi5
 
 To add IR Filter switching put a wire between GPIO26 (pin37) on the Pi and the GPIO 'hole' on the camera.
+
+## Arducam ov9281
+Use their installation instructions https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/Global-Shutter/1MP-OV9281-OV9282/
 
 ## HDR
 A Pi v3 camera now has more HDR options: OFF, SINGLE EXPOSURE, AUTO, SENSOR.
