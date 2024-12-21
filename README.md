@@ -42,6 +42,9 @@ To add IR Filter switching put a wire between GPIO26 (pin37) on the Pi and the G
 ## Arducam ov9281
 Use their installation instructions https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/Global-Shutter/1MP-OV9281-OV9282/
 
+## Innomaker ov9281
+add dtoverlay=ov9281 to config.txt. Not Pi5 has an issue with rpicam-still, only blank images.
+
 ## HDR
 A Pi v3 camera now has more HDR options: OFF, SINGLE EXPOSURE, AUTO, SENSOR.
 
