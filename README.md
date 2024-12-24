@@ -35,7 +35,8 @@ The 64MP OWLSIGHT camera should work without needing the Arducam install just ad
 
 ## Waveshare imx290-83
 add dtoverlay=imx290,clock-frequency=37125000 to config.txt , add cam0 or cam1 if using a Pi5.
-You may need to add https://github.com/raspberrypi/libcamera/blob/next/src/ipa/rpi/pisp/data/imx290.json as imx290.json to /usr/share/libcamera/ipa/rpi/pisp if using a Pi5
+You may need to add https://github.com/raspberrypi/libcamera/blob/next/src/ipa/rpi/pisp/data/imx290.json as imx290.json to /usr/share/libcamera/ipa/rpi/pisp if using a Pi5.
+You can experiment with the tuning file imx290a.json, put it in /home/USERNAME/ , it will allow hdr to work to some extent
 
 To add IR Filter switching put a wire between GPIO26 (pin37) on the Pi and the GPIO 'hole' on the camera.
 
