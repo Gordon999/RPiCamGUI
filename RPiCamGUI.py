@@ -472,7 +472,10 @@ def Camera_Version():
                     foc_sub3 = x + 1
                 elif ctrlstxt[a][0:37] == "exposure 0x00980911 (int)    : min=16" and Pi_Cam == 8: # arducam owlsight 64mp
                     foc_sub3 = x + 1
-    pygame.display.set_caption('RPiCamGUI:  v' + str(version) + "  Pi: " + str(Pi) + "  Camera: "  + cameras[Pi_Cam])               
+    if cam0 != "0" and cam1 != "1":
+        pygame.display.set_caption('RPiCamGUI:  v' + str(version) + "  Pi: " + str(Pi) + "  Camera: "  + cameras[Pi_Cam] + " : " + str(camera))
+    else:
+        pygame.display.set_caption('RPiCamGUI:  v' + str(version) + "  Pi: " + str(Pi) + "  Camera: "  + cameras[Pi_Cam] )
 
     if (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt):
         lo_res = 0
@@ -1692,6 +1695,8 @@ while True:
                         datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --quality " + str(quality)
                         datastr += " --denoise " + denoises[denoise]
+                        if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json"):
+                            datastr += " --tuning-file /home/gt64bw/imx290a.json"
                         if Pi_Cam == 4 and scientific == 1:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
@@ -2490,6 +2495,8 @@ while True:
                         datastr += " --saturation " + str(saturation/10)
                         datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --denoise "    + denoises[denoise]
+                        if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json"):
+                            datastr += " --tuning-file /home/gt64bw/imx290a.json"
                         if Pi_Cam == 4 and scientific == 1:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
@@ -2665,6 +2672,8 @@ while True:
                         datastr += " --saturation " + str(saturation/10)
                         datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --denoise "    + denoises[denoise]
+                        if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json"):
+                            datastr += " --tuning-file /home/gt64bw/imx290a.json"
                         if Pi_Cam == 4 and scientific == 1:
                             if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
                                 datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
@@ -2821,6 +2830,8 @@ while True:
                             datastr += " --sharpness " + str(sharpness/10)
                             datastr += " --quality " + str(quality)
                             datastr += " --denoise "    + denoises[denoise]
+                            if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json"):
+                                datastr += " --tuning-file /home/gt64bw/imx290a.json"
                             if Pi_Cam == 4 and scientific == 1:
                                 if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
                                     datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
@@ -3022,6 +3033,8 @@ while True:
                                     datastr += " --sharpness " + str(sharpness/10)
                                     datastr += " --quality " + str(quality)
                                     datastr += " --denoise "    + denoises[denoise]
+                                    if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json"):
+                                        datastr += " --tuning-file /home/gt64bw/imx290a.json"
                                     if Pi_Cam == 4 and scientific == 1:
                                         if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
                                             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
@@ -3194,6 +3207,8 @@ while True:
                             datastr += " --saturation " + str(saturation/10)
                             datastr += " --sharpness "  + str(sharpness/10)
                             datastr += " --denoise "    + denoises[denoise]
+                            if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json"):
+                                datastr += " --tuning-file /home/gt64bw/imx290a.json"
                             if Pi_Cam == 4 and scientific == 1:
                                 if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
                                     datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
