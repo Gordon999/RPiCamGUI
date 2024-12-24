@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.46
+version = 5.47
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -845,8 +845,10 @@ def preview():
         datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
     if (Pi_Cam == 3 and v3_af == 1) and v3_f_range != 0:
         datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-    if Pi_Cam == 3 or Pi == 5:
+    if Pi_Cam == 3 or (Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json")) or Pi == 5:
         datastr += " --hdr " + v3_hdrs[v3_hdr]
+    if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json"):
+        datastr += " --tuning-file /home/gt64bw/imx290a.json"
     if Pi_Cam == 4 and scientific == 1:
         if os.path.exists('/usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json') and Pi == 4:
             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
@@ -909,12 +911,12 @@ def Menu():
     if foc_man == 1:
         text(1,7,3,1,1,"manual",fv,0)
         
-  if Pi_Cam == 3 or Pi == 5:
+  if Pi_Cam == 3 or Pi == 5 or (Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json")):
       button(0,13,6,4)
       text(0,13,5,0,1,"HDR",fv,10)
       text(0,13,3,1,1,v3_hdrs[v3_hdr],fv,10)
 
-  if Pi_Cam != 3 and Pi != 5:
+  if Pi_Cam != 3 and Pi != 5 and (Pi_Cam != 9 and not os.path.exists("/home/" + Home_Files[0] + "/imx290a.json")):
       button(0,13,6,4)
       text(0,13,5,0,1,"STILL -t",fv,10)
       text(0,13,3,1,1,str(timet),fv,10)
@@ -1706,7 +1708,7 @@ while True:
                             datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
                         if ((Pi_Cam == 3 and v3_af == 1) or (((Pi_Cam == 5 and v5_af == 1)or Pi_Cam == 6)) or Pi_Cam == 8) and zoom == 0 and fxz != 1:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                        if Pi_Cam == 3 or Pi == 5:
+                        if Pi_Cam == 3 or Pi == 5 or (Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json")):
                             datastr += " --hdr " + v3_hdrs[v3_hdr]
                         if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 1:
                             datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
@@ -2276,7 +2278,7 @@ while True:
                 time.sleep(.25)
                 restart = 1
 
-            elif button_row == 14 and Pi_Cam == 3:
+            elif button_row == 14 and (Pi_Cam == 3 or (Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json"))):
                 # PI V3 CAMERA HDR
                 if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                     v3_hdr -=1
@@ -2290,7 +2292,7 @@ while True:
                 time.sleep(0.25)
                 restart = 1
 
-            elif button_row == 14 and Pi_Cam != 3 and Pi != 5:
+            elif button_row == 14 and (Pi_Cam != 3 or Pi_Cam != 9 or (Pi_Cam == 9 and not os.path.exists("/home/" + Home_Files[0] + "/imx290a.json"))) and Pi != 5:
                 # CAMERA still -t time (NOT Pi v3 camera)
                 if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                     timet -=100
@@ -2303,8 +2305,8 @@ while True:
                 text(0,13,3,1,1,str(timet),fv,10)
                 time.sleep(0.05)
 
-            elif button_row == 14 and Pi_Cam != 3 and Pi == 5:
-                # PI5 and NON V3 CAMERA HDR
+            elif button_row == 14 and (Pi_Cam != 3 or Pi_Cam != 9 or (Pi_Cam == 9 and not os.path.exists("/home/" + Home_Files[0] + "/imx290a.json"))) and Pi == 5:
+                # Pi5 and NON V3 CAMERA HDR
                 if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                     v3_hdr -=1
                     v3_hdr  = max(v3_hdr ,0)
@@ -2517,7 +2519,7 @@ while True:
                             datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
                         if (Pi_Cam == 3 and v3_af == 1) and v3_f_range != 0:
                             datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-                        if Pi_Cam == 3 or Pi == 5:
+                        if Pi_Cam == 3 or Pi == 5 or (Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json")):
                             datastr += " --hdr " + v3_hdrs[v3_hdr]
                         datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
                         if zoom > 0 and zoom < 5:
@@ -2681,7 +2683,7 @@ while True:
                             datastr += " --autofocus-speed " + v3_f_speeds[v3_f_speed]
                         if (Pi_Cam == 3 and v3_af == 1) and v3_f_range != 0:
                             datastr += " --autofocus-range " + v3_f_ranges[v3_f_range]
-                        if Pi_Cam == 3 or Pi == 5:
+                        if Pi_Cam == 3 or Pi == 5 or (Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json")):
                             datastr += " --hdr " + v3_hdrs[v3_hdr]
                         datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
                         if zoom > 0 and zoom < 5:
@@ -2835,7 +2837,7 @@ while True:
                                 datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
                             if ((Pi_Cam == 3 and v3_af == 1) or (((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6)) or Pi_Cam == 8) and zoom == 0:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                            if Pi_Cam == 3 or Pi == 5:
+                            if Pi_Cam == 3 or Pi == 5 or (Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json")):
                                 datastr += " --hdr " + v3_hdrs[v3_hdr]
                             if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
                                 datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
@@ -3036,7 +3038,7 @@ while True:
                                         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode] + " --autofocus-on-capture"
                                     if ((Pi_Cam == 3 and v3_af == 1) or (((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6)) or Pi_Cam == 8)  and zoom == 0:
                                         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                                    if Pi_Cam == 3:
+                                    if Pi_Cam == 3 or Pi == 5 or (Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json")):
                                         datastr += " --hdr " + v3_hdrs[v3_hdr]
                                     if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
                                         datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
@@ -3206,7 +3208,7 @@ while True:
                                         datastr += " --lens-position " + str(focus/100)
                             if ((Pi_Cam == 3 and v3_af == 1) or (((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6) ) or Pi_Cam == 8) and zoom == 0:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
-                            if Pi_Cam == 3 or Pi == 5:
+                            if Pi_Cam == 3 or Pi == 5 or (Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json")):
                                 datastr += " --hdr " + v3_hdrs[v3_hdr]
                             if zoom > 0 and zoom < 5 :
                                 zws = int(igw * zfs[zoom])
