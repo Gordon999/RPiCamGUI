@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.47
+version = 5.48
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
