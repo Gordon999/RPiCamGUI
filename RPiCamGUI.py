@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.49
+version = 5.50
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -423,6 +423,10 @@ def Camera_Version():
 
     igw = x_sens[Pi_Cam]
     igh = y_sens[Pi_Cam]
+
+    if igw/igh > 1.5 and rotate == 0:
+        pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,int(preview_height *.25) ))
+
             
     if max_camera == 1 and cam0 == cam1:
         same_cams = 1
