@@ -307,7 +307,8 @@ def Camera_Version():
     # Check for Pi Camera version
     global lver,v3_af,camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,x_sens,y_sens,igw,igh
     global cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,lo_res
-    global speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8,max_vf_9,IRF,foc_sub3,foc_sub5,v3_hdr
+    global speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8,max_vf_9,IRF,foc_sub3
+    global foc_sub5,v3_hdr,windowSurfaceObj
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('libcams.txt'):
         os.rename('libcams.txt', 'oldlibcams.txt')
@@ -537,8 +538,6 @@ def Camera_Version():
             else:
                 text(0,2,0,1,1,str(shutters[speed]),fv,10)
 
-Camera_Version()
-
 pygame.init()
 
 if frame == 1:
@@ -557,6 +556,8 @@ else:
         windowSurfaceObj = pygame.display.set_mode((preview_width,dis_height), pygame.NOFRAME,24)
     else:
         windowSurfaceObj = pygame.display.set_mode((dis_width,dis_height), pygame.NOFRAME,24)
+
+Camera_Version()
 
 global greyColor, redColor, greenColor, blueColor, dgryColor, lgrnColor, blackColor, whiteColor, purpleColor, yellowColor,lpurColor,lyelColor
 bredColor =   pygame.Color(255,   0,   0)
@@ -1543,9 +1544,9 @@ while True:
             focus_mode = 0
             v3_f_mode = 0 
             foc_man = 0
-            if same_cams == 0:
-                Camera_Version()
-                Menu()
+            #if same_cams == 0:
+            Camera_Version()
+            Menu()
             restart = 1
                 
 
