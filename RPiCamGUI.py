@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.50
+version = 5.51
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -807,6 +807,8 @@ def preview():
         datastr += " --width 2028 --height 1520 -o /run/shm/test%04d.jpg "
     elif Pi_Cam == 15: # ov9281
         datastr += " --width 1280 --height  800 -o /run/shm/test%04d.jpg "
+    elif Pi_Cam == 1:  # v1 / ov5647
+        datastr += " --width 1296 --height 972 -o /run/shm/test%04d.jpg "
     else:
         if preview_width == 640 and preview_height == 480:
             datastr += " --width 720 --height 540 -o /run/shm/test%04d.jpg "
