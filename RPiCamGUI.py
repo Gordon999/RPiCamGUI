@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Copyright (c) 2024
+"""Copyright (c) 2025
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -32,13 +32,13 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.51
+version = 5.52
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
 
 # streaming parameters
-stream_type = 0             # 0 = TCP, 1 = UDP, 2 = RTSP
+stream_type = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
 stream_port = 5000          # set video streaming port number
 udp_ip_addr = "10.42.0.52"  # IP address of the client for UDP streaming
 
@@ -89,7 +89,9 @@ IRF         = 0    # Waveshare imx290-83 IR filter, 1 = ON
 str_cap     = 0    # 0 = STILL, see strs below
 v3_hdr      = 0    # HDR (v3 camera or Pi5 ONLY), see v3_hdrs below
 timet       = 5000 # -t setting when capturing STILLS
-rotate      = 0    # rotate preview ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
+rotate      = 0    # rotate preview & stills ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
+vflip       = 0    # set to 1 to vertical flip images
+hflip       = 0    # set tp 1 tp horiozontally flip images
 # NOTE if you change any of the above defaults you need to delete the con_file and restart.
 
 # default directories and files
@@ -156,7 +158,7 @@ else:
     
 # data
 cameras      = [  '', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283','imx500','ov9281']
-camids       = [  '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500','ov9281']
+camids       = [  '','ov5647','imx218','imx709','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500','ov9281']
 x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472,    4056,    1280]
 y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040,     800]
 max_gains    = [  64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64,      64]
@@ -842,6 +844,10 @@ def preview():
     datastr += " --sharpness "  + str(sharpness/10)
     datastr += " --denoise "    + denoises[denoise]
     datastr += " --quality " + str(quality)
+    if vflip == 1:
+        datastr += " --vflip"
+    if hflip == 1:
+        datastr += " --hflip"
     if ((Pi_Cam == 3 and v3_af == 1) and v3_f_mode > 0 and fxx == 0) or (((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6)) or Pi_Cam == 8:
         datastr += " --autofocus-mode " + v3_f_modes[v3_f_mode]
         if v3_f_mode == 1:
@@ -1701,6 +1707,10 @@ while True:
                         datastr += " --saturation " + str(saturation/10)
                         datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --quality " + str(quality)
+                        if vflip == 1:
+                            datastr += " --vflip"
+                        if hflip == 1:
+                            datastr += " --hflip"
                         datastr += " --denoise " + denoises[denoise]
                         if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json") and Pi == 5:
                             datastr += " --tuning-file /home/" + Home_Files[0] + "/imx290a.json"
@@ -2504,6 +2514,10 @@ while True:
                         datastr += " --saturation " + str(saturation/10)
                         datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --denoise "    + denoises[denoise]
+                        if vflip == 1:
+                            datastr += " --vflip"
+                        if hflip == 1:
+                            datastr += " --hflip"
                         if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json") and Pi == 5:
                             datastr += " --tuning-file /home/" + Home_Files[0] + "/imx290a.json"
                         if Pi_Cam == 4 and scientific == 1:
@@ -2681,6 +2695,10 @@ while True:
                         datastr += " --saturation " + str(saturation/10)
                         datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --denoise "    + denoises[denoise]
+                        if vflip == 1:
+                            datastr += " --vflip"
+                        if hflip == 1:
+                            datastr += " --hflip"
                         if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json") and Pi == 5:
                             datastr += " --tuning-file /home/" + Home_Files[0] + "/imx290a.json"
                         if Pi_Cam == 4 and scientific == 1:
@@ -2839,6 +2857,10 @@ while True:
                             datastr += " --sharpness " + str(sharpness/10)
                             datastr += " --quality " + str(quality)
                             datastr += " --denoise "    + denoises[denoise]
+                            if vflip == 1:
+                                datastr += " --vflip"
+                            if hflip == 1:
+                                datastr += " --hflip"
                             if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json") and Pi == 5:
                                 datastr += " --tuning-file /home/" + Home_Files[0] + "/imx290a.json"
                             if Pi_Cam == 4 and scientific == 1:
@@ -3042,6 +3064,10 @@ while True:
                                     datastr += " --sharpness " + str(sharpness/10)
                                     datastr += " --quality " + str(quality)
                                     datastr += " --denoise "    + denoises[denoise]
+                                    if vflip == 1:
+                                        datastr += " --vflip"
+                                    if hflip == 1:
+                                        datastr += " --hflip"
                                     if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json") and Pi == 5:
                                         datastr += " --tuning-file /home/" + Home_Files[0] + "/imx290a.json"
                                     if Pi_Cam == 4 and scientific == 1:
@@ -3216,6 +3242,10 @@ while True:
                             datastr += " --saturation " + str(saturation/10)
                             datastr += " --sharpness "  + str(sharpness/10)
                             datastr += " --denoise "    + denoises[denoise]
+                            if vflip == 1:
+                                datastr += " --vflip"
+                            if hflip == 1:
+                                datastr += " --hflip"
                             if Pi_Cam == 9 and os.path.exists("/home/" + Home_Files[0] + "/imx290a.json") and Pi == 5:
                                 datastr += " --tuning-file /home/" + Home_Files[0] + "/imx290a.json"
                             if Pi_Cam == 4 and scientific == 1:
