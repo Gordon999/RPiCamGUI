@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.52
+version = 5.53
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -90,14 +90,14 @@ str_cap     = 0    # 0 = STILL, see strs below
 v3_hdr      = 0    # HDR (v3 camera or Pi5 ONLY), see v3_hdrs below
 timet       = 5000 # -t setting when capturing STILLS
 rotate      = 0    # rotate preview & stills ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
-vflip       = 0    # set to 1 to vertical flip images
+vflip       = 0    # set to 1 to vertically flip images
 hflip       = 0    # set tp 1 tp horiozontally flip images
 # NOTE if you change any of the above defaults you need to delete the con_file and restart.
 
 # default directories and files
 pic         = "Pictures"
 vid         = "Videos"
-con_file    = "PiLCConfig538.txt"
+con_file    = "PiLCConfig553.txt"
 
 # setup directories
 Home_Files  = []
@@ -236,7 +236,7 @@ video_limits = ['vlen',0,3600,'fps',1,40,'v5_focus',10,2500,'vformat',0,7,'0',0,
 # check config_file exists, if not then write default values
 if not os.path.exists(config_file):
     points = [mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation,
-              meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet]
+              meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip]
     with open(config_file, 'w') as f:
         for item in points:
             f.write("%s\n" % item)
@@ -280,11 +280,13 @@ histogram   = config[27]
 histarea    = config[28]
 v3_f_speed  = config[29]
 v3_f_range  = config[30]
-#rotate      = config[31]
+rotate      = config[31]
 IRF         = config[32]
 str_cap     = config[33]
 v3_hdr      = config[34]
 timet       = config[35]
+vflip       = config[36]
+hflip       = config[37]
 
 if codec > len(codecs)-1:
     codec = 0
@@ -4173,6 +4175,8 @@ while True:
                    config[33] = str_cap
                    config[34] = v3_hdr
                    config[35] = timet
+                   config[36] = vflip
+                   config[37] = hflip
                    with open(config_file, 'w') as f:
                        for item in config:
                            f.write("%s\n" % item)
