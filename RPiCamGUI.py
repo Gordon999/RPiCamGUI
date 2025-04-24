@@ -234,11 +234,11 @@ video_limits = ['vlen',0,3600,'fps',1,40,'v5_focus',10,2500,'vformat',0,7,'0',0,
                 'str_cap',0,len(strs)-1,'v6_focus',10,1020]
 
 # check config_file exists, if not then write default values
+titles = ['mode','speed','gain','brightness','contrast','frame','red','blue','ev','vlen','fps','vformat','codec','tinterval','tshots','extn','zx','zy','zoom','saturation',
+          'meter','awb','sharpness','denoise','quality','profile','level','histogram','histarea','v3_f_speed','v3_f_range','rotate','IRF','str_cap','v3_hdr','timet','vflip','hflip']
+points = [mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation,
+          meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip]
 if not os.path.exists(config_file):
-    titles = ['mode','speed','gain','brightness','contrast','frame','red','blue','ev','vlen','fps','vformat','codec','tinterval','tshots','extn','zx','zy','zoom','saturation',
-              'meter','awb','sharpness','denoise','quality','profile','level','histogram','histarea','v3_f_speed','v3_f_range','rotate','IRF','str_cap','v3_hdr','timet','vflip','hflip']
-    points = [mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation,
-              meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip]
     with open(config_file, 'w') as f:
         for item in range(0,len(titles)):
             f.write( titles[item] + " : " + str(points[item]) + "\n")
@@ -4156,7 +4156,7 @@ while True:
             elif button_row == 17:
                 # HORIZONTAL FLIP
                 hflip += 1
-                if hflip == 2:
+                if hflip > 1:
                     hflip = 0
                 text(1,16,3,1,1,str(hflip),fv,7)
                 restart = 1
@@ -4205,8 +4205,8 @@ while True:
                    config[36] = vflip
                    config[37] = hflip
                    with open(config_file, 'w') as f:
-                       for item in config:
-                           f.write("%s\n" % item)
+                      for item in range(0,len(titles)):
+                          f.write(titles[item] + " : " + str(config[item]) + "\n")
                    time.sleep(1)
                    text(1,13,2,1,1,"Config",fv,7)
                 else:
