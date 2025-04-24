@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.53
+version = 5.54
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -97,7 +97,7 @@ hflip       = 0    # set tp 1 tp horiozontally flip images
 # default directories and files
 pic         = "Pictures"
 vid         = "Videos"
-con_file    = "PiLCConfig553.txt"
+con_file    = "PiLCConfig554.txt"
 
 # setup directories
 Home_Files  = []
@@ -158,7 +158,7 @@ else:
     
 # data
 cameras      = [  '', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283','imx500','ov9281']
-camids       = [  '','ov5647','imx218','imx709','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500','ov9281']
+camids       = [  '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500','ov9281']
 x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472,    4056,    1280]
 y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040,     800]
 max_gains    = [  64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64,      64]
@@ -235,19 +235,23 @@ video_limits = ['vlen',0,3600,'fps',1,40,'v5_focus',10,2500,'vformat',0,7,'0',0,
 
 # check config_file exists, if not then write default values
 if not os.path.exists(config_file):
+    titles = ['mode','speed','gain','brightness','contrast','frame','red','blue','ev','vlen','fps','vformat','codec','tinterval','tshots','extn','zx','zy','zoom','saturation',
+              'meter','awb','sharpness','denoise','quality','profile','level','histogram','histarea','v3_f_speed','v3_f_range','rotate','IRF','str_cap','v3_hdr','timet','vflip','hflip']
     points = [mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation,
               meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip]
     with open(config_file, 'w') as f:
-        for item in points:
-            f.write("%s\n" % item)
+        for item in range(0,len(titles)):
+            f.write( titles[item] + " : " + str(points[item]) + "\n")
 
 # read config_file
 config = []
 with open(config_file, "r") as file:
    line = file.readline()
    while line:
-      config.append(line.strip())
-      line = file.readline()
+       line = line.strip()
+       item = line.split(" : ")
+       config.append(item[1])
+       line = file.readline()
 config = list(map(int,config))
 
 mode        = config[0]
