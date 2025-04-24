@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.54
+version = 5.55
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -91,7 +91,7 @@ v3_hdr      = 0    # HDR (v3 camera or Pi5 ONLY), see v3_hdrs below
 timet       = 5000 # -t setting when capturing STILLS
 rotate      = 0    # rotate preview & stills ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
 vflip       = 0    # set to 1 to vertically flip images
-hflip       = 0    # set tp 1 tp horiozontally flip images
+hflip       = 0    # set tp 1 tp horizontally flip images
 # NOTE if you change any of the above defaults you need to delete the con_file and restart.
 
 # default directories and files
@@ -142,7 +142,7 @@ else:
 
 # set button sizes
 bw = int(preview_width/8)
-bh = int(preview_height/16)
+bh = int(preview_height/17)
 ft = int(preview_width/55)
 fv = int(preview_width/55)
 
@@ -917,6 +917,8 @@ button(1,13,0,5)
 button(1,14,0,5)
 button(0,14,0,5)
 button(0,13,6,4)
+button(1,16,0,5)
+button(0,16,0,5)
 
 def Menu():
   global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz,v3_hdr,v3_hdrs
@@ -1017,6 +1019,10 @@ def Menu():
     button(0,15,6,4)
     text(0,15,5,0,1," STILL -t time ",fv,10)
     text(0,15,3,1,1,str(timet),fv,10)
+  text(0,16,2,0,1,"Vert Flip",ft,7)
+  text(0,16,3,1,1,str(vflip),fv,7)
+  text(1,16,2,0,1,"Horiz Flip",ft,7)
+  text(1,16,3,1,1,str(hflip),fv,7)
     
 # write button texts
 text(0,0,1,0,1,"CAPTURE",ft,7)
@@ -2436,6 +2442,15 @@ while True:
                         v3_f_speed = min(v3_f_speed,pmax)
                 text(0,15,3,1,1,v3_f_speeds[v3_f_speed],fv,7)
                 draw_bar(0,15,greyColor,'v3_f_speed',v3_f_speed)
+                restart = 1
+                time.sleep(.25)
+
+            if button_row == 17:
+                # VERTICAL FLIP
+                vflip +=1
+                if vflip > 1:
+                    vflip = 0
+                text(0,16,3,1,1,str(vflip),fv,7)
                 restart = 1
                 time.sleep(.25)
                
@@ -4138,7 +4153,15 @@ while True:
                 restart = 1
                 time.sleep(.25)
 
-               
+            elif button_row == 17:
+                # HORIZONTAL FLIP
+                hflip += 1
+                if hflip == 2:
+                    hflip = 0
+                text(1,16,3,1,1,str(hflip),fv,7)
+                restart = 1
+                time.sleep(.25)
+                
             elif button_row == 14:
                 if (alt_dis == 0 and mousex < preview_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                    # SAVE CONFIG
