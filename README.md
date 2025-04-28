@@ -6,6 +6,8 @@ To work with RaspiOS based on BULLSEYE / BOOKWORM, using rpicam / libcamera (NOT
 
 Preview uses rpicam-vid (so may not be as sharp as captured stills), stills rpicam-still, videos rpicam-vid, timelapses depends on timings and settings, rpicam-still, -vid or -raw. Note preview has a maximum shutter setting of 1 second.
 
+vflip and hflip only available if using alt_dis = 0
+
 At your own risk !!. Ensure you have any required software backed up.
 
 Pi4B or Pi5B recommended, but will work on others including Zero2W
