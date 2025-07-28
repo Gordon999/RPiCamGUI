@@ -320,7 +320,10 @@ def Camera_Version():
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('libcams.txt'):
         os.rename('libcams.txt', 'oldlibcams.txt')
-    os.system("libcamera-vid --list-cameras >> libcams.txt")
+    if lver != "bookworm":
+        os.system("libcamera-vid --list-cameras >> libcams.txt")
+    else:
+        os.system("rpicam-vid --list-cameras >> libcams.txt")
     time.sleep(0.5)
     # read libcams.txt file
     camstxt = []
