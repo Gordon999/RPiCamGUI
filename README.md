@@ -2,7 +2,7 @@
 
 Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ, GS and imx500. Also Arducam 16MP or 64MP Autofocus cameras, Waveshare imx290-83 camera, imx585 and ov9281. It should also recognise other cameras if you have a dtoverlay for it, and added in the config.txt, but it may not be optimal.
 
-To work with RaspiOS based on BULLSEYE / BOOKWORM, using rpicam / libcamera (NOT raspistill/raspivid). TRIXIE tested with pi update https://forums.raspberrypi.com/viewtopic.php?t=389477
+To work with RaspiOS based on BULLSEYE (libcamera) / BOOKWORM (rpicam). TRIXIE tested with pi update https://forums.raspberrypi.com/viewtopic.php?t=389477
 
 Preview uses rpicam-vid (so may not be as sharp as captured stills), stills rpicam-still, videos rpicam-vid, timelapses depends on timings and settings, rpicam-still, -vid or -raw. Note preview has a maximum shutter setting of 1 second.
 
