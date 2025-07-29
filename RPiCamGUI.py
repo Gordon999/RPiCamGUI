@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.55
+version = 5.56
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -202,8 +202,10 @@ with open("/run/shm/lv.txt", "r") as file:
            line = file.readline()
            if line[0:16] == "VERSION_CODENAME":
                lver = line
+print(lver)
 lvers = lver.split("=")
-lver = lvers[1][0:8]
+lver = lvers[1][0:6]
+print(lver)
 
 #check Pi model.
 Pi = -1
@@ -318,13 +320,13 @@ def Camera_Version():
     global speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8,max_vf_9,IRF,foc_sub3
     global foc_sub5,v3_hdr,windowSurfaceObj
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
-    if os.path.exists('libcams.txt'):
-        os.rename('libcams.txt', 'oldlibcams.txt')
-    os.system("libcamera-vid --list-cameras >> libcams.txt")
+    if os.path.exists('rpicams.txt'):
+        os.rename('rpicams.txt', 'oldrpicams.txt')
+    os.system("rpicam-vid --list-cameras >> rpicams.txt")
     time.sleep(0.5)
     # read libcams.txt file
     camstxt = []
-    with open("libcams.txt", "r") as file:
+    with open("rpicams.txt", "r") as file:
         line = file.readline()
         while line:
             camstxt.append(line.strip())
@@ -449,7 +451,7 @@ def Camera_Version():
         v3_hdr = 1
     if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8:
         # read /boot/config.txt file
-        if lver != "bookworm":
+        if lver != "bookwo" and lver != "trixie":
           with open("/boot/config.txt", "r") as file:
             line = file.readline()
             while line:
@@ -788,7 +790,7 @@ def preview():
         os.remove(f)
     speed2 = sspeed
     speed2 = min(speed2,2000000)
-    if lver != "bookworm":
+    if lver != "bookwo" and lver != "trixie":
         datastr = "libcamera-vid"
     else:
         datastr = "rpicam-vid"
@@ -1687,7 +1689,7 @@ while True:
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         if extns[extn] != 'raw':
                             fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
-                            if lver != "bookworm":
+                            if lver != "bookwo" and lver != "trixie":
                                 datastr = "libcamera-still"
                             else:
                                 datastr = "rpicam-still"
@@ -1695,7 +1697,7 @@ while True:
                             datastr += "-t " + str(timet) + " -o " + fname
                         else:
                             fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
-                            if lver != "bookworm":
+                            if lver != "bookwo" and lver != "trixie":
                                 datastr = "libcamera-still"
                             else:
                                  datastr = "rpicam-still"
@@ -2479,7 +2481,7 @@ while True:
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
                         if codecs2[codec] != 'raw':
-                            if lver != "bookworm":
+                            if lver != "bookwo" and lver != "trixie":
                                 datastr = "libcamera-vid"
                             else:
                                 datastr = "rpicam-vid"
@@ -2497,7 +2499,7 @@ while True:
                                 #datastr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
                                 datastr += " --level " + str(prof[1])
                         else:
-                            if lver != "bookworm":
+                            if lver != "bookwo" and lver != "trixie":
                                 datastr = "libcamera-raw"
                             else:
                                  datastr = "rpicam-raw"
@@ -2670,7 +2672,7 @@ while True:
                         now = datetime.datetime.now()
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
-                        if lver != "bookworm":
+                        if lver != "bookwo" and lver != "trixie":
                             datastr = "libcamera-vid "
                         else:
                             datastr = "rpicam-vid "
@@ -2842,7 +2844,7 @@ while True:
                             timestamp = now.strftime("%y%m%d%H%M%S")
                             count = 0
                             fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
-                            if lver != "bookworm":
+                            if lver != "bookwo" and lver != "trixie":
                                 datastr = "libcamera-still"
                             else:
                                 datastr = "rpicam-still"
@@ -2938,7 +2940,7 @@ while True:
                             old_count = 0
                             while count < tshots and stop == 0:
                                 if time.monotonic() - start2 >= tinterval:
-                                    if lver != "bookworm":
+                                    if lver != "bookwo" and lver != "trixie":
                                         os.system('pkill -SIGUSR1 libcamera-still')
                                     else:
                                         os.system('pkill -SIGUSR1 rpicam-still')
@@ -3020,7 +3022,7 @@ while True:
                                             stop = 1
                                             count = tshots
                                         if button_column == 1 and button_row == 1:
-                                            if lver != "bookworm":
+                                            if lver != "bookwo" and lver != "trixie":
                                                 os.system('pkill -SIGUSR1 libcamera-still')
                                             else:
                                                 os.system('pkill -SIGUSR1 rpicam-still')
@@ -3035,7 +3037,7 @@ while True:
                                                 text(0,0,1,1,1,"STILL    2x2",ft,7)
                                             else:
                                                 text(0,0,1,1,1,"Still ",ft,7)
-                            if lver != "bookworm":
+                            if lver != "bookwo" and lver != "trixie":
                                 os.system('pkill -SIGUSR2 libcamera-still')
                             else:
                                 os.system('pkill -SIGUSR2 rpicam-still')
@@ -3060,7 +3062,7 @@ while True:
                                         poll = p.poll()
                                         time.sleep(0.1)
                                     fname =  pic_dir + str(timestamp) + "_" + str(count) + "." + extns2[extn]
-                                    if lver != "bookworm":
+                                    if lver != "bookwo" and lver != "trixie":
                                         datastr = "libcamera-still"
                                     else:
                                         datastr = "rpicam-still"
@@ -3225,14 +3227,14 @@ while True:
                             timestamp = now.strftime("%y%m%d%H%M%S")
                             fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
                             if codecs2[codec] != 'raw':
-                                if lver != "bookworm":
+                                if lver != "bookwo" and lver != "trixie":
                                     datastr = "libcamera-vid"
                                 else:
                                     datastr = "rpicam-vid"
                                 datastr += " --camera " + str(camera) + " -n --codec mjpeg -t " + str(tduration*1000) + " --segment 1 -o " + fname
                             else:
                                 fname =  pic_dir + str(timestamp) + '_%04d.' + codecs2[codec]
-                                if lver != "bookworm":
+                                if lver != "bookwo" and lver != "trixie":
                                     datastr = "libcamera-raw"
                                 else:
                                     datastr = "rpicam-raw"
