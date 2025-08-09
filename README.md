@@ -108,8 +108,10 @@ lf using a Pi HQ camera for astrophotography it might be worth a try adding "imx
 
 Install latest RaspiOS,
 ```bash
-for BUSTER & BULLSEYE but NOT BOOKWORM - python3 -m pip install -U pygame --user
 sudo apt install python3-opencv -y
+
+for BUSTER & BULLSEYE but NOT BOOKWORM - python3 -m pip install -U pygame --user
+
 
 (You may not need the following line if using RaspiOS 64bit)
 sudo apt install libsdl-gfx1.2-5 libsdl-image1.2 libsdl-kitchensink1 libsdl-mixer1.2 libsdl-sound1.2 libsdl-ttf2.0-0 libsdl1.2debian libsdl2-2.0-0 libsdl2-gfx-1.0-0 libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 libsdl2-ttf-2.0-0 -y
