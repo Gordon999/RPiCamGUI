@@ -32,7 +32,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.56
+version = 5.57
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -2859,7 +2859,7 @@ while True:
                                     datastr += " -n"
                             else:
                                 datastr += " --camera " + str(camera) + " -r -s -t 0 -o " + fname 
-                                if fullsceen != 1:
+                                if fullscreen != 1:
                                     datastr += " -p 0,0,640,480 "
                                 else:
                                     datastr += " -n"
