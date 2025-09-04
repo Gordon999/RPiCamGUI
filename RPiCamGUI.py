@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# SPDX-FileCopyrightText: 2025 Gordon999
+# SPDX-License-Identifier: MIT
+
 """Copyright (c) 2025
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.57
+version = 5.58
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
