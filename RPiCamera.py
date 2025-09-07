@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 1.02
+version = 1.03
 
 # streaming parameters
 stream_type = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -892,7 +892,7 @@ def preview():
     time.sleep(0.2)
 
 def Menu():
-    global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz,v3_hdr,v3_hdrs,bw,bh,ft,fv,cam1,v3_f_mode,v3_af
+    global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz,v3_hdr,v3_hdrs,bw,bh,ft,fv,cam1,v3_f_mode,v3_af,button_row
     pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(preview_width,0,bw,preview_height))
     if menu > -1: 
         # set button sizes
@@ -1521,9 +1521,8 @@ while True:
             
         # determine button pressed
         if mousex > preview_width or str_btn == 1:
-            # normal layout(buttons on right)
-            button_row = int((mousey)/bh)
-            if mousex > preview_width + (bw/2):
+            button_row = int(mousey/bh)
+            if mousex > preview_width + bw/2:
                 button_pos = 1
             else:
                 button_pos = 0
@@ -1537,8 +1536,18 @@ while True:
               elif str_cap == 3:
                   button_row = 2
               str_btn = 0
-          
-            if button_row == 0 and menu < 0:
+              
+            if button_row == 0 and menu > -1:
+                menu = -1
+                Menu()
+                
+            elif menu == -1: 
+              if button_row == 3:
+                menu = 0
+                Menu()
+                button_row = -1
+                
+              elif button_row == 0:
                         # TAKE STILL
                         os.killpg(p.pid, signal.SIGTERM)
                         button(0,0,1,4)
@@ -1685,611 +1694,7 @@ while True:
                         Menu()
                         restart = 2
                         
-            elif button_row == 2 and menu == 0 and cam1 != "1":
-                # SWITCH CAMERA
-                camera += 1
-                if camera > max_camera:
-                    camera = 0
-                text(0,2,3,1,1,str(camera),fv,7)
-                poll = p.poll()
-                if poll == None:
-                    os.killpg(p.pid, signal.SIGTERM)
-                focus_mode = 0
-                v3_f_mode = 0 
-                foc_man = 0
-                text(0,2,3,1,1,str(camera),fv,7)
-                Camera_Version()
-                Menu()
-                restart = 1
-               
-            elif button_row == 1 and menu == 1:
-                # MODE
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'mode':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    mode = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
-                    mode = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
-                    mode = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        mode -=1
-                        mode  = max(mode ,pmin)
-                    else:
-                        mode  +=1
-                        mode = min(mode ,pmax)
-                if mode == 0:
-                    text(0,2,5,0,1,"Shutter S",ft,10)
-                    draw_bar(0,2,lgrnColor,'speed',speed)
-                    if shutters[speed] < 0:
-                        text(0,2,3,1,1,"1/" + str(abs(shutters[speed])),fv,10)
-                    else:
-                        text(0,2,3,1,1,str(shutters[speed]),fv,10)
-                    if gain == 0:
-                        gain = 1
-                        text(0,3,5,0,1,"Gain    A/D",ft,10)
-                        if gain <= mag:
-                            text(0,3,3,1,1,str(gain) + " :  " + str(gain) + "/1",fv,10)
-                        else:
-                            text(0,3,3,1,1,str(gain) + " :  " + str(int(mag)) + "/" + str(((gain/mag)*10)/10)[0:3],fv,10)
-                        draw_bar(0,3,lgrnColor,'gain',gain)
-                else:
-                    text(0,2,5,0,1,"eV",ft,10)
-                    text(0,2,3,1,1,str(ev),fv,10)
-                    draw_bar(0,2,lgrnColor,'ev',ev)
-                    gain = 0
-                    text(0,3,5,0,1,"Gain ",ft,10)
-                    text(0,3,3,1,1,"Auto",fv,10)
-                    draw_bar(0,3,lgrnColor,'gain',gain)
-                if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
-                    text(0,0,1,1,1,"STILL    2x2",ft,7)
-                else:
-                    text(0,0,1,1,1,"Still ",ft,7)
-                text(0,1,3,1,1,modes[mode],fv,10)
-                draw_bar(0,1,lgrnColor,'mode',mode)
-                td = timedelta(seconds=tinterval)
-                if tinterval > 0:
-                    tduration = tinterval * tshots
-                if mode == 0 and tinterval == 0 :
-                    speed = 15
-                    shutter = shutters[speed]
-                    if shutter < 0:
-                        shutter = abs(1/shutter)
-                    sspeed = int(shutter * 1000000)
-                    if (shutter * 1000000) - int(shutter * 1000000) > 0.5:
-                        sspeed +=1
-                    if shutters[speed] < 0:
-                        text(0,2,3,1,1,"1/" + str(abs(shutters[speed])),fv,10)
-                    else:
-                        text(0,2,3,1,1,str(shutters[speed]),fv,10)
-                    draw_bar(0,2,lgrnColor,'speed',speed)
-
-                time.sleep(.25)
-                restart = 1
-
-            elif button_row == 2 and menu == 1:
-                # SHUTTER SPEED or EV (dependent on MODE set)
-                if mode == 0 :
-                    for f in range(0,len(still_limits)-1,3):
-                        if still_limits[f] == 'speed':
-                            pmin = still_limits[f+1]
-                            pmax = max_speed
-                    if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                        speed = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                    elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
-                        speed = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                    elif (mousey > preview_height * .75 and mousey < preview_height * .75  + int(bh/3)) and alt_dis == 2:
-                        speed = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                    else:
-                        if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                            speed -=1
-                            speed  = max(speed ,pmin)
-                        else:
-                            speed  +=1
-                            speed = min(speed ,pmax)
-                    shutter = shutters[speed]
-                    if shutter < 0:
-                        shutter = abs(1/shutter)
-                    sspeed = int(shutter * 1000000)
-                    if (shutter * 1000000) - int(shutter * 1000000) > 0.5:
-                        sspeed +=1
-                    if shutters[speed] < 0:
-                        text(0,2,3,1,1,"1/" + str(abs(shutters[speed])),fv,10)
-                    else:
-                        text(0,2,3,1,1,str(shutters[speed]),fv,10)
-                    draw_bar(0,2,lgrnColor,'speed',speed)
-                    if tinterval > 0:
-                        tinterval = int(sspeed/1000000)
-                        tinterval = max(tinterval,1)
-                        td = timedelta(seconds=tinterval)
-                        tduration = tinterval * tshots
-                        td = timedelta(seconds=tduration)
-                        
-                    time.sleep(.25)
-                    restart = 1
-                else:
-                    # EV
-                    for f in range(0,len(still_limits)-1,3):
-                        if still_limits[f] == 'ev':
-                            pmin = still_limits[f+1]
-                            pmax = still_limits[f+2]
-                    if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                        ev = int(((mousex-preview_width) / bw) * (pmax+1-pmin)) + pmin 
-                    elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
-                        ev = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin)) + pmin
-                    elif (mousey > preview_height * .75  and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
-                        ev = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin)) + pmin
-                    else:
-                        if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                            ev -=1
-                            ev  = max(ev ,pmin)
-                        else:
-                            ev  +=1
-                            ev = min(ev ,pmax)
-                    text(0,2,3,1,1,str(ev),fv,10)
-                    draw_bar(0,2,lgrnColor,'ev',ev)
-                    time.sleep(0.25)
-                    restart = 1
-                    
-            elif button_row == 3 and menu == 1:
-                # GAIN
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'gain':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    gain = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
-                    gain = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75  and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
-                    gain = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        gain -=1
-                        gain  = max(gain ,pmin)
-                    else:
-                        gain  +=1
-                        gain = min(gain ,pmax)
-                if gain > 0:
-                    text(0,3,5,0,1,"Gain    A/D",ft,10)
-                    if gain <= mag:
-                        text(0,3,3,1,1,str(gain) + " :  " + str(gain) + "/1",fv,10)
-                    else:
-                        text(0,3,3,1,1,str(gain) + " :  " + str(int(mag)) + "/" + str(((gain/mag)*10)/10)[0:3],fv,10)
-                else:
-                    if gain == 0:
-                        text(0,3,5,0,1,"Gain ",ft,10)
-                    else:
-                        text(0,3,5,0,1,"Gain    A/D",ft,10)
-                    text(0,3,3,1,1,"Auto",fv,10)
-                time.sleep(.25)
-                draw_bar(0,3,lgrnColor,'gain',gain)
-                restart = 1
-                
-            elif button_row == 4 and menu == 1:
-                # BRIGHTNESS
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'brightness':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    brightness = int(((mousex-preview_width) / bw) * (pmax+1-pmin)) + pmin 
-                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
-                    brightness = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin)) + pmin
-                elif (mousey > preview_height * .75  and mousey < preview_height * .75+ int(bh/3)) and alt_dis == 2:
-                    brightness = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin)) + pmin 
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        brightness -=1
-                        brightness  = max(brightness ,pmin)
-                    else:
-                        brightness  +=1
-                        brightness = min(brightness ,pmax)
-                text(0,4,3,1,1,str(brightness/100),fv,10)
-                draw_bar(0,4,lgrnColor,'brightness',brightness)
-                time.sleep(0.025)
-                restart = 1
-                
-            elif button_row == 5 and menu == 1:
-                # CONTRAST
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'contrast':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    contrast = int(((mousex-preview_width) / bw) * (pmax+1-pmin)) 
-                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
-                    contrast = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75  and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
-                    contrast = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        contrast -=1
-                        contrast  = max(contrast ,pmin)
-                    else:
-                        contrast  +=1
-                        contrast = min(contrast ,pmax)
-                text(0,5,3,1,1,str(contrast/100)[0:4],fv,10)
-                draw_bar(0,5,lgrnColor,'contrast',contrast)
-                time.sleep(0.025)
-                restart = 1
-                
-            elif button_row == 6 and menu == 1:
-                # AWB
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'awb':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    awb = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height and mousey < preview_height + int(bh/3)) and alt_dis == 1:
-                    awb = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
-                    awb = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        awb -=1
-                        awb  = max(awb ,pmin)
-                    else:
-                        awb  +=1
-                        awb = min(awb ,pmax)
-                text(0,6,3,1,1,awbs[awb],fv,10)
-                draw_bar(0,6,lgrnColor,'awb',awb)
-                if awb == 0:
-                    text(0,7,5,0,1,"Blue",ft,10)
-                    text(0,8,5,0,1,"Red",ft,10)
-                    text(0,8,3,1,1,str(red/10)[0:3],fv,10)
-                    text(0,7,3,1,1,str(blue/10)[0:3],fv,10)
-                    draw_bar(0,7,lgrnColor,'blue',blue)
-                    draw_bar(0,8,lgrnColor,'red',red)
-                else:
-                    text(0,7,5,0,1,"Denoise",fv,10)
-                    text(0,7,3,1,1,denoises[denoise],fv,10)
-                    text(0,8,5,0,1,"Sharpness",fv,10)
-                    text(0,8,3,1,1,str(sharpness/10),fv,10)
-                    draw_bar(0,7,lgrnColor,'denoise',denoise)
-                    draw_bar(0,8,lgrnColor,'sharpness',sharpness)
-                time.sleep(.25)
-                restart = 1
-                
-            elif button_row == 7 and awb == 0 and menu == 1:
-                # BLUE
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'blue':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    blue = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
-                    blue = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75  and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
-                    blue = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        blue -=1
-                        blue  = max(blue ,pmin)
-                    else:
-                        blue  +=1
-                        blue = min(blue ,pmax)
-                text(0,7,3,1,1,str(blue/10)[0:3],fv,10)
-                draw_bar(0,7,lgrnColor,'blue',blue)
-                time.sleep(.25)
-                restart = 1
-
-
-            elif button_row == 7 and awb != 0 and menu == 1:
-                # DENOISE
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'denoise':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    denoise = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
-                    denoise = int(((mousex-((button_row -1)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75  and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
-                    denoise = int(((mousex-((button_row -1)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        denoise -=1
-                        denoise = max(denoise,pmin)
-                    else:
-                        denoise +=1
-                        denoise = min(denoise,pmax)
-                text(0,7,3,1,1,denoises[denoise],fv,10)
-                draw_bar(0,7,lgrnColor,'denoise',denoise)
-                time.sleep(.25)
-                restart = 1
-
-            elif button_row == 8 and awb == 0  and menu == 1:
-                # RED
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'red':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    red = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
-                    red = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
-                    red = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        red -=1
-                        red  = max(red ,pmin)
-                    else:
-                        red  +=1
-                        red = min(red ,pmax)
-                text(0,8,3,1,1,str(red/10)[0:3],fv,10)
-                draw_bar(0,8,lgrnColor,'red',red)
-                time.sleep(.25)
-                restart = 1
-                
-            elif button_row == 8 and awb != 0 and menu == 1:
-                # SHARPNESS
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'sharpness':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    sharpness = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + (bh)  and mousey < preview_height + (bh) + int(bh/3)) and alt_dis == 1:
-                    sharpness = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + (bh)  and mousey < preview_height * .75 + (bh) + int(bh/3)) and alt_dis == 2:
-                    sharpness = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        sharpness -=1
-                        sharpness = max(sharpness,pmin)
-                    else:
-                        sharpness +=1
-                        sharpness = min(sharpness,pmax)
-                        
-                text(0,8,3,1,1,str(sharpness/10),fv,10)
-                draw_bar(0,8,lgrnColor,'sharpness',sharpness)
-                time.sleep(.25)
-                restart = 1
-                
-            elif button_row == 9 and menu == 1:
-                # EXTENSION
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'extn':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    extn = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
-                    extn = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
-                    extn = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        extn -=1
-                        extn  = max(extn ,pmin)
-                    else:
-                        extn  +=1
-                        extn = min(extn ,pmax) 
-                text(0,9,3,1,1,extns[extn],fv,10)
-                draw_bar(0,9,lgrnColor,'extn',extn)
-                time.sleep(.25)
-                
-            elif button_row == 10 and menu == 1:
-                # QUALITY
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'quality':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    quality = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
-                    quality = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
-                    quality = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        quality -=1
-                        quality  = max(quality ,pmin)
-                    else:
-                        quality  +=1
-                        quality = min(quality ,pmax)
-                text(0,10,3,1,1,str(quality)[0:3],fv,10)
-                draw_bar(0,10,lgrnColor,'quality',quality)
-                time.sleep(.25)
-                restart = 1
-                
-            elif button_row == 11 and menu == 1:
-                # SATURATION
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'saturation':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    saturation = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
-                    saturation = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
-                    saturation = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        saturation -=1
-                        saturation  = max(saturation ,pmin)
-                    else:
-                        saturation  +=1
-                        saturation = min(saturation ,pmax)
-                text(0,11,3,1,1,str(saturation/10),fv,10)
-                draw_bar(0,11,lgrnColor,'saturation',saturation)
-                time.sleep(.25)
-                restart = 1
-                
-            elif button_row == 7 and menu == 2:
-                # METER
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'meter':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    meter = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
-                    meter = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
-                    meter = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        meter -=1
-                        meter  = max(meter ,pmin)
-                    else:
-                        meter  +=1
-                        meter = min(meter ,pmax)
-                text(0,7,3,1,1,meters[meter],fv,10)
-                draw_bar(0,7,lgrnColor,'meter',meter)
-                time.sleep(.25)
-                restart = 1
-
-            elif button_row == 6 and Pi_Cam == 3 and menu == 2:
-                # PI V3 CAMERA HDR
-                if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                    v3_hdr -=1
-                    v3_hdr  = max(v3_hdr ,0)
-                else:
-                    v3_hdr  +=1
-                    v3_hdr = min(v3_hdr ,3)
-
-                text(0,6,5,0,1,"HDR",fv,10)
-                text(0,6,3,1,1,v3_hdrs[v3_hdr],fv,10)
-                time.sleep(0.25)
-                restart = 1
-
-            elif button_row == 3 and Pi_Cam != 3 and Pi != 5 and menu == 2:
-                # CAMERA still -t time (NOT Pi v3 camera)
-                if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                    timet -=100
-                    timet  = max(timet ,100)
-                else:
-                    timet  +=100
-                    timet = min(timet ,10000)
-
-                text(0,6,5,0,1,"STILL -t",fv,10)
-                text(0,6,3,1,1,str(timet),fv,10)
-                time.sleep(0.05)
-
-            elif button_row == 6 and Pi_Cam != 3 and Pi == 5 and menu == 2:
-                # PI5 and NON V3 CAMERA HDR
-                if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                    v3_hdr -=1
-                    v3_hdr  = max(v3_hdr ,0)
-                else:
-                    v3_hdr  +=1
-                    v3_hdr = min(v3_hdr ,1)
-
-                text(0,6,5,0,1,"HDR",fv,10)
-                text(0,6,3,1,1,v3_hdrs[v3_hdr],fv,10)
-                time.sleep(0.25)
-                restart = 1
-
-            elif button_row == 10 and menu == 0:
-                # HISTOGRAM 
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'histogram':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    histogram = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
-                    histogram = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
-                    histogram = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        histogram -=1
-                        histogram = max(histogram,pmin)
-                    else:
-                        histogram +=1
-                        histogram = min(histogram,pmax)
-                text(0,10,3,1,1,histograms[histogram],fv,7)
-                draw_bar(0,10,greyColor,'histogram',histogram)
-                time.sleep(.25)
-                
-            elif button_row == 4 and Pi_Cam == 4 and scientif == 1 and menu == 2:
-                # v4 (HQ) CAMERA Scientific.json
-                if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                    scientific -=1
-                    scientific = max(scientific ,0)
-                else:
-                    scientific  +=1
-                    scientific = min(scientific ,1)
-                text(0,4,5,0,1,"Scientific",fv,10)
-                if scientific == 0:
-                    text(0,4,3,1,1,"Off",fv,10)
-                else:
-                    text(0,4,3,1,1,"ON ",fv,10)
-                time.sleep(0.25)
-                restart = 1
-
-            elif button_row == 3 and Pi_Cam == 9 and menu == 2:
-                # Waveshare imx290 IR Filter
-                if mousex < preview_width + (bw/2):
-                    IRF -=1
-                    IRF = max(IRF ,0)
-                else:
-                    IRF  +=1
-                    IRF = min(IRF ,1)
-                if IRF == 0:
-                    text(0,3,3,1,1,"Off",fv,10)
-                    led_sw_ir.off()
-                else:
-                    text(0,3,3,1,1,"ON ",fv,10)
-                    led_sw_ir.on()
-                time.sleep(0.25)
-                restart = 1
-
-            elif button_row == 5 and menu == 2:
-                # timet
-                if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                    timet -=100
-                    timet  = max(timet ,100)
-                else:
-                    timet  +=100
-                    timet = min(timet ,10000)
-                text(0,5,3,1,1,str(timet),fv,10)
-                time.sleep(0.05)
-
-            elif button_row == 4 and Pi_Cam == 3 and v3_af == 1 and menu == 0:
-                # V3 FOCUS SPEED 
-                for f in range(0,len(still_limits)-1,3):
-                    if still_limits[f] == 'v3_f_speed':
-                        pmin = still_limits[f+1]
-                        pmax = still_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    v3_f_speed = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
-                    v3_f_speed = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
-                    v3_f_speed = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        v3_f_speed-=1
-                        v3_f_speed = max(v3_f_speed,pmin)
-                    else:
-                        v3_f_speed +=1
-                        v3_f_speed = min(v3_f_speed,pmax)
-                text(0,4,3,1,1,v3_f_speeds[v3_f_speed],fv,7)
-                draw_bar(0,4,greyColor,'v3_f_speed',v3_f_speed)
-                restart = 1
-                time.sleep(.25)
-
-            if button_row == 1 and menu == 2:
-                # VERTICAL FLIP
-                vflip +=1
-                if vflip > 1:
-                    vflip = 0
-                text(0,1,3,1,1,str(vflip),fv,10)
-                restart = 1
-                time.sleep(.25)
-               
-            if button_row == 1 and event.button != 3 and menu == -1:
+              if button_row == 1 and event.button != 3:
                         # TAKE VIDEO
                         os.killpg(p.pid, signal.SIGTERM)
                         button(0,1,1,3)
@@ -2445,7 +1850,7 @@ while True:
                         Menu()
                         restart = 2
                                        
-            elif button_row == 1 and event.button == 3 and menu == -1:
+              if button_row == 1 and event.button == 3:
                         # STREAM VIDEO
                         os.killpg(p.pid, signal.SIGTERM)
                         button(0,1,1,3)
@@ -2576,7 +1981,7 @@ while True:
                         Menu()
                         restart = 2
                         
-            elif button_row == 2 and menu == -1:
+              if button_row == 2:
                         # TAKE TIMELAPSE
                         os.killpg(p.pid, signal.SIGTERM)
                         restart = 1
@@ -2996,301 +2401,199 @@ while True:
                                 text(0,2,1,1,1,str(td),fv,0)
                         menu = -1
                         Menu()
-                        restart = 2
-
-            elif button_row == 1 and menu == 3:
-                # VIDEO LENGTH
-                for f in range(0,len(video_limits)-1,3):
-                    if video_limits[f] == 'vlen':
-                        pmin = video_limits[f+1]
-                        pmax = video_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    vlen = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height  + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)) and alt_dis == 1:
-                    vlen = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75  + (bh*2) and mousey < preview_height * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
-                    vlen = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                        restart = 2 
+                        
+              elif button_row == 4:
+                if mousex < preview_width + (bw/2):
+                   # SAVE CONFIG
+                   text(0,4,3,1,1,"Config",fv,7)
+                   config[0] = mode
+                   config[1] = speed
+                   config[2] = gain
+                   config[3] = int(brightness)
+                   config[4] = int(contrast)
+                   config[5] = frame
+                   config[6] = int(red)
+                   config[7] = int(blue)
+                   config[8] = ev
+                   config[9] = vlen
+                   config[10] = fps
+                   config[11] = vformat
+                   config[12] = codec
+                   config[13] = tinterval
+                   config[14] = tshots
+                   config[15] = extn
+                   config[16] = zx
+                   config[17] = zy
+                   config[18] = zoom
+                   config[19] = int(saturation)
+                   config[20] = meter
+                   config[21] = awb
+                   config[22] = sharpness
+                   config[23] = int(denoise)
+                   config[24] = quality
+                   config[25] = profile
+                   config[26] = level
+                   config[27] = histogram
+                   config[28] = histarea
+                   config[29] = v3_f_speed
+                   config[30] = v3_f_range
+                   config[31] = rotate
+                   config[32] = IRF
+                   config[33] = str_cap
+                   config[34] = v3_hdr
+                   config[35] = timet
+                   config[36] = vflip
+                   config[37] = hflip
+                   with open(config_file, 'w') as f:
+                      for item in range(0,len(titles)):
+                          f.write(titles[item] + " : " + str(config[item]) + "\n")
+                   time.sleep(1)
+                   text(0,4,2,1,1,"Config",fv,7)
                 else:
-                    if mousex < preview_width + (bw/2):
-                        vlen -=1
-                        vlen  = max(vlen ,pmin)
-                    else:
-                        vlen  +=1
-                        vlen = min(vlen ,pmax)
-                td = timedelta(seconds=vlen)
-                text(0,1,3,1,1,str(td),fv,11)
-                draw_Vbar(0,1,lpurColor,'vlen',vlen)
-                time.sleep(.25)
- 
-            elif button_row == 2 and menu == 3:
-                # FPS
-                for f in range(0,len(video_limits)-1,3):
-                    if video_limits[f] == 'fps':
-                        pmin = video_limits[f+1]
-                        pmax = video_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    fps = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                    fps = min(fps,vfps)
-                    fps = max(fps,pmin)
-                elif (mousey > preview_height  + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)) and alt_dis == 1:
-                    fps = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                    fps = min(fps,vfps)
-                    fps = max(fps,pmin)
-                elif (mousey > preview_height * .75  + (bh*2) and mousey < preview_height  * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
-                    fps = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                    fps = min(fps,vfps)
-                    fps = max(fps,pmin)
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        fps -=1
-                        fps  = max(fps ,pmin)
-                    else:
-                        fps  +=1
-                        fps = min(fps ,pmax)
-                
-                text(0,2,3,1,1,str(fps),fv,11)
-                draw_Vbar(0,2,lpurColor,'fps',fps)
-                time.sleep(.25)
+                   # EXIT
+                   os.killpg(p.pid, signal.SIGTERM)
+                   pygame.display.quit()
+                   sys.exit()
+                               
+            # MENU 0        
+            if menu == 0: 
+              if button_row == 7:
+                  menu = 1
+                  Menu()
+              elif button_row == 8:
+                  menu = 3
+                  Menu()
+              elif button_row == 9:
+                  menu = 4
+                  Menu()             
+              elif button_row == 2 and cam1 != "1":
+                # SWITCH CAMERA
+                camera += 1
+                if camera > max_camera:
+                    camera = 0
+                text(0,2,3,1,1,str(camera),fv,7)
+                poll = p.poll()
+                if poll == None:
+                    os.killpg(p.pid, signal.SIGTERM)
+                focus_mode = 0
+                v3_f_mode = 0 
+                foc_man = 0
+                fxx = 0
+                fxy = 0
+                fxz = 1
+                fyz = 1
+                text(0,2,3,1,1,str(camera),fv,7)
+                Camera_Version()
+                Menu()
                 restart = 1
-                   
-            elif button_row == 3 and menu == 3:
-                # VFORMAT
-                for f in range(0,len(video_limits)-1,3):
-                    if video_limits[f] == 'vformat':
-                        pmin = video_limits[f+1]
-                        pmax = video_limits[f+2]
                 
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    # set max video format
-                    setmaxvformat()
-                    pmax = max_vformat
-                    vformat = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height  + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)) and alt_dis == 1:
-                    # set max video format    
-                    setmaxvformat()
-                    pmax = max_vformat
-                    vformat = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75  + (bh*2) and mousey < preview_height * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
-                    # set max video format    
-                    setmaxvformat()
-                    pmax = max_vformat
-                    vformat = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        vformat -=1
-                        # set max video format    
-                        setmaxvformat()
-                        vformat = min(vformat,max_vformat)
-                    else:
-                        vformat +=1
-                        # set max video format
-                        setmaxvformat()
-                        vformat = min(vformat,max_vformat)
-                draw_Vbar(0,3,lpurColor,'vformat',vformat)
-                vwidth  = vwidths[vformat]
-                vheight = vheights[vformat]
-                if Pi_Cam == 3:
-                    vfps = v3_max_fps[vformat]
-                    if vwidth == 1920 and codec == 0:
-                        prof = h264profiles[profile].split(" ")
-                        if str(prof[1]) == "4.2":
-                            if vpreview == 1:
-                                vfps = 45
-                            else:
-                                vfps = 60
-                    elif vwidth == 1536 and codec == 0:
-                        prof = h264profiles[profile].split(" ")
-                        if str(prof[1]) == "4.2":
-                            if vpreview == 1:
-                                vfps = 60
-                            else:
-                                vfps = 90
-                elif Pi_Cam == 9:
-                    vfps = v9_max_fps[vformat]
-                elif Pi_Cam == 15:
-                    vfps = v15_max_fps[vformat]
-                else:
-                    vfps = v_max_fps[vformat]
-                fps = min(fps,vfps)
-                video_limits[5] = vfps
-                text(0,2,3,1,1,str(fps),fv,11)
-                draw_Vbar(0,2,lpurColor,'fps',fps)
-                # determine if camera native format
-                vw = 0
-                x = 0
-                while x < len(vwidths2) and vw == 0:
-                    if vwidth == vwidths2[x]:
-                        if vheight == vheights2[x]:
-                            vw = 1
-                    x += 1
-                if vw == 0:
-                    text(0,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
-                if vw == 1:
-                    text(0,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
-                time.sleep(.25)
-
-            elif button_row == 4 and menu == 3:
-                # CODEC
+              elif button_row == 11:
+                # HISTOGRAM SIZE
                 for f in range(0,len(video_limits)-1,3):
-                    if video_limits[f] == 'codec':
+                    if video_limits[f] == 'histarea':
                         pmin = video_limits[f+1]
                         pmax = video_limits[f+2]
                 if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    codec = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)) and alt_dis == 1:
-                    codec = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + (bh*2) and mousey < preview_height * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
-                    codec = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                    histarea = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                    histarea = max(histarea,pmin)
+                elif (mousey > preview_height + (bh*3)  and mousey < preview_height + (bh*3) + int(bh/3)) and alt_dis == 1:
+                    histarea = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
+                    histarea = max(histarea,pmin)
+                elif (mousey > preview_height * .75 + (bh*3)  and mousey < preview_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
+                    histarea = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
+                    histarea = max(histarea,pmin)
                 else:
                     if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        codec -=1
-                        codec  = max(codec ,pmin)
+                        histarea -=1
+                        histarea = max(histarea,pmin)
                     else:
-                        codec  +=1
-                        codec = min(codec ,pmax)
-                # set max video format
-                setmaxvformat()
-                vformat = min(vformat,max_vformat)
-                text(0,4,3,1,1,codecs[codec],fv,11)
-                draw_Vbar(0,4,lpurColor,'codec',codec)
-                draw_Vbar(0,3,lpurColor,'vformat',vformat)
-                vwidth  = vwidths[vformat]
-                vheight = vheights[vformat]
-                if Pi_Cam == 3:
-                    vfps = v3_max_fps[vformat]
-                    if vwidth == 1920 and codec == 0:
-                        prof = h264profiles[profile].split(" ")
-                        if str(prof[1]) == "4.2":
-                            if vpreview == 1:
-                                vfps = 45
-                            else:
-                                vfps = 60
-                    elif vwidth == 1536 and codec == 0:
-                        prof = h264profiles[profile].split(" ")
-                        if str(prof[1]) == "4.2":
-                            if vpreview == 1:
-                                vfps = 60
-                            else:
-                                vfps = 90
-                elif Pi_Cam == 9:
-                    vfps = v9_max_fps[vformat]
-                elif Pi_Cam == 15:
-                    vfps = v15_max_fps[vformat]
-                else:
-                    vfps = v_max_fps[vformat]
-                fps = min(fps,vfps)
-                video_limits[5] = vfps
-                text(0,2,3,1,1,str(fps),fv,11)
-                draw_Vbar(0,2,lpurColor,'fps',fps)
-                # determine if camera native format
-                vw = 0
-                x = 0
-                while x < len(vwidths2) and vw == 0:
-                    if vwidth == vwidths2[x]:
-                        if vheight == vheights2[x]:
-                            vw = 1
-                    x += 1
-                if vw == 0:
-                    text(0,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
-                if vw == 1:
-                    text(0,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                        histarea +=1
+                        histarea = min(histarea,pmax)
+                if xx - histarea < 0 or xy - histarea < 0:
+                    histarea = old_histarea
+                if xy + histarea > preview_height or xx + histarea > preview_width:
+                    histarea = old_histarea
+                if (Pi_Cam == 3 and v3_af == 1) and (xy + histarea > preview_height * 0.75 or xx + histarea > preview_width):
+                    histarea = old_histarea
+                text(0,11,3,1,1,str(histarea),fv,7)
+                draw_Vbar(0,11,greyColor,'histarea',histarea)
+                old_histarea = histarea
                 time.sleep(.25)
 
-            elif button_row == 5 and menu == 3:
-                # H264 PROFILE
+              elif button_row == 5 and (Pi_Cam == 3 and v3_af == 1):
+                # V3 FOCUS RANGE 
                 for f in range(0,len(video_limits)-1,3):
-                    if video_limits[f] == 'profile':
+                    if video_limits[f] == 'v3_f_range':
                         pmin = video_limits[f+1]
                         pmax = video_limits[f+2]
                 if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    profile = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)) and alt_dis == 1:
-                    profile = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + (bh*2) and mousey < preview_height * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
-                    profile = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                    v3_f_range = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + bh  and mousey < preview_height + (bh*3) + int(bh/3)) and alt_dis == 1:
+                    v3_f_range = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
+                    v3_f_range = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
                 else:
                     if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        profile -=1
-                        profile  = max(profile ,pmin)
+                        v3_f_range-=1
+                        v3_f_range = max(v3_f_range,pmin)
                     else:
-                        profile  +=1
-                        profile = min(profile ,pmax)
-                text(0,5,3,1,1,h264profiles[profile],fv,11)
-                draw_Vbar(0,5,lpurColor,'profile',profile)
-                vwidth  = vwidths[vformat]
-                vheight = vheights[vformat]
-                if Pi_Cam == 3:
-                    vfps = v3_max_fps[vformat]
-                    if vwidth == 1920 and codec == 0:
-                        prof = h264profiles[profile].split(" ")
-                        if str(prof[1]) == "4.2":
-                            if vpreview == 1:
-                                vfps = 45
-                            else:
-                                vfps = 60
-                    elif vwidth == 1536 and codec == 0:
-                        prof = h264profiles[profile].split(" ")
-                        if str(prof[1]) == "4.2":
-                            if vpreview == 1:
-                                vfps = 60
-                            else:
-                                vfps = 90
-                elif Pi_Cam == 9:
-                    vfps = v9_max_fps[vformat]
-                elif Pi_Cam == 15:
-                    vfps = v15_max_fps[vformat]
-                else:
-                    vfps = v_max_fps[vformat]
-                fps = min(fps,vfps)
-                video_limits[5] = vfps
-                text(0,2,3,1,1,str(fps),fv,11)
-                draw_Vbar(0,2,lpurColor,'fps',fps)
+                        v3_f_range +=1
+                        v3_f_range = min(v3_f_range,pmax)
+                text(0,5,3,1,1,v3_f_ranges[v3_f_range],fv,7)
+                draw_Vbar(0,5,greyColor,'v3_f_range',v3_f_range)
+                restart = 1
                 time.sleep(.25)
 
-            elif button_row == 6 and menu == 3:
-                # V_PREVIEW
-                if (alt_dis == 0 and mousex > preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                    vpreview +=1
-                    vpreview  = min(vpreview ,1)
+              elif button_row == 1:
+                # EXT TRIGGER 
+                for f in range(0,len(video_limits)-1,3):
+                    if video_limits[f] == 'str_cap':
+                        pmin = video_limits[f+1]
+                        pmax = video_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    str_cap = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + bh  and mousey < preview_height + (bh*3) + int(bh/3)) and alt_dis == 1:
+                    str_cap = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
+                    str_cap = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
                 else:
-                    vpreview  -=1
-                    vpreview = max(vpreview ,0)
-
-                if vpreview == 0:
-                    text(0,6,3,1,1,"Off",fv,11)
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        str_cap -=1
+                        str_cap = max(str_cap,pmin)
+                    else:
+                        str_cap +=1
+                        str_cap = min(str_cap,pmax)
+                text(0,1,3,1,1,strs[str_cap],fv,7)
+                draw_Vbar(0,1,greyColor,'str_cap',str_cap)
+                restart = 1
+                time.sleep(.25)
+                
+              elif button_row == 4 and Pi_Cam == 3 and v3_af == 1:
+                # V3 FOCUS SPEED 
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'v3_f_speed':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    v3_f_speed = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
+                    v3_f_speed = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
+                    v3_f_speed = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
                 else:
-                    text(0,6,3,1,1,"ON ",fv,11)
-                vwidth  = vwidths[vformat]
-                vheight = vheights[vformat]
-                if Pi_Cam == 3:
-                    vfps = v3_max_fps[vformat]
-                    if vwidth == 1920 and codec == 0:
-                        prof = h264profiles[profile].split(" ")
-                        if str(prof[1]) == "4.2":
-                            if vpreview == 1:
-                                vfps = 45
-                            else:
-                                vfps = 60
-                    elif vwidth == 1536 and codec == 0:
-                        prof = h264profiles[profile].split(" ")
-                        if str(prof[1]) == "4.2":
-                            if vpreview == 1:
-                                vfps = 60
-                            else:
-                                vfps = 90
-                elif Pi_Cam == 9:
-                    vfps = v9_max_fps[vformat]
-                elif Pi_Cam == 15:
-                    vfps = v15_max_fps[vformat]
-                else:
-                    vfps = v_max_fps[vformat]
-                fps = min(fps,vfps)
-                video_limits[5] = vfps
-                text(0,2,3,1,1,str(fps),fv,11)
-                draw_Vbar(0,2,lpurColor,'fps',fps)
-                time.sleep(0.25)
-
-            elif button_row == 3 and menu == 0:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        v3_f_speed-=1
+                        v3_f_speed = max(v3_f_speed,pmin)
+                    else:
+                        v3_f_speed +=1
+                        v3_f_speed = min(v3_f_speed,pmax)
+                text(0,4,3,1,1,v3_f_speeds[v3_f_speed],fv,7)
+                draw_bar(0,4,greyColor,'v3_f_speed',v3_f_speed)
+                restart = 1
+                time.sleep(.25)
+                
+              elif button_row == 3:
                 # FOCUS
                 if (Pi_Cam == 3 and v3_af == 1):
                     for f in range(0,len(video_limits)-1,3):
@@ -3389,11 +2692,11 @@ while True:
                         restart = 1
                     # Pi V3 manual focus 
                     elif Pi_Cam == 3 and v3_af == 1 and v3_f_mode == 0:
-                        print ("Manual")
                         focus_mode = 1
                         v3_f_mode = 1 
                         foc_man = 1 
                         restart = 1
+                        button(0,3,1,9)
                         time.sleep(0.25)
                         draw_Vbar(0,3,dgryColor,'v3_focus',v3_focus-pmin)
                         fd = 1/(v3_focus/100)
@@ -3474,7 +2777,7 @@ while True:
                         restart = 1
                 time.sleep(.25)
                 
-            elif button_row == 6 and menu == 0:
+              elif button_row == 6:
                 # ZOOM
                 for f in range(0,len(video_limits)-1,3):
                     if video_limits[f] == 'zoom':
@@ -3532,13 +2835,880 @@ while True:
                     fxy = 0
                     fxz = 1
                     fyz = 1
-                    #fcount = 0
                     if (Pi_Cam == 3 and v3_af == 1) and v3_f_mode == 0:
                         text(0,3,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
                 restart = 1
                 time.sleep(.2)
+              
+              elif button_row == 10:
+                # HISTOGRAM 
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'histogram':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    histogram = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
+                    histogram = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
+                    histogram = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        histogram -=1
+                        histogram = max(histogram,pmin)
+                    else:
+                        histogram +=1
+                        histogram = min(histogram,pmax)
+                text(0,10,3,1,1,histograms[histogram],fv,7)
+                draw_bar(0,10,greyColor,'histogram',histogram)
+                time.sleep(.25)
+            
+            # MENU 1    
+            if menu == 1: 
+              if button_row == 12:
+                  menu = 2
+                  Menu()
+              elif button_row == 1:
+                # MODE
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'mode':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    mode = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
+                    mode = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
+                    mode = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        mode -=1
+                        mode  = max(mode ,pmin)
+                    else:
+                        mode  +=1
+                        mode = min(mode ,pmax)
+                if mode == 0:
+                    text(0,2,5,0,1,"Shutter S",ft,10)
+                    draw_bar(0,2,lgrnColor,'speed',speed)
+                    if shutters[speed] < 0:
+                        text(0,2,3,1,1,"1/" + str(abs(shutters[speed])),fv,10)
+                    else:
+                        text(0,2,3,1,1,str(shutters[speed]),fv,10)
+                    if gain == 0:
+                        gain = 1
+                        text(0,3,5,0,1,"Gain    A/D",ft,10)
+                        if gain <= mag:
+                            text(0,3,3,1,1,str(gain) + " :  " + str(gain) + "/1",fv,10)
+                        else:
+                            text(0,3,3,1,1,str(gain) + " :  " + str(int(mag)) + "/" + str(((gain/mag)*10)/10)[0:3],fv,10)
+                        draw_bar(0,3,lgrnColor,'gain',gain)
+                else:
+                    text(0,2,5,0,1,"eV",ft,10)
+                    text(0,2,3,1,1,str(ev),fv,10)
+                    draw_bar(0,2,lgrnColor,'ev',ev)
+                    gain = 0
+                    text(0,3,5,0,1,"Gain ",ft,10)
+                    text(0,3,3,1,1,"Auto",fv,10)
+                    draw_bar(0,3,lgrnColor,'gain',gain)
+                if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
+                    text(0,0,1,1,1,"STILL    2x2",ft,7)
+                else:
+                    text(0,0,1,1,1,"Still ",ft,7)
+                text(0,1,3,1,1,modes[mode],fv,10)
+                draw_bar(0,1,lgrnColor,'mode',mode)
+                td = timedelta(seconds=tinterval)
+                if tinterval > 0:
+                    tduration = tinterval * tshots
+                if mode == 0 and tinterval == 0 :
+                    speed = 15
+                    shutter = shutters[speed]
+                    if shutter < 0:
+                        shutter = abs(1/shutter)
+                    sspeed = int(shutter * 1000000)
+                    if (shutter * 1000000) - int(shutter * 1000000) > 0.5:
+                        sspeed +=1
+                    if shutters[speed] < 0:
+                        text(0,2,3,1,1,"1/" + str(abs(shutters[speed])),fv,10)
+                    else:
+                        text(0,2,3,1,1,str(shutters[speed]),fv,10)
+                    draw_bar(0,2,lgrnColor,'speed',speed)
 
-            elif button_row == 1 and menu == 4:
+                time.sleep(.25)
+                restart = 1
+
+              elif button_row == 2:
+                # SHUTTER SPEED or EV (dependent on MODE set)
+                if mode == 0 :
+                    for f in range(0,len(still_limits)-1,3):
+                        if still_limits[f] == 'speed':
+                            pmin = still_limits[f+1]
+                            pmax = max_speed
+                    if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                        speed = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                    elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
+                        speed = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                    elif (mousey > preview_height * .75 and mousey < preview_height * .75  + int(bh/3)) and alt_dis == 2:
+                        speed = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                    else:
+                        if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                            speed -=1
+                            speed  = max(speed ,pmin)
+                        else:
+                            speed  +=1
+                            speed = min(speed ,pmax)
+                    shutter = shutters[speed]
+                    if shutter < 0:
+                        shutter = abs(1/shutter)
+                    sspeed = int(shutter * 1000000)
+                    if (shutter * 1000000) - int(shutter * 1000000) > 0.5:
+                        sspeed +=1
+                    if shutters[speed] < 0:
+                        text(0,2,3,1,1,"1/" + str(abs(shutters[speed])),fv,10)
+                    else:
+                        text(0,2,3,1,1,str(shutters[speed]),fv,10)
+                    draw_bar(0,2,lgrnColor,'speed',speed)
+                    if tinterval > 0:
+                        tinterval = int(sspeed/1000000)
+                        tinterval = max(tinterval,1)
+                        td = timedelta(seconds=tinterval)
+                        tduration = tinterval * tshots
+                        td = timedelta(seconds=tduration)
+                        
+                    time.sleep(.25)
+                    restart = 1
+                else:
+                    # EV
+                    for f in range(0,len(still_limits)-1,3):
+                        if still_limits[f] == 'ev':
+                            pmin = still_limits[f+1]
+                            pmax = still_limits[f+2]
+                    if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                        ev = int(((mousex-preview_width) / bw) * (pmax+1-pmin)) + pmin 
+                    elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
+                        ev = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin)) + pmin
+                    elif (mousey > preview_height * .75  and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
+                        ev = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin)) + pmin
+                    else:
+                        if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                            ev -=1
+                            ev  = max(ev ,pmin)
+                        else:
+                            ev  +=1
+                            ev = min(ev ,pmax)
+                    text(0,2,3,1,1,str(ev),fv,10)
+                    draw_bar(0,2,lgrnColor,'ev',ev)
+                    time.sleep(0.25)
+                    restart = 1
+                    
+              elif button_row == 3:
+                # GAIN
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'gain':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    gain = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
+                    gain = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75  and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
+                    gain = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        gain -=1
+                        gain  = max(gain ,pmin)
+                    else:
+                        gain  +=1
+                        gain = min(gain ,pmax)
+                if gain > 0:
+                    text(0,3,5,0,1,"Gain    A/D",ft,10)
+                    if gain <= mag:
+                        text(0,3,3,1,1,str(gain) + " :  " + str(gain) + "/1",fv,10)
+                    else:
+                        text(0,3,3,1,1,str(gain) + " :  " + str(int(mag)) + "/" + str(((gain/mag)*10)/10)[0:3],fv,10)
+                else:
+                    if gain == 0:
+                        text(0,3,5,0,1,"Gain ",ft,10)
+                    else:
+                        text(0,3,5,0,1,"Gain    A/D",ft,10)
+                    text(0,3,3,1,1,"Auto",fv,10)
+                time.sleep(.25)
+                draw_bar(0,3,lgrnColor,'gain',gain)
+                restart = 1
+                
+              elif button_row == 4:
+                # BRIGHTNESS
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'brightness':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    brightness = int(((mousex-preview_width) / bw) * (pmax+1-pmin)) + pmin 
+                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
+                    brightness = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin)) + pmin
+                elif (mousey > preview_height * .75  and mousey < preview_height * .75+ int(bh/3)) and alt_dis == 2:
+                    brightness = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin)) + pmin 
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        brightness -=1
+                        brightness  = max(brightness ,pmin)
+                    else:
+                        brightness  +=1
+                        brightness = min(brightness ,pmax)
+                text(0,4,3,1,1,str(brightness/100),fv,10)
+                draw_bar(0,4,lgrnColor,'brightness',brightness)
+                time.sleep(0.025)
+                restart = 1
+                
+              elif button_row == 5:
+                # CONTRAST
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'contrast':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    contrast = int(((mousex-preview_width) / bw) * (pmax+1-pmin)) 
+                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
+                    contrast = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75  and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
+                    contrast = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        contrast -=1
+                        contrast  = max(contrast ,pmin)
+                    else:
+                        contrast  +=1
+                        contrast = min(contrast ,pmax)
+                text(0,5,3,1,1,str(contrast/100)[0:4],fv,10)
+                draw_bar(0,5,lgrnColor,'contrast',contrast)
+                time.sleep(0.025)
+                restart = 1
+                
+              elif button_row == 6:
+                # AWB
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'awb':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    awb = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height and mousey < preview_height + int(bh/3)) and alt_dis == 1:
+                    awb = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
+                    awb = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        awb -=1
+                        awb  = max(awb ,pmin)
+                    else:
+                        awb  +=1
+                        awb = min(awb ,pmax)
+                text(0,6,3,1,1,awbs[awb],fv,10)
+                draw_bar(0,6,lgrnColor,'awb',awb)
+                if awb == 0:
+                    text(0,7,5,0,1,"Blue",ft,10)
+                    text(0,8,5,0,1,"Red",ft,10)
+                    text(0,8,3,1,1,str(red/10)[0:3],fv,10)
+                    text(0,7,3,1,1,str(blue/10)[0:3],fv,10)
+                    draw_bar(0,7,lgrnColor,'blue',blue)
+                    draw_bar(0,8,lgrnColor,'red',red)
+                else:
+                    text(0,7,5,0,1,"Denoise",fv,10)
+                    text(0,7,3,1,1,denoises[denoise],fv,10)
+                    text(0,8,5,0,1,"Sharpness",fv,10)
+                    text(0,8,3,1,1,str(sharpness/10),fv,10)
+                    draw_bar(0,7,lgrnColor,'denoise',denoise)
+                    draw_bar(0,8,lgrnColor,'sharpness',sharpness)
+                time.sleep(.25)
+                restart = 1
+                
+              elif button_row == 7 and awb == 0:
+                # BLUE
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'blue':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    blue = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
+                    blue = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75  and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
+                    blue = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        blue -=1
+                        blue  = max(blue ,pmin)
+                    else:
+                        blue  +=1
+                        blue = min(blue ,pmax)
+                text(0,7,3,1,1,str(blue/10)[0:3],fv,10)
+                draw_bar(0,7,lgrnColor,'blue',blue)
+                time.sleep(.25)
+                restart = 1
+
+
+              elif button_row == 7 and awb != 0:
+                # DENOISE
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'denoise':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    denoise = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height  and mousey < preview_height + int(bh/3)) and alt_dis == 1:
+                    denoise = int(((mousex-((button_row -1)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75  and mousey < preview_height * .75 + int(bh/3)) and alt_dis == 2:
+                    denoise = int(((mousex-((button_row -1)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        denoise -=1
+                        denoise = max(denoise,pmin)
+                    else:
+                        denoise +=1
+                        denoise = min(denoise,pmax)
+                text(0,7,3,1,1,denoises[denoise],fv,10)
+                draw_bar(0,7,lgrnColor,'denoise',denoise)
+                time.sleep(.25)
+                restart = 1
+
+              elif button_row == 8 and awb == 0:
+                # RED
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'red':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    red = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
+                    red = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
+                    red = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        red -=1
+                        red  = max(red ,pmin)
+                    else:
+                        red  +=1
+                        red = min(red ,pmax)
+                text(0,8,3,1,1,str(red/10)[0:3],fv,10)
+                draw_bar(0,8,lgrnColor,'red',red)
+                time.sleep(.25)
+                restart = 1
+                
+              elif button_row == 8 and awb != 0:
+                # SHARPNESS
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'sharpness':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    sharpness = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + (bh)  and mousey < preview_height + (bh) + int(bh/3)) and alt_dis == 1:
+                    sharpness = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + (bh)  and mousey < preview_height * .75 + (bh) + int(bh/3)) and alt_dis == 2:
+                    sharpness = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        sharpness -=1
+                        sharpness = max(sharpness,pmin)
+                    else:
+                        sharpness +=1
+                        sharpness = min(sharpness,pmax)
+                        
+                text(0,8,3,1,1,str(sharpness/10),fv,10)
+                draw_bar(0,8,lgrnColor,'sharpness',sharpness)
+                time.sleep(.25)
+                restart = 1
+                
+              elif button_row == 9:
+                # EXTENSION
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'extn':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    extn = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
+                    extn = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
+                    extn = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        extn -=1
+                        extn  = max(extn ,pmin)
+                    else:
+                        extn  +=1
+                        extn = min(extn ,pmax) 
+                text(0,9,3,1,1,extns[extn],fv,10)
+                draw_bar(0,9,lgrnColor,'extn',extn)
+                time.sleep(.25)
+                
+              elif button_row == 10:
+                # QUALITY
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'quality':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    quality = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
+                    quality = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
+                    quality = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        quality -=1
+                        quality  = max(quality ,pmin)
+                    else:
+                        quality  +=1
+                        quality = min(quality ,pmax)
+                text(0,10,3,1,1,str(quality)[0:3],fv,10)
+                draw_bar(0,10,lgrnColor,'quality',quality)
+                time.sleep(.25)
+                restart = 1
+                
+              elif button_row == 11:
+                # SATURATION
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'saturation':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    saturation = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
+                    saturation = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
+                    saturation = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        saturation -=1
+                        saturation  = max(saturation ,pmin)
+                    else:
+                        saturation  +=1
+                        saturation = min(saturation ,pmax)
+                text(0,11,3,1,1,str(saturation/10),fv,10)
+                draw_bar(0,11,lgrnColor,'saturation',saturation)
+                time.sleep(.25)
+                restart = 1
+            
+            # MENU 2
+            elif menu == 2:
+              if button_row == 12:
+                  menu = 1
+                  Menu()
+                  
+              elif button_row == 1:
+                # VERTICAL FLIP
+                vflip +=1
+                if vflip > 1:
+                    vflip = 0
+                text(0,1,3,1,1,str(vflip),fv,10)
+                restart = 1
+                time.sleep(.25)
+                
+              elif button_row == 2:
+                # HORIZONTAL FLIP
+                hflip += 1
+                if hflip > 1:
+                    hflip = 0
+                text(0,2,3,1,1,str(hflip),fv,10)
+                restart = 1
+                time.sleep(.25)
+                
+              elif button_row == 3 and Pi_Cam == 9:
+                # Waveshare imx290 IR Filter
+                if mousex < preview_width + (bw/2):
+                    IRF -=1
+                    IRF = max(IRF ,0)
+                else:
+                    IRF  +=1
+                    IRF = min(IRF ,1)
+                if IRF == 0:
+                    text(0,3,3,1,1,"Off",fv,10)
+                    led_sw_ir.off()
+                else:
+                    text(0,3,3,1,1,"ON ",fv,10)
+                    led_sw_ir.on()
+                time.sleep(0.25)
+                restart = 1
+                 
+              elif button_row == 4 and Pi_Cam == 4 and scientif == 1:
+                # v4 (HQ) CAMERA Scientific.json
+                if alt_dis == 0 and mousex < preview_width + (bw/2):
+                    scientific -=1
+                    scientific = max(scientific ,0)
+                else:
+                    scientific  +=1
+                    scientific = min(scientific ,1)
+                text(0,4,5,0,1,"Scientific",fv,10)
+                if scientific == 0:
+                    text(0,4,3,1,1,"Off",fv,10)
+                else:
+                    text(0,4,3,1,1,"ON ",fv,10)
+                time.sleep(0.25)
+                restart = 1
+
+              elif button_row == 5:
+                # timet
+                if alt_dis == 0 and mousex < preview_width + (bw/2):
+                    timet -=100
+                    timet  = max(timet ,100)
+                else:
+                    timet  +=100
+                    timet = min(timet ,10000)
+                text(0,5,3,1,1,str(timet),fv,10)
+                time.sleep(0.05)
+                
+              elif button_row == 6 and Pi_Cam == 3:
+                # PI V3 CAMERA HDR
+                if alt_dis == 0 and mousex < preview_width + (bw/2):
+                    v3_hdr -=1
+                    v3_hdr  = max(v3_hdr ,0)
+                else:
+                    v3_hdr  +=1
+                    v3_hdr = min(v3_hdr ,3)
+
+                text(0,6,5,0,1,"HDR",fv,10)
+                text(0,6,3,1,1,v3_hdrs[v3_hdr],fv,10)
+                time.sleep(0.25)
+                restart = 1
+
+              elif button_row == 6 and Pi_Cam != 3 and Pi == 5:
+                # PI5 and NON V3 CAMERA HDR
+                if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                    v3_hdr -=1
+                    v3_hdr  = max(v3_hdr ,0)
+                else:
+                    v3_hdr  +=1
+                    v3_hdr = min(v3_hdr ,1)
+
+                text(0,6,5,0,1,"HDR",fv,10)
+                text(0,6,3,1,1,v3_hdrs[v3_hdr],fv,10)
+                time.sleep(0.25)
+                restart = 1
+                
+              elif button_row == 7:
+                # METER
+                for f in range(0,len(still_limits)-1,3):
+                    if still_limits[f] == 'meter':
+                        pmin = still_limits[f+1]
+                        pmax = still_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    meter = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + bh  and mousey < preview_height + bh + int(bh/3)) and alt_dis == 1:
+                    meter = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + bh + int(bh/3)) and alt_dis == 2:
+                    meter = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        meter -=1
+                        meter  = max(meter ,pmin)
+                    else:
+                        meter  +=1
+                        meter = min(meter ,pmax)
+                text(0,7,3,1,1,meters[meter],fv,10)
+                draw_bar(0,7,lgrnColor,'meter',meter)
+                time.sleep(.25)
+                restart = 1
+
+                
+                                        
+            # MENU 3
+            elif menu == 3:   
+              if button_row == 1:
+                # VIDEO LENGTH
+                for f in range(0,len(video_limits)-1,3):
+                    if video_limits[f] == 'vlen':
+                        pmin = video_limits[f+1]
+                        pmax = video_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    vlen = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height  + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)) and alt_dis == 1:
+                    vlen = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75  + (bh*2) and mousey < preview_height * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
+                    vlen = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if mousex < preview_width + (bw/2):
+                        vlen -=1
+                        vlen  = max(vlen ,pmin)
+                    else:
+                        vlen  +=1
+                        vlen = min(vlen ,pmax)
+                td = timedelta(seconds=vlen)
+                text(0,1,3,1,1,str(td),fv,11)
+                draw_Vbar(0,1,lpurColor,'vlen',vlen)
+                time.sleep(.25)
+ 
+              elif button_row == 2:
+                # FPS
+                for f in range(0,len(video_limits)-1,3):
+                    if video_limits[f] == 'fps':
+                        pmin = video_limits[f+1]
+                        pmax = video_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    fps = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                    fps = min(fps,vfps)
+                    fps = max(fps,pmin)
+                elif (mousey > preview_height  + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)) and alt_dis == 1:
+                    fps = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                    fps = min(fps,vfps)
+                    fps = max(fps,pmin)
+                elif (mousey > preview_height * .75  + (bh*2) and mousey < preview_height  * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
+                    fps = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                    fps = min(fps,vfps)
+                    fps = max(fps,pmin)
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        fps -=1
+                        fps  = max(fps ,pmin)
+                    else:
+                        fps  +=1
+                        fps = min(fps ,pmax)
+                
+                text(0,2,3,1,1,str(fps),fv,11)
+                draw_Vbar(0,2,lpurColor,'fps',fps)
+                time.sleep(.25)
+                restart = 1
+                   
+              elif button_row == 3:
+                # VFORMAT
+                for f in range(0,len(video_limits)-1,3):
+                    if video_limits[f] == 'vformat':
+                        pmin = video_limits[f+1]
+                        pmax = video_limits[f+2]
+                
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    # set max video format
+                    setmaxvformat()
+                    pmax = max_vformat
+                    vformat = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height  + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)) and alt_dis == 1:
+                    # set max video format    
+                    setmaxvformat()
+                    pmax = max_vformat
+                    vformat = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75  + (bh*2) and mousey < preview_height * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
+                    # set max video format    
+                    setmaxvformat()
+                    pmax = max_vformat
+                    vformat = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        vformat -=1
+                        # set max video format    
+                        setmaxvformat()
+                        vformat = min(vformat,max_vformat)
+                    else:
+                        vformat +=1
+                        # set max video format
+                        setmaxvformat()
+                        vformat = min(vformat,max_vformat)
+                draw_Vbar(0,3,lpurColor,'vformat',vformat)
+                vwidth  = vwidths[vformat]
+                vheight = vheights[vformat]
+                if Pi_Cam == 3:
+                    vfps = v3_max_fps[vformat]
+                    if vwidth == 1920 and codec == 0:
+                        prof = h264profiles[profile].split(" ")
+                        if str(prof[1]) == "4.2":
+                            if vpreview == 1:
+                                vfps = 45
+                            else:
+                                vfps = 60
+                    elif vwidth == 1536 and codec == 0:
+                        prof = h264profiles[profile].split(" ")
+                        if str(prof[1]) == "4.2":
+                            if vpreview == 1:
+                                vfps = 60
+                            else:
+                                vfps = 90
+                elif Pi_Cam == 9:
+                    vfps = v9_max_fps[vformat]
+                elif Pi_Cam == 15:
+                    vfps = v15_max_fps[vformat]
+                else:
+                    vfps = v_max_fps[vformat]
+                fps = min(fps,vfps)
+                video_limits[5] = vfps
+                text(0,2,3,1,1,str(fps),fv,11)
+                draw_Vbar(0,2,lpurColor,'fps',fps)
+                # determine if camera native format
+                vw = 0
+                x = 0
+                while x < len(vwidths2) and vw == 0:
+                    if vwidth == vwidths2[x]:
+                        if vheight == vheights2[x]:
+                            vw = 1
+                    x += 1
+                if vw == 0:
+                    text(0,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                if vw == 1:
+                    text(0,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                time.sleep(.25)
+
+              elif button_row == 4:
+                # CODEC
+                for f in range(0,len(video_limits)-1,3):
+                    if video_limits[f] == 'codec':
+                        pmin = video_limits[f+1]
+                        pmax = video_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    codec = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)) and alt_dis == 1:
+                    codec = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + (bh*2) and mousey < preview_height * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
+                    codec = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        codec -=1
+                        codec  = max(codec ,pmin)
+                    else:
+                        codec  +=1
+                        codec = min(codec ,pmax)
+                # set max video format
+                setmaxvformat()
+                vformat = min(vformat,max_vformat)
+                text(0,4,3,1,1,codecs[codec],fv,11)
+                draw_Vbar(0,4,lpurColor,'codec',codec)
+                draw_Vbar(0,3,lpurColor,'vformat',vformat)
+                vwidth  = vwidths[vformat]
+                vheight = vheights[vformat]
+                if Pi_Cam == 3:
+                    vfps = v3_max_fps[vformat]
+                    if vwidth == 1920 and codec == 0:
+                        prof = h264profiles[profile].split(" ")
+                        if str(prof[1]) == "4.2":
+                            if vpreview == 1:
+                                vfps = 45
+                            else:
+                                vfps = 60
+                    elif vwidth == 1536 and codec == 0:
+                        prof = h264profiles[profile].split(" ")
+                        if str(prof[1]) == "4.2":
+                            if vpreview == 1:
+                                vfps = 60
+                            else:
+                                vfps = 90
+                elif Pi_Cam == 9:
+                    vfps = v9_max_fps[vformat]
+                elif Pi_Cam == 15:
+                    vfps = v15_max_fps[vformat]
+                else:
+                    vfps = v_max_fps[vformat]
+                fps = min(fps,vfps)
+                video_limits[5] = vfps
+                text(0,2,3,1,1,str(fps),fv,11)
+                draw_Vbar(0,2,lpurColor,'fps',fps)
+                # determine if camera native format
+                vw = 0
+                x = 0
+                while x < len(vwidths2) and vw == 0:
+                    if vwidth == vwidths2[x]:
+                        if vheight == vheights2[x]:
+                            vw = 1
+                    x += 1
+                if vw == 0:
+                    text(0,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                if vw == 1:
+                    text(0,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                time.sleep(.25)
+
+              elif button_row == 5:
+                # H264 PROFILE
+                for f in range(0,len(video_limits)-1,3):
+                    if video_limits[f] == 'profile':
+                        pmin = video_limits[f+1]
+                        pmax = video_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
+                    profile = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)) and alt_dis == 1:
+                    profile = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + (bh*2) and mousey < preview_height * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
+                    profile = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
+                else:
+                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        profile -=1
+                        profile  = max(profile ,pmin)
+                    else:
+                        profile  +=1
+                        profile = min(profile ,pmax)
+                text(0,5,3,1,1,h264profiles[profile],fv,11)
+                draw_Vbar(0,5,lpurColor,'profile',profile)
+                vwidth  = vwidths[vformat]
+                vheight = vheights[vformat]
+                if Pi_Cam == 3:
+                    vfps = v3_max_fps[vformat]
+                    if vwidth == 1920 and codec == 0:
+                        prof = h264profiles[profile].split(" ")
+                        if str(prof[1]) == "4.2":
+                            if vpreview == 1:
+                                vfps = 45
+                            else:
+                                vfps = 60
+                    elif vwidth == 1536 and codec == 0:
+                        prof = h264profiles[profile].split(" ")
+                        if str(prof[1]) == "4.2":
+                            if vpreview == 1:
+                                vfps = 60
+                            else:
+                                vfps = 90
+                elif Pi_Cam == 9:
+                    vfps = v9_max_fps[vformat]
+                elif Pi_Cam == 15:
+                    vfps = v15_max_fps[vformat]
+                else:
+                    vfps = v_max_fps[vformat]
+                fps = min(fps,vfps)
+                video_limits[5] = vfps
+                text(0,2,3,1,1,str(fps),fv,11)
+                draw_Vbar(0,2,lpurColor,'fps',fps)
+                time.sleep(.25)
+
+              elif button_row == 6:
+                # V_PREVIEW
+                if (alt_dis == 0 and mousex > preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                    vpreview +=1
+                    vpreview  = min(vpreview ,1)
+                else:
+                    vpreview  -=1
+                    vpreview = max(vpreview ,0)
+
+                if vpreview == 0:
+                    text(0,6,3,1,1,"Off",fv,11)
+                else:
+                    text(0,6,3,1,1,"ON ",fv,11)
+                vwidth  = vwidths[vformat]
+                vheight = vheights[vformat]
+                if Pi_Cam == 3:
+                    vfps = v3_max_fps[vformat]
+                    if vwidth == 1920 and codec == 0:
+                        prof = h264profiles[profile].split(" ")
+                        if str(prof[1]) == "4.2":
+                            if vpreview == 1:
+                                vfps = 45
+                            else:
+                                vfps = 60
+                    elif vwidth == 1536 and codec == 0:
+                        prof = h264profiles[profile].split(" ")
+                        if str(prof[1]) == "4.2":
+                            if vpreview == 1:
+                                vfps = 60
+                            else:
+                                vfps = 90
+                elif Pi_Cam == 9:
+                    vfps = v9_max_fps[vformat]
+                elif Pi_Cam == 15:
+                    vfps = v15_max_fps[vformat]
+                else:
+                    vfps = v_max_fps[vformat]
+                fps = min(fps,vfps)
+                video_limits[5] = vfps
+                text(0,2,3,1,1,str(fps),fv,11)
+                draw_Vbar(0,2,lpurColor,'fps',fps)
+                time.sleep(0.25)
+
+            # MENU 4
+            elif menu == 4:
+              if button_row == 1:
                 # TIMELAPSE DURATION
                 for f in range(0,len(video_limits)-1,3):
                     if video_limits[f] == 'tduration':
@@ -3568,7 +3738,7 @@ while True:
                 draw_Vbar(0,3,lyelColor,'tshots',tshots)
                 time.sleep(.25)
 
-            elif button_row == 2 and menu == 4:
+              elif button_row == 2:
                 # TIMELAPSE INTERVAL
                 for f in range(0,len(video_limits)-1,3):
                     if video_limits[f] == 'tinterval':
@@ -3610,7 +3780,7 @@ while True:
                     text(0,3,3,1,1,str(tshots),fv,12)
                 time.sleep(.25)
                 
-            elif button_row == 3 and tinterval > 0 and menu == 4:
+              elif button_row == 3 and tinterval > 0:
                 # TIMELAPSE SHOTS
                 for f in range(0,len(video_limits)-1,3):
                     if video_limits[f] == 'tshots':
@@ -3639,170 +3809,7 @@ while True:
                 text(0,1,3,1,1,str(td),fv,12)
                 draw_Vbar(0,1,lyelColor,'tduration',tduration)
                 time.sleep(.25)
-
-            elif button_row == 11 and menu == 0:
-                # HISTOGRAM SIZE
-                for f in range(0,len(video_limits)-1,3):
-                    if video_limits[f] == 'histarea':
-                        pmin = video_limits[f+1]
-                        pmax = video_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    histarea = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                    histarea = max(histarea,pmin)
-                elif (mousey > preview_height + (bh*3)  and mousey < preview_height + (bh*3) + int(bh/3)) and alt_dis == 1:
-                    histarea = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
-                    histarea = max(histarea,pmin)
-                elif (mousey > preview_height * .75 + (bh*3)  and mousey < preview_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
-                    histarea = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
-                    histarea = max(histarea,pmin)
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        histarea -=1
-                        histarea = max(histarea,pmin)
-                    else:
-                        histarea +=1
-                        histarea = min(histarea,pmax)
-                if xx - histarea < 0 or xy - histarea < 0:
-                    histarea = old_histarea
-                if xy + histarea > preview_height or xx + histarea > preview_width:
-                    histarea = old_histarea
-                if (Pi_Cam == 3 and v3_af == 1) and (xy + histarea > preview_height * 0.75 or xx + histarea > preview_width):
-                    histarea = old_histarea
-                text(0,11,3,1,1,str(histarea),fv,7)
-                draw_Vbar(0,11,greyColor,'histarea',histarea)
-                old_histarea = histarea
-                time.sleep(.25)
-
-            elif button_row == 5 and (Pi_Cam == 3 and v3_af == 1) and menu == 0:
-                # V3 FOCUS RANGE 
-                for f in range(0,len(video_limits)-1,3):
-                    if video_limits[f] == 'v3_f_range':
-                        pmin = video_limits[f+1]
-                        pmax = video_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    v3_f_range = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + bh  and mousey < preview_height + (bh*3) + int(bh/3)) and alt_dis == 1:
-                    v3_f_range = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
-                    v3_f_range = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        v3_f_range-=1
-                        v3_f_range = max(v3_f_range,pmin)
-                    else:
-                        v3_f_range +=1
-                        v3_f_range = min(v3_f_range,pmax)
-                text(0,5,3,1,1,v3_f_ranges[v3_f_range],fv,7)
-                draw_Vbar(0,5,greyColor,'v3_f_range',v3_f_range)
-                restart = 1
-                time.sleep(.25)
-
-            elif button_row == 1 and menu == 0:
-                # EXT TRIGGER 
-                for f in range(0,len(video_limits)-1,3):
-                    if video_limits[f] == 'str_cap':
-                        pmin = video_limits[f+1]
-                        pmax = video_limits[f+2]
-                if (mousex > preview_width and mousey < ((button_row)*bh) + int(bh/3)):
-                    str_cap = int(((mousex-preview_width) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height + bh  and mousey < preview_height + (bh*3) + int(bh/3)) and alt_dis == 1:
-                    str_cap = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                elif (mousey > preview_height * .75 + bh  and mousey < preview_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
-                    str_cap = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                        str_cap -=1
-                        str_cap = max(str_cap,pmin)
-                    else:
-                        str_cap +=1
-                        str_cap = min(str_cap,pmax)
-                text(0,1,3,1,1,strs[str_cap],fv,7)
-                draw_Vbar(0,1,greyColor,'str_cap',str_cap)
-                restart = 1
-                time.sleep(.25)
-
-            elif button_row == 2 and menu == 2:
-                # HORIZONTAL FLIP
-                hflip += 1
-                if hflip > 1:
-                    hflip = 0
-                text(0,2,3,1,1,str(hflip),fv,10)
-                restart = 1
-                time.sleep(.25)
-                
-            elif button_row == 4 and menu == -1:
-                if alt_dis == 0 and mousex < preview_width + (bw/2):
-                   # SAVE CONFIG
-                   text(0,4,3,1,1,"Config",fv,7)
-                   config[0] = mode
-                   config[1] = speed
-                   config[2] = gain
-                   config[3] = int(brightness)
-                   config[4] = int(contrast)
-                   config[5] = frame
-                   config[6] = int(red)
-                   config[7] = int(blue)
-                   config[8] = ev
-                   config[9] = vlen
-                   config[10] = fps
-                   config[11] = vformat
-                   config[12] = codec
-                   config[13] = tinterval
-                   config[14] = tshots
-                   config[15] = extn
-                   config[16] = zx
-                   config[17] = zy
-                   config[18] = zoom
-                   config[19] = int(saturation)
-                   config[20] = meter
-                   config[21] = awb
-                   config[22] = sharpness
-                   config[23] = int(denoise)
-                   config[24] = quality
-                   config[25] = profile
-                   config[26] = level
-                   config[27] = histogram
-                   config[28] = histarea
-                   config[29] = v3_f_speed
-                   config[30] = v3_f_range
-                   config[31] = rotate
-                   config[32] = IRF
-                   config[33] = str_cap
-                   config[34] = v3_hdr
-                   config[35] = timet
-                   config[36] = vflip
-                   config[37] = hflip
-                   with open(config_file, 'w') as f:
-                      for item in range(0,len(titles)):
-                          f.write(titles[item] + " : " + str(config[item]) + "\n")
-                   time.sleep(1)
-                   text(0,4,2,1,1,"Config",fv,7)
-                else:
-                   os.killpg(p.pid, signal.SIGTERM)
-                   pygame.display.quit()
-                   sys.exit()
-            elif button_row == 3 and menu == -1:
-                menu = 0
-                Menu()
-            elif button_row == 0 and menu > -1:
-                menu = -1
-                Menu()
-            elif button_row == 7 and menu == 0:
-                menu = 1
-                Menu()
-            elif button_row == 8 and menu == 0:
-                menu = 3
-                Menu()
-            elif button_row == 9 and menu == 0:
-                menu = 4
-                Menu()
-            elif button_row == 12 and menu == 1:
-                menu = 2
-                Menu()
-            elif button_row == 12 and menu == 2:
-                menu = 1
-                Menu()
-            button_row = -1
+        #button_row = -1
                      
         # RESTART
         if restart > 0:
