@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 1.00
+version = 1.01
 
 # streaming parameters
 stream_type = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -312,7 +312,7 @@ def Camera_Version():
     global lver,v3_af,camera,vwidths2,vheights2,configtxt,mode,mag,max_gain,max_shutter,Pi_Cam,max_camera,same_cams,x_sens,y_sens,igw,igh
     global cam0,cam1,cam2,cam3,max_gains,max_shutters,scientif,max_vformat,vformat,vwidth,vheight,vfps,sspeed,tduration,video_limits,lo_res
     global speed,shutter,max_vf_7,max_vf_6,max_vf_5,max_vf_4,max_vf_3,max_vf_2,max_vf_1,max_vf_4a,max_vf_0,max_vf_8,max_vf_9,IRF,foc_sub3
-    global foc_sub5,v3_hdr,windowSurfaceObj
+    global foc_sub5,v3_hdr,windowSurfaceObj,cam1
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('rpicams.txt'):
         os.rename('rpicams.txt', 'oldrpicams.txt')
@@ -549,12 +549,12 @@ pygame.init()
 
 if frame == 1:
     if fullscreen == 1:
-        windowSurfaceObj = pygame.display.set_mode((preview_width + (bw),dis_height),pygame.FULLSCREEN, 24)
+        windowSurfaceObj = pygame.display.set_mode((preview_width + bw,dis_height),pygame.FULLSCREEN, 24)
     elif fullscreen == 0:
-        windowSurfaceObj = pygame.display.set_mode((preview_width + (bw),dis_height),0,24)
+        windowSurfaceObj = pygame.display.set_mode((preview_width + bw,dis_height),0,24)
 
 else:
-    windowSurfaceObj = pygame.display.set_mode((preview_width + (bw),dis_height), pygame.NOFRAME,24)
+    windowSurfaceObj = pygame.display.set_mode((preview_width + bw,dis_height), pygame.NOFRAME,24)
 
 Camera_Version()
 
@@ -890,25 +890,16 @@ def preview():
         print(datastr)
     restart = 0
     time.sleep(0.2)
-    if igw/igh > 1.5 and zoom != 5 and alt_dis == 1:
-        pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,int(preview_height *.24) ))
 
 def Menu():
-    global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz,v3_hdr,v3_hdrs,bw,bh,ft,fv
+    global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz,v3_hdr,v3_hdrs,bw,bh,ft,fv,cam1
     pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(preview_width,0,bw,preview_height))
-    if menu > -1:
+    if menu > -1: 
         # set button sizes
         bw = int(preview_width/5.66)
         bh = int(preview_height/13)
         ft = int(preview_width/46)
         fv = int(preview_width/46)
-    else:
-        # set button sizes
-        bw = int(preview_width/5.66)
-        bh = int(preview_height/6)
-        ft = int(preview_width/46)
-        fv = int(preview_width/46) 
-    if menu > -1: 
         for d in range(1,12):
             button(0,0,0,4)
             if menu == 0:  
@@ -919,10 +910,14 @@ def Menu():
                 button(0,d,7,4)
             elif menu == 4:  
                 button(0,d,8,4)
-    if menu > -1:
         text(0,0,1,0,1,"Main Menu ",ft,7)
       
     if menu == -1:
+        # set button sizes
+        bw = int(preview_width/5.66)
+        bh = int(preview_height/6)
+        ft = int(preview_width/46)
+        fv = int(preview_width/46)
         button(0,0,4,4)
         button(0,1,2,4)
         button(0,2,3,4)
@@ -947,9 +942,13 @@ def Menu():
         text(0,3,1,0,1,"CAMERA",ft,7)
         text(0,3,1,1,1,"Settings",ft,7)
       
-    if menu == 0:
+    elif menu == 0:
       text(0,1,2,0,1,"Ext Trig: " + str(STR),ft,7)
       text(0,1,3,1,1,strs[str_cap],fv,7)
+      if cam1 != "1":
+          text(0,2,2,0,1,"Switch Camera",ft,7)
+          text(0,2,3,1,1,str(camera),fv,7)
+          
       if Pi_Cam == 3 and v3_af == 1:
           button(0,4,0,5)
           text(0,4,2,0,1,"Focus Speed",ft,7)
@@ -971,8 +970,6 @@ def Menu():
           button(0,3,0,9)
           text(0,3,5,0,1,"FOCUS",ft,7)
         
-      draw_bar(0,4,greyColor,'v3_f_speed',v3_f_speed)
-      draw_Vbar(0,5,greyColor,'v3_f_range',v3_f_range)
       if fxz != 1:
           text(0,3,3,1,1,"Spot",fv,7)
       if zoom == 0:
@@ -1003,7 +1000,7 @@ def Menu():
       text(0,11,2,0,1,"Hist Area",ft,7)
       text(0,11,3,1,1,str(histarea),fv,7)
       
-    if menu == 1:
+    elif menu == 1:
       text(0,1,5,0,1,"Mode",ft,10)
       text(0,1,3,1,1,modes[mode],fv,10)
       if mode == 0:
@@ -1054,7 +1051,7 @@ def Menu():
           text(0,13,5,0,1,"STILL -t",fv,10)
           text(0,13,3,1,1,str(timet),fv,10)
           
-    if menu == 2: 
+    elif menu == 2: 
         text(0,1,5,0,1,"Vert Flip",ft,10)
         text(0,1,3,1,1,str(vflip),fv,10)
         text(0,2,5,0,1,"Horiz Flip",ft,10)
@@ -1083,7 +1080,7 @@ def Menu():
         button(0,12,0,9) 
         text(0,12,1,0,1,"Page 1 ",ft,7)
       
-    if menu == 3:
+    elif menu == 3:
         text(0,1,5,0,1,"V_Length",ft,11)
         td = timedelta(seconds=vlen)
         text(0,1,3,1,1,str(td),fv,11)
@@ -1110,7 +1107,7 @@ def Menu():
         if vw == 1:
             text(0,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
       
-    if menu == 4:
+    elif menu == 4:
         td = timedelta(seconds=tduration)
         text(0,1,5,0,1,"Duration",ft,12)
         text(0,1,3,1,1,str(td),fv,12)
@@ -1129,8 +1126,11 @@ def Menu():
         draw_bar(0,14,greyColor,'histogram',histogram)
         draw_Vbar(0,1,greyColor,'str_cap',str_cap)
         draw_Vbar(0,14,greyColor,'histarea',histarea)
+        if Pi_Cam == 3:
+            draw_bar(0,4,greyColor,'v3_f_speed',v3_f_speed)
+            draw_Vbar(0,5,greyColor,'v3_f_range',v3_f_range)
       
-    if menu == 1:
+    elif menu == 1:
         draw_bar(0,1,lgrnColor,'mode',mode)
         draw_bar(0,3,lgrnColor,'gain',gain)
         draw_bar(0,4,lgrnColor,'brightness',brightness)
@@ -1148,17 +1148,17 @@ def Menu():
         draw_bar(0,6,lgrnColor,'awb',awb)
         draw_bar(0,11,lgrnColor,'saturation',saturation)
       
-    if menu == 2:
+    elif menu == 2:
         draw_bar(0,7,lgrnColor,'meter',meter)
     
-    if menu == 3:
+    elif menu == 3:
         draw_Vbar(0,1,lpurColor,'vlen',vlen)
         draw_Vbar(0,2,lpurColor,'fps',fps)
         draw_Vbar(0,3,lpurColor,'vformat',vformat)
         draw_Vbar(0,4,lpurColor,'codec',codec)
         draw_Vbar(0,5,lpurColor,'profile',profile)
     
-    if menu == 4:
+    elif menu == 4:
         draw_Vbar(0,1,lyelColor,'tduration',tduration)
         draw_Vbar(0,2,lyelColor,'tinterval',tinterval)
         draw_Vbar(0,3,lyelColor,'tshots',tshots)
@@ -1219,8 +1219,9 @@ while True:
             focus_mode = 1
             v3_f_mode = 1 # manual focus
             foc_man = 1 
-            button(0,7,1,9)
-            text(0,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
+            if menu == 0:
+                button(0,7,1,9)
+                text(0,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
         v3_focus += 10
         for f in range(0,len(video_limits)-1,3):
           if video_limits[f] == 'v3_focus':
@@ -1228,11 +1229,11 @@ while True:
             v3_pmax = video_limits[f+2]
         v3_focus = min(v3_focus,v3_pmax)
         focus = v3_focus
-        if Pi_Cam == 3:
+        if Pi_Cam == 3 and menu == 0:
             draw_Vbar(0,7,dgryColor,'v3_focus',v3_focus * 4)
             fd = 1/(v3_focus/100)
             text(0,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
-        else:
+        elif menu == 0:
             draw_Vbar(0,7,dgryColor,'v3_focus',v3_focus)
             text(0,7,3,0,1,'<<< ' + str(v3_focus) + ' >>>',fv,0)
         poll = p.poll()
@@ -1248,8 +1249,9 @@ while True:
             focus_mode = 1
             v3_f_mode = 1 # manual focus
             foc_man = 1 
-            button(0,7,1,9)
-            text(0,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
+            if menu == 0:
+                button(0,7,1,9)
+                text(0,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
         v3_focus -= 10
         for f in range(0,len(video_limits)-1,3):
           if video_limits[f] == 'v3_focus':
@@ -1257,11 +1259,11 @@ while True:
             v3_pmax = video_limits[f+2]
         v3_focus = max(v3_focus,v3_pmin)
         focus = v3_focus
-        if Pi_Cam == 3:
+        if Pi_Cam == 3 and menu == 0:
             draw_Vbar(0,7,dgryColor,'v3_focus',v3_focus * 4)
             fd = 1/(v3_focus/100)
             text(0,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
-        else:
+        elif menu == 0:
             draw_Vbar(0,7,dgryColor,'v3_focus',v3_focus)
             text(0,7,3,0,1,'<<< ' + str(v3_focus) + ' >>>',fv,0)
         poll = p.poll()
@@ -1525,7 +1527,6 @@ while True:
             focus_mode = 0
             v3_f_mode = 0 
             foc_man = 0
-            #if same_cams == 0:
             Camera_Version()
             Menu()
             restart = 1
@@ -1661,7 +1662,7 @@ while True:
                             pass
                         if extns2[extn] == 'jpg' or extns2[extn] == 'bmp' or extns2[extn] == 'png':
                             image = pygame.image.load(fname)
-                            if igw/igh > 1.5: # and zoom < 5:
+                            if igw/igh > 1.5: 
                                 image = pygame.transform.scale(image, (preview_width,int(preview_height * 0.75)))
 
                             else:
@@ -1700,6 +1701,22 @@ while True:
                         menu = -1
                         Menu()
                         restart = 2
+                        
+            elif button_row == 2 and menu == 0 and cam1 != "2":
+                camera += 1
+                if camera > max_camera:
+                    camera = 0
+                text(0,2,3,1,1,str(camera),fv,7)
+                poll = p.poll()
+                if poll == None:
+                    os.killpg(p.pid, signal.SIGTERM)
+                focus_mode = 0
+                v3_f_mode = 0 
+                foc_man = 0
+                text(0,2,3,1,1,str(camera),fv,7)
+                Camera_Version()
+                Menu()
+                restart = 1
                
             elif button_row == 1 and menu == 1:
                 # MODE
@@ -1747,15 +1764,9 @@ while True:
                     text(0,0,1,1,1,"STILL    2x2",ft,7)
                 else:
                     text(0,0,1,1,1,"Still ",ft,7)
-                #if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
-                #    text(0,9,1,1,1,"T'lapse  2x2",ft,7)
-                #else:
-                #    text(0,9,1,1,1,"Timelapse",ft,7)
                 text(0,1,3,1,1,modes[mode],fv,10)
                 draw_bar(0,1,lgrnColor,'mode',mode)
                 td = timedelta(seconds=tinterval)
-                #text(0,11,3,1,1,str(td),fv,12)
-                #draw_Vbar(0,10,lyelColor,'tinterval',tinterval)
                 if tinterval > 0:
                     tduration = tinterval * tshots
                 if mode == 0 and tinterval == 0 :
@@ -3043,7 +3054,7 @@ while True:
                 elif (mousey > preview_height * .75  + (bh*2) and mousey < preview_height * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
                     vlen = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
                 else:
-                    if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                    if mousex < preview_width + (bw/2):
                         vlen -=1
                         vlen  = max(vlen ,pmin)
                     else:
@@ -3410,6 +3421,7 @@ while True:
                     elif (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 1:
                         zoom = 0
                         focus_mode = 0
+                        pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height/4))
                         button(0,3,0,9)
                         button(0,6,0,9)
                         text(0,3,5,0,1,"FOCUS",ft,7)
@@ -3475,8 +3487,7 @@ while True:
                         fxy = 0
                         fxz = 1
                         fyz = 0.75
-                        if alt_dis < 2:
-                            pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,0,preview_width,preview_height))
+                        pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,0,preview_width,preview_height))
                         button(0,3,0,9)
                         text(0,3,5,0,1,"FOCUS",ft,7)
                         text(0,3,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
@@ -3495,8 +3506,7 @@ while True:
                         fxy = 0
                         fxz = 1
                         fyz = 0.75
-                        if alt_dis < 2:
-                            pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,0,preview_width,preview_height))
+                        pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,0,preview_width,preview_height))
                         button(0,3,0,9)
                         text(0,3,5,0,1,"FOCUS",ft,7)
                         text(0,3,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
@@ -3526,7 +3536,7 @@ while True:
                 elif ((alt_dis == 0 and mousex > preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 1)) and zoom != 5:
                     zoom +=1
                     zoom = min(zoom,pmax)
-                elif ((alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0)) and zoom > 0:
+                elif alt_dis == 0 and mousex < preview_width + (bw/2)  and zoom > 0:
                     zoom -=1
                     if zoom != 5 and igw/igh > 1.5 and alt_dis == 0:
                         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height))
