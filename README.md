@@ -4,6 +4,8 @@ Script to allow control of a Pi Camera. Will work with all Pi camera models, v1,
 
 To work with RaspiOS based on BULLSEYE (libcamera) / BOOKWORM (rpicam). TRIXIE tested with pi update https://forums.raspberrypi.com/viewtopic.php?t=389477
 
+Note if using the hardware from here https://github.com/JennyList/7-inch-touchscreen-camera then try RPiCamera.py, which gives an easier interface.
+
 Preview uses rpicam-vid (so may not be as sharp as captured stills), stills rpicam-still, videos rpicam-vid, timelapses depends on timings and settings, rpicam-still, -vid or -raw. Note preview has a maximum shutter setting of 1 second.
 
 vflip and hflip only available if using alt_dis = 0
