@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 1.01
+version = 1.02
 
 # streaming parameters
 stream_type = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -892,7 +892,7 @@ def preview():
     time.sleep(0.2)
 
 def Menu():
-    global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz,v3_hdr,v3_hdrs,bw,bh,ft,fv,cam1
+    global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,preview_width,preview_height,ft,fv,focus,fxz,v3_hdr,v3_hdrs,bw,bh,ft,fv,cam1,v3_f_mode,v3_af
     pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(preview_width,0,bw,preview_height))
     if menu > -1: 
         # set button sizes
@@ -948,7 +948,6 @@ def Menu():
       if cam1 != "1":
           text(0,2,2,0,1,"Switch Camera",ft,7)
           text(0,2,3,1,1,str(camera),fv,7)
-          
       if Pi_Cam == 3 and v3_af == 1:
           button(0,4,0,5)
           text(0,4,2,0,1,"Focus Speed",ft,7)
@@ -960,17 +959,16 @@ def Menu():
               button(0,3,1,9)
               draw_Vbar(0,3,dgryColor,'v3_focus',v3_focus-pmin)
               fd = 1/(v3_focus/100)
-              text(0,3,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
-              text(0,3,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
+              text(0,3,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,7)
           elif v3_f_mode == 0 or v3_f_mode == 2:
               button(0,3,0,9)
               text(0,3,5,0,1,"FOCUS",ft,7)
-              text(0,3,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
       else:
           button(0,3,0,9)
           text(0,3,5,0,1,"FOCUS",ft,7)
+          text(0,3,3,1,1,"    ",fv,7)
         
-      if fxz != 1:
+      if fxz != 1 and Pi_Cam == 3:
           text(0,3,3,1,1,"Spot",fv,7)
       if zoom == 0:
           button(0,6,0,9)
@@ -1488,6 +1486,7 @@ while True:
       # MOVE HISTAREA
       elif (event.type == MOUSEBUTTONUP):
         mousex, mousey = event.pos
+        print(mousex,mousey)
         if mousex < preview_width and mousey < preview_height and alt_dis < 2 and mousex != 0 and mousey != 0 and event.button != 3 and menu == 0:
             xx = mousex
             xx = min(xx,preview_width - histarea)
@@ -1515,24 +1514,11 @@ while True:
                     text(0,3,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
             if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6)) or Pi_Cam == 8) and zoom == 0:
                 restart = 1
-                    
-        # SWITCH CAMERA
-        if mousex < preview_width and mousey < preview_height and mousex != 0 and mousey != 0 and event.button == 3:
-            camera += 1
-            if camera > max_camera:
-                camera = 0
-            poll = p.poll()
-            if poll == None:
-                os.killpg(p.pid, signal.SIGTERM)
-            focus_mode = 0
-            v3_f_mode = 0 
-            foc_man = 0
-            Camera_Version()
-            Menu()
-            restart = 1
- 
+        
+        # external trigger
         if mousex == 0 and mousey == 0:
             str_btn = 1
+            
         # determine button pressed
         if mousex > preview_width or str_btn == 1:
             # normal layout(buttons on right)
@@ -1545,14 +1531,11 @@ while True:
             # capture on STR button press
             if str_btn == 1:
               if str_cap == 0:
-                  button_column = 1
-                  button_row = 1
+                  button_row = 0
               elif str_cap == 1 or str_cap == 2:
-                  button_column = 2
                   button_row = 1
               elif str_cap == 3:
-                  button_column = 2
-                  button_row = 10
+                  button_row = 2
               str_btn = 0
           
             if button_row == 0 and menu < 0:
@@ -1702,7 +1685,8 @@ while True:
                         Menu()
                         restart = 2
                         
-            elif button_row == 2 and menu == 0 and cam1 != "2":
+            elif button_row == 2 and menu == 0 and cam1 != "1":
+                # SWITCH CAMERA
                 camera += 1
                 if camera > max_camera:
                     camera = 0
@@ -2439,38 +2423,24 @@ while True:
                             else:
                                 vlength = int(time.monotonic()-start_video)
                             td = timedelta(seconds=vlength)
-                            text(0,1,1,1,1,str(td),fv,11)
+                            text(0,1,1,1,1,str(td),fv,0)
                             for event in pygame.event.get():
                                 if (event.type == MOUSEBUTTONUP):
                                     mousex, mousey = event.pos
                                     # stop video recording
                                     if mousex > preview_width:
-                                        button_column = int((mousex-preview_width)/bw) + 1
-                                        button_row = int((mousey)/bh) + 1
+                                        button_row = int((mousey)/bh)
                                         if mousex > preview_width + (bw/2):
                                             button_pos = 1
                                         else:
                                             button_pos = 0
-                                    else:
-                                        if mousey - preview_height < bh:
-                                            button_column = 1
-                                            button_row = int(mousex / bw) + 1
-                                        elif mousey - preview_height < bh * 2:
-                                            button_column = 1
-                                            button_row = int(mousex / bw) + 7
-                                        elif mousey - preview_height < bh * 3:
-                                            button_column = 2
-                                            button_row = int(mousex / bw) + 1
-                                        elif mousey - preview_height < bh * 4:
-                                            button_column = 2
-                                            button_row = int(mousex / bw) + 7
-                                    if button_column == 2 and button_row == 1:
+                                    if button_row == 1:
                                        os.killpg(p.pid, signal.SIGTERM)
                                        stop = 1
                         text(0,0,6,2,1,vname,int(fv*1.5),1)
                         time.sleep(1)
                         td = timedelta(seconds=vlen)
-                        text(0,1,3,1,1,str(td),fv,11)
+                        text(0,1,3,1,1,str(td),fv,0)
                         menu = -1
                         Menu()
                         restart = 2
@@ -2478,10 +2448,10 @@ while True:
             elif button_row == 1 and event.button == 3 and menu == -1:
                         # STREAM VIDEO
                         os.killpg(p.pid, signal.SIGTERM)
-                        button(0,0,1,3)
-                        text(0,0,3,0,1,"STOP ",ft,0)
-                        text(0,0,3,1,1,"STREAM",ft,0)
-                        text(0,0,6,2,1,"Streaming Video ...",int(fv*1.7),1)
+                        button(0,1,1,3)
+                        text(0,1,3,0,1,"STOP ",ft,0)
+                        text(0,1,3,1,1,"STREAM",ft,0)
+                        text(0,1,6,2,1,"Streaming Video ...",int(fv*1.7),1)
                         now = datetime.datetime.now()
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
@@ -2586,36 +2556,22 @@ while True:
                             else:
                                 vlength = int(time.monotonic()-start_video)
                             td = timedelta(seconds=vlength)
-                            text(0,1,1,1,1,str(td),fv,11)
+                            text(0,1,1,1,1,str(td),fv,0)
                             for event in pygame.event.get():
                                 if (event.type == MOUSEBUTTONUP):
                                     mousex, mousey = event.pos
                                     # stop video streaming
                                     if mousex > preview_width:
-                                        button_column = int((mousex-preview_width)/bw) + 1
-                                        button_row = int((mousey)/bh) + 1
+                                        button_row = int((mousey)/bh)
                                         if mousex > preview_width + (bw/2):
                                             button_pos = 1
                                         else:
                                             button_pos = 0
-                                    else:
-                                        if mousey - preview_height < bh:
-                                            button_column = 1
-                                            button_row = int(mousex / bw) + 1
-                                        elif mousey - preview_height < bh * 2:
-                                            button_column = 1
-                                            button_row = int(mousex / bw) + 7
-                                        elif mousey - preview_height < bh * 3:
-                                            button_column = 2
-                                            button_row = int(mousex / bw) + 1
-                                        elif mousey - preview_height < bh * 4:
-                                            button_column = 2
-                                            button_row = int(mousex / bw) + 7
-                                    if button_column == 2 and button_row == 1:
+                                    if button_row == 1:
                                        os.killpg(p.pid, signal.SIGTERM)
                                        stop = 1
                         td = timedelta(seconds=vlen)
-                        text(0,1,3,1,1,str(td),fv,11)
+                        text(0,1,3,1,1,str(td),fv,0)
                         menu = -1
                         Menu()
                         restart = 2
@@ -2624,6 +2580,7 @@ while True:
                         # TAKE TIMELAPSE
                         os.killpg(p.pid, signal.SIGTERM)
                         restart = 1
+                        button(0,2,1,4)
                         text(0,2,3,0,1,"STOP",ft,0)
                         text(0,2,3,1,1,"Timelapse",ft,0)
                         tcount = 0
@@ -2762,7 +2719,7 @@ while True:
                                                     count = tshots
                                                                                         
                                     old_count = count
-                                    text(0,2,1,1,1,str(tshots - count),fv,12)
+                                    text(0,2,1,1,1,str(tshots - count),fv,0)
                                     tdur = tinterval * (tshots - count)
                                     td = timedelta(seconds=tdur)
                                     #text(0,10,1,1,1,str(td),fv,12)
@@ -2923,7 +2880,7 @@ while True:
                                                     button_row = int((mousey)/bh)
                                                 if button_row == 2:
                                                     os.killpg(p.pid, signal.SIGTERM)
-                                                    text(0,2,3,1,1,str(tshots),fv,12)
+                                                    text(0,2,3,1,1,str(tshots),fv,0)
                                                     stop = 1
                                                     count = tshots
                                         
@@ -2940,7 +2897,7 @@ while True:
                                             button_row = int((mousey)/bh)
                                         if button_row == 2:
                                             os.killpg(p.pid, signal.SIGTERM)
-                                            text(0,12,3,1,1,str(tshots),fv,12)
+                                            text(0,2,3,1,1,str(tshots),fv,0)
                                             stop = 1
                                             count = tshots
 
@@ -3036,7 +2993,7 @@ while True:
                             while time.monotonic() - start_timelapse < tduration+1 and stop == 0:
                                 tdur = int(tduration - (time.monotonic() - start_timelapse))
                                 td = timedelta(seconds=tdur)
-                                text(0,10,1,1,1,str(td),fv,12)
+                                text(0,2,1,1,1,str(td),fv,0)
                         menu = -1
                         Menu()
                         restart = 2
@@ -3639,7 +3596,7 @@ while True:
                     text(0,1,3,1,1,str(td),fv,12)
                     draw_Vbar(0,1,lyelColor,'tduration',tduration)
                 if tinterval == 0:
-                    text(0,12,3,1,1," ",fv,12)
+                    text(0,3,3,1,1," ",fv,12)
                     if mode == 0:
                         speed = 15
                         shutter = shutters[speed]
