@@ -1122,8 +1122,8 @@ def Menu():
             draw_Vbar(0,7,greyColor,'v3_f_range',v3_f_range)
             
     elif menu == 2:
+        draw_Vbar(0,2,greyColor,'str_cap',str_cap)
         draw_bar(0,3,greyColor,'histogram',histogram)
-        draw_Vbar(0,1,greyColor,'str_cap',str_cap)
         draw_Vbar(0,4,greyColor,'histarea',histarea)
       
     elif menu == 3:
