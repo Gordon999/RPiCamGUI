@@ -55,7 +55,7 @@ sw_ir          = 26  # Waveshare IR Filter switch GPIO
 STR            = 12  # external GPIO trigger for capture
 
 # set default values (see limits below)
-camera      = 1    # choose camera to use, usually 0 unless using a Pi5 or multiswitcher
+camera      = 0    # choose camera to use, usually 0 unless using a Pi5 or multiswitcher
 mode        = 1    # set camera mode ['manual','normal','sport'] 
 speed       = 16   # position in shutters list (16 = 1/125th)
 gain        = 0    # set gain , 0 = AUTO
