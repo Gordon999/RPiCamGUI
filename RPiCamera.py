@@ -1920,7 +1920,7 @@ while True:
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
                         if stream_type == 2:
                             data = "#rtp{sdp=rtsp://:" + str(stream_port) + "/stream1}"
-                            datastr += " --inline -o - | cvlc stream:///dev/stdin --sout '" + data + "' :demux=h264"
+                            datastr += " --inline -o | cvlc stream:///dev/stdin --sout '" + data + "' :demux=h264"
                         if show_cmds == 1:
                             print (datastr)
                         p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
