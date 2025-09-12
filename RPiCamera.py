@@ -1400,8 +1400,8 @@ while True:
                 fxy = ((xy - 20) * 1.3333)/preview_height
                 fxz = 50/preview_width
                 fyz = fxz
-                if fxz != 1 and menu == 0:
-                    text(0,3,3,1,1,"Spot",fv,7)
+                #if fxz != 1 and menu == 0:
+                #    text(0,3,3,1,1,"Spot",fv,7)
             elif ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam ==6)) or Pi_Cam == 8) and zoom == 0:
                 fxx = 0
                 fxy = 0
