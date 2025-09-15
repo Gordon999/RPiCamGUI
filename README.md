@@ -24,6 +24,10 @@ Time of streaming set by v_length.
 
 ![screenshot](screenshot.jpg)
 
+## RPiCamera Screenshot
+
+![RPICamera](RPiCamera.jpg)
+
 
 ## Arducam 16MP or 64MP HAWKEYE AF camera on Pi4/Pi5...
 
