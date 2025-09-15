@@ -20,7 +20,7 @@ Time of streaming set by v_length.
  # Always use the EXIT button to EXIT
  ( or you will need to reboot your pi)
 
-## Screenshot
+## RPiCamGUI Screenshot
 
 ![screenshot](screenshot.jpg)
 
