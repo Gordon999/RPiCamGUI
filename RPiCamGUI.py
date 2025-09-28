@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.59
+version = 5.60
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -1217,7 +1217,8 @@ old_histarea = histarea
 if rotate == 0:
     text(0,0,6,2,1,"Please Wait for preview...",int(fv*1.7),1)
 preview()
-
+ncount = 0
+nvalues = [0] * 20
 # main loop
 while True:
     time.sleep(0.01)
@@ -1320,10 +1321,13 @@ while True:
             windowSurfaceObj.blit(image, (int((preview_width/2) - ((preview_height * (igwr/ighr)))/2),0))
         else:
             windowSurfaceObj.blit(image, (0,0))
+        ns = 2
         if (zoom > 0 or foc_man == 1) and rotate == 0:
             image2 = pygame.surfarray.pixels3d(image)
             crop2 = image2[xx-histarea:xx+histarea,xy-histarea:xy+histarea]
             gray = cv2.cvtColor(crop2,cv2.COLOR_RGB2GRAY)
+            crop3 = image2[xx-ns:xx+ns,xy-ns:xy+ns]
+            gray3 = cv2.cvtColor(crop3,cv2.COLOR_RGB2GRAY)
             if zoom > 0 and histogram > 0:
                 if (histogram == 1 or histogram == 5):
                     red1   = crop2[:,:,0]
@@ -1340,6 +1344,8 @@ while True:
 
                 gray2  = gray.reshape(histarea * histarea * 4,1)
                 lume   = [0] * 256
+                gray4  = gray3.reshape(ns * ns * 4,1)
+                lume4   = [0] * 256
                 for q in range(0,len(gray2)):
                     if (histogram == 4 or histogram == 5):
                         lume[int(gray2[q])] +=1
@@ -1349,6 +1355,8 @@ while True:
                         greene[int(green2[q])] +=1
                     if (histogram == 3 or histogram == 5):
                         bluee[int(blue2[q])] +=1
+                for q in range(0,len(gray4)):
+                    lume4[int(gray4[q])] +=1
                 for t in range(0,256):
                     if histogram == 4 or histogram == 5:
                         if lume[t] > 0:
@@ -1362,6 +1370,17 @@ while True:
                     if histogram == 3 or histogram == 5:
                         if bluee[t] > 0:
                             bluee[t] = int(25*math.log10(bluee[t]))
+                max_val = -1
+                min_val = -1
+                for t in range(0,256):
+                    if lume4[t] > 0 and min_val == -1:
+                        min_val = t
+                for t in range(255,0,-1):
+                    if lume4[t] > 0 and max_val == -1:
+                        max_val = t
+                nvalues.append(max_val-min_val)
+                del nvalues[0]
+                nave = int(sum(nvalues)/20) 
                 output = np.zeros((256,100,3))
                 old_lume   = 0
                 old_rede   = 0
@@ -1414,6 +1433,8 @@ while True:
                 graph = pygame.transform.flip(graph,0,1)
                 graph.set_alpha(160)
                 if alt_dis < 2:
+                    pygame.draw.rect(windowSurfaceObj,redColor,Rect(min_val + 10,preview_height-111,2,102),1)
+                    pygame.draw.rect(windowSurfaceObj,greenColor,Rect(max_val + 10,preview_height-111,2,102),1)
                     pygame.draw.rect(windowSurfaceObj,greyColor,Rect(9,preview_height-111,64,102),1)
                     pygame.draw.rect(windowSurfaceObj,greyColor,Rect(73,preview_height-111,64,102),1)
                     pygame.draw.rect(windowSurfaceObj,greyColor,Rect(137,preview_height-111,64,102),1)
@@ -1429,6 +1450,7 @@ while True:
                 pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,int(preview_width/4.5),int(preview_height/8)),0)
             foc = cv2.Laplacian(gray, cv2.CV_64F).var()
             text(20,1,3,2,0,"Focus: " + str(int(foc)),fv* 2,0)
+            text(20,2,3,2,0,"Noise: " + str(int(nave)),fv* 2,0)
             pygame.draw.rect(windowSurfaceObj,redColor,Rect(xx-histarea,xy-histarea,histarea*2,histarea*2),1)
             pygame.draw.line(windowSurfaceObj,(255,255,255),(xx-int(histarea/2),xy),(xx+int(histarea/2),xy),1)
             pygame.draw.line(windowSurfaceObj,(255,255,255),(xx,xy-int(histarea/2)),(xx,xy+int(histarea/2)),1)
