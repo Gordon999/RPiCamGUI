@@ -1433,8 +1433,7 @@ while True:
                 graph = pygame.transform.flip(graph,0,1)
                 graph.set_alpha(160)
                 if alt_dis < 2:
-                    pygame.draw.rect(windowSurfaceObj,redColor,Rect(min_val + 10,preview_height-111,2,102),1)
-                    pygame.draw.rect(windowSurfaceObj,greenColor,Rect(max_val + 10,preview_height-111,2,102),1)
+                    pygame.draw.rect(windowSurfaceObj,dgryColor,Rect(min_val + 10,preview_height-111,int(nave),102),0)
                     pygame.draw.rect(windowSurfaceObj,greyColor,Rect(9,preview_height-111,64,102),1)
                     pygame.draw.rect(windowSurfaceObj,greyColor,Rect(73,preview_height-111,64,102),1)
                     pygame.draw.rect(windowSurfaceObj,greyColor,Rect(137,preview_height-111,64,102),1)
