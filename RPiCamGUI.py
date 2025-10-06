@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.60
+version = 5.63
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -49,8 +49,8 @@ udp_ip_addr = "10.42.0.52"  # IP address of the client for UDP streaming
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
 # 800x600, 1280x960 or 1440x1080
 # For a FULL HD screen (1920x1080) and FULLSCREEN ON set preview_width = 1440, preview_height = 1080
-preview_width  = 640
-preview_height = 480
+preview_width  = 800
+preview_height = 600
 fullscreen     = 0   # set to 1 for FULLSCREEN
 frame          = 1   # set to 0 for NO frame (i.e. if using Pi 7" touchscreen)
 FUP            = 21  # Pi v3 camera Focus UP GPIO button
@@ -85,6 +85,7 @@ profile     = 0    # set h264 profile, see h264profiles below
 level       = 0    # set h264 level
 histogram   = 5    # OFF = 0, 1 = red, 2 = green, 3 = blue, 4 = luminance, 5 = ALL
 histarea    = 50   # set histogram area size
+ns          = 2    # Noise sampling area size
 v3_f_mode   = 0    # v3 focus mode,  see v3_f_modes below
 v3_f_range  = 0    # v3 focus range, see v3_f_ranges below
 v3_f_speed  = 0    # v3 focus speed, see v3_f_speeds below
@@ -146,9 +147,8 @@ else:
 # set button sizes
 bw = int(preview_width/8)
 bh = int(preview_height/17)
-ft = int(preview_width/60)
-fv = int(preview_width/60)
-
+ft = int(bh/3) 
+fv = int(bh/3) 
 if alt_dis == 1:
     dis_height = preview_width
     dis_width  = preview_width
@@ -672,13 +672,13 @@ def text(col,row,fColor,top,upd,msg,fsize,bkgnd_Color):
     msgRectobj = msgSurfaceObj.get_rect()
     if top == 0:
         pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/3),bw-4,int(bh/3)))
-        msgRectobj.topleft = (bx + 5, by + int(bh/3)-int(preview_width/640))
+        msgRectobj.topleft = (bx + 5, by + int(bh/3))
     elif msg == "Config":
-        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/1.5),int(bw/2)-1,int(bh/3)-1))
-        msgRectobj.topleft = (bx+5,  by + int(bh/1.5)-1)
+        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/1.5),int(bw/2)-1,int(bh/3)))
+        msgRectobj.topleft = (bx+5,  by + int(bh/1.5))
     elif top == 1:
-        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+20,by+int(bh/1.5)-1,int(bw-21)-1,int(bh/3)))
-        msgRectobj.topleft = (bx + 20, by + int(bh/1.5)-int(preview_width/640)-1) 
+        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+20,by+int(bh/1.5),int(bw-21)-1,int(bh/3)))
+        msgRectobj.topleft = (bx + 20, by + int(bh/1.5)) 
     elif top == 2:
         if bkgnd_Color == 1:
             pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,row * fsize,preview_width,fv*2))
@@ -698,7 +698,7 @@ def draw_bar(col,row,color,msg,value):
     if msg == "speed":
         pmax = max_speed
     if alt_dis == 0:
-        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw,(row * bh) + 1,bw-2,int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw,(row * bh) + 1,bw-2,int(bh/3)-1))
     else:
         if row < 8:
             if alt_dis == 1:
@@ -717,10 +717,10 @@ def draw_bar(col,row,color,msg,value):
         j = int(bw/2) + (value / (pmax - pmin)  * bw)
     j = min(j,bw-5)
     if alt_dis == 0:
-        pygame.draw.rect(windowSurfaceObj,(0,200,0),Rect(int(preview_width + int(col*bw) + 2),int(row * bh)+1,int(j+1),int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,(0,200,0),Rect(int(preview_width + int(col*bw) + 2),int(row * bh)+1,int(j+1),int(bh/3)-1))
         if msg == "gain" and value > mag:
-           pygame.draw.rect(windowSurfaceObj,(200,200,0),Rect(int(preview_width + int(col*bw) + 2 + jag),int(row * bh),int(j+1 - jag),int(bh/3)))
-        pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width + int(col*bw) + j ),int(row * bh)+1,3,int(bh/3)))
+           pygame.draw.rect(windowSurfaceObj,(200,200,0),Rect(int(preview_width + int(col*bw) + 2 + jag),int(row * bh),int(j+1 - jag),int(bh/3)-1))
+        pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width + int(col*bw) + j ),int(row * bh)+1,3,int(bh/3)-1))
     else:
         if row < 8:
             if alt_dis == 1:
@@ -747,7 +747,7 @@ def draw_Vbar(col,row,color,msg,value):
     if msg == "vformat":
         pmax = max_vformat
     if alt_dis == 0:
-        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw,(row * bh) +1,bw-2,int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw,(row * bh) +1,bw-2,int(bh/3)-1))
     else:
         if row < 8:
             if alt_dis == 1:
@@ -765,8 +765,8 @@ def draw_Vbar(col,row,color,msg,value):
         j = int(bw/2) + (value / (pmax - pmin)  * bw)
     j = min(j,bw-5)
     if alt_dis == 0:
-        pygame.draw.rect(windowSurfaceObj,(150,120,150),Rect(int(preview_width + (col*bw) + 2),int(row * bh)+1,int(j+1),int(bh/3)))
-        pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width + (col*bw) + j ),int(row * bh)+1,3,int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,(150,120,150),Rect(int(preview_width + (col*bw) + 2),int(row * bh)+1,int(j+1),int(bh/3)-1))
+        pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width + (col*bw) + j ),int(row * bh)+1,3,int(bh/3)-1))
     else:
         if row < 8:
             if alt_dis == 1:
@@ -1321,7 +1321,6 @@ while True:
             windowSurfaceObj.blit(image, (int((preview_width/2) - ((preview_height * (igwr/ighr)))/2),0))
         else:
             windowSurfaceObj.blit(image, (0,0))
-        ns = 2
         if (zoom > 0 or foc_man == 1) and rotate == 0:
             image2 = pygame.surfarray.pixels3d(image)
             crop2 = image2[xx-histarea:xx+histarea,xy-histarea:xy+histarea]
@@ -1450,6 +1449,7 @@ while True:
             foc = cv2.Laplacian(gray, cv2.CV_64F).var()
             text(20,1,3,2,0,"Focus: " + str(int(foc)),fv* 2,0)
             text(20,2,3,2,0,"Noise: " + str(int(nave)),fv* 2,0)
+            pygame.draw.rect(windowSurfaceObj,redColor,Rect(xx-ns,xy-ns,ns*2,ns*2),1)
             pygame.draw.rect(windowSurfaceObj,redColor,Rect(xx-histarea,xy-histarea,histarea*2,histarea*2),1)
             pygame.draw.line(windowSurfaceObj,(255,255,255),(xx-int(histarea/2),xy),(xx+int(histarea/2),xy),1)
             pygame.draw.line(windowSurfaceObj,(255,255,255),(xx,xy-int(histarea/2)),(xx,xy+int(histarea/2)),1)
@@ -1720,6 +1720,8 @@ while True:
                                 datastr = "libcamera-still"
                             else:
                                 datastr = "rpicam-still"
+                            if Pi == 5:
+                                datastr += " --zsl"
                             datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -n "
                             datastr += "-t " + str(timet) + " -o " + fname
                         else:
@@ -2875,6 +2877,8 @@ while True:
                                 datastr = "libcamera-still"
                             else:
                                 datastr = "rpicam-still"
+                            if Pi == 5:
+                                datastr += " --zsl"
                             if extns[extn] != 'raw':
                                 datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -s -t 0 -o " + fname
                                 if fullscreen != 1:
@@ -3093,6 +3097,8 @@ while True:
                                         datastr = "libcamera-still"
                                     else:
                                         datastr = "rpicam-still"
+                                    if Pi == 5:
+                                        datastr += " --zsl"
                                     if extns[extn] != 'raw':
                                         datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -t " + str(timet) + " -o " + fname + " -p 0,0,640,480 "
                                     else:
