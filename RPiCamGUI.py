@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.63
+version = 5.64
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -147,8 +147,10 @@ else:
 # set button sizes
 bw = int(preview_width/8)
 bh = int(preview_height/17)
-ft = int(bh/3) 
-fv = int(bh/3) 
+# set font sizes
+ft = int(bh/3) + 2
+fv = int(bh/3) + 2
+
 if alt_dis == 1:
     dis_height = preview_width
     dis_width  = preview_width
@@ -624,8 +626,8 @@ def button(col,row,bkgnd_Color,border_Color):
             else:
                 by = (preview_height *.75 + (bh*3)) 
     pygame.draw.rect(windowSurfaceObj,Color,Rect(bx+1,by,bw-2,bh))
-    pygame.draw.line(windowSurfaceObj,whiteColor,(bx,by),(bx,by+bh-1),2)
-    pygame.draw.line(windowSurfaceObj,whiteColor,(bx,by),(bx+bw-1,by),1)
+    pygame.draw.line(windowSurfaceObj,whiteColor,(bx,by),(bx,by+bh-1),3)
+    pygame.draw.line(windowSurfaceObj,whiteColor,(bx,by),(bx+bw-1,by),2)
     pygame.draw.line(windowSurfaceObj,dgryColor,(bx,by+bh-1),(bx+bw-1,by+bh-1),1)
     pygame.draw.line(windowSurfaceObj,dgryColor,(bx+bw-2,by),(bx+bw-2,by+bh),2)
     pygame.display.update()
@@ -675,10 +677,10 @@ def text(col,row,fColor,top,upd,msg,fsize,bkgnd_Color):
         msgRectobj.topleft = (bx + 5, by + int(bh/3))
     elif msg == "Config":
         pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/1.5),int(bw/2)-1,int(bh/3)))
-        msgRectobj.topleft = (bx+5,  by + int(bh/1.5))
+        msgRectobj.topleft = (bx+5,  by + int(bh/1.5) - 1)
     elif top == 1:
         pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+20,by+int(bh/1.5),int(bw-21)-1,int(bh/3)))
-        msgRectobj.topleft = (bx + 20, by + int(bh/1.5)) 
+        msgRectobj.topleft = (bx + 20, by + int(bh/1.5) - 1) 
     elif top == 2:
         if bkgnd_Color == 1:
             pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,row * fsize,preview_width,fv*2))
@@ -698,7 +700,7 @@ def draw_bar(col,row,color,msg,value):
     if msg == "speed":
         pmax = max_speed
     if alt_dis == 0:
-        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw,(row * bh) + 1,bw-2,int(bh/3)-1))
+        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw + 2,(row * bh) + 1,bw-4,int(bh/3)))
     else:
         if row < 8:
             if alt_dis == 1:
@@ -711,16 +713,16 @@ def draw_bar(col,row,color,msg,value):
             else:
                 pygame.draw.rect(windowSurfaceObj,color,Rect((row-8)*bw,int((preview_height *.75) + bh),bw-1,int(bh/3)))
     if pmin > -1: 
-        j = value / (pmax - pmin)  * bw
-        jag = mag / (pmax - pmin) * bw
+        j = int((value / (pmax - pmin) * bw) * 0.93)
+        jag = int((mag / (pmax - pmin) * bw) * 0.93)
     else:
-        j = int(bw/2) + (value / (pmax - pmin)  * bw)
+        j = int((bw/2) + (value / (pmax - pmin)  * bw) * 0.93)
     j = min(j,bw-5)
     if alt_dis == 0:
-        pygame.draw.rect(windowSurfaceObj,(0,200,0),Rect(int(preview_width + int(col*bw) + 2),int(row * bh)+1,int(j+1),int(bh/3)-1))
+        pygame.draw.rect(windowSurfaceObj,(0,200,0),Rect(int(preview_width + int(col*bw) + 2),int(row * bh)+1,int(j-1),int(bh/3)))
         if msg == "gain" and value > mag:
-           pygame.draw.rect(windowSurfaceObj,(200,200,0),Rect(int(preview_width + int(col*bw) + 2 + jag),int(row * bh),int(j+1 - jag),int(bh/3)-1))
-        pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width + int(col*bw) + j ),int(row * bh)+1,3,int(bh/3)-1))
+           pygame.draw.rect(windowSurfaceObj,(200,200,0),Rect(int(preview_width + int(col*bw) + 2 + jag),int(row * bh),int(j-1 - jag),int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width + int(col*bw) + j + 2),int(row * bh)+1,3,int(bh/3)))
     else:
         if row < 8:
             if alt_dis == 1:
@@ -747,7 +749,7 @@ def draw_Vbar(col,row,color,msg,value):
     if msg == "vformat":
         pmax = max_vformat
     if alt_dis == 0:
-        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw,(row * bh) +1,bw-2,int(bh/3)-1))
+        pygame.draw.rect(windowSurfaceObj,color,Rect(preview_width + col*bw + 2 ,(row * bh) + 1,bw-4,int(bh/3)))
     else:
         if row < 8:
             if alt_dis == 1:
@@ -760,13 +762,13 @@ def draw_Vbar(col,row,color,msg,value):
             else:
                 pygame.draw.rect(windowSurfaceObj,color,Rect((row-8)*bw,int((preview_height *.75) + (bh*3)),bw-1,int(bh/3)))
     if pmin > -1: 
-        j = value / (pmax - pmin)  * bw
+        j = int((value / (pmax - pmin)  * bw) * 0.92)
     else:
-        j = int(bw/2) + (value / (pmax - pmin)  * bw)
+        j = int(((bw/2) + (value / (pmax - pmin)  * bw)) * 0.92)
     j = min(j,bw-5)
     if alt_dis == 0:
-        pygame.draw.rect(windowSurfaceObj,(150,120,150),Rect(int(preview_width + (col*bw) + 2),int(row * bh)+1,int(j+1),int(bh/3)-1))
-        pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(preview_width + (col*bw) + j ),int(row * bh)+1,3,int(bh/3)-1))
+        pygame.draw.rect(windowSurfaceObj,(150,120,150),Rect(int(preview_width + int(col*bw) + 2),int(row * bh)+1,int(j-1),int(bh/3)))
+        pygame.draw.rect(windowSurfaceObj,(155,0,150),  Rect(int(preview_width + int(col*bw) + j + 2),int(row * bh)+1,3,int(bh/3)))
     else:
         if row < 8:
             if alt_dis == 1:
