@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.66
+version = 5.68
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -49,8 +49,8 @@ udp_ip_addr = "10.42.0.52"  # IP address of the client for UDP streaming
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
 # 800x600, 1280x960 or 1440x1080
 # For a FULL HD screen (1920x1080) and FULLSCREEN ON set preview_width = 1440, preview_height = 1080
-preview_width  = 800
-preview_height = 600
+preview_width  = 1280 
+preview_height =  960 
 fullscreen     = 0   # set to 1 for FULLSCREEN
 frame          = 1   # set to 0 for NO frame (i.e. if using Pi 7" touchscreen)
 FUP            = 21  # Pi v3 camera Focus UP GPIO button
@@ -135,7 +135,7 @@ buttonSTR   = Button(STR)
 led_sw_ir   = LED(sw_ir)
 str_btn     = 0
 lo_res      = 1
-show_cmds   = 0
+show_cmds   = 1
 v3_af       = 1
 v5_af       = 1
 
@@ -174,7 +174,7 @@ extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
 vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,1928,2028,2028,2304,2592,3280,3840,3856,4032,4056,4608,4656,5472,8000,9152,9248]
 vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1090,1080,1520,1296,1944,2464,2160,2180,3024,3040,2592,3496,3648,6000,6944,6944]
-v_max_fps    = [200,120, 40,  40,  40,  30,  60,  30,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  20,  10,  20,  20,  20,  20,  20,  20]
+v_max_fps    = [200,120, 40,  40,  40,  30, 120,  30,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  20,  10,  20,  20,  20,  20,  20,  20]
 v3_max_fps   = [200,120,125, 120, 120, 120, 120, 120, 120, 100, 100,  50, 100,  56,  56,  20,  20,  20,  20,  20,  15,  20,  20,  20  ,20,  20,  20]
 v9_max_fps   = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60]
 v15_max_fps  = [240,200,200, 130]
@@ -224,7 +224,9 @@ with open("/run/shm/md.txt", "r") as file:
            if line[0:5] == "Model":
                model = line
 mod = model.split(" ")
-if mod[3] == "Zero":
+if mod[4] == "Compute":
+    Pi = int(mod[6][0:1])
+elif mod[3] == "Zero":
     Pi = 0
 else:
     Pi = int(mod[3])
@@ -3974,6 +3976,8 @@ while True:
                     x = 0
                     xx = int(preview_width/2)
                     xy = int(preview_height/2)
+                    if igw/igh > 1.5:
+                        xy = int(xy * .75)
                     while x < len(vwidths2) and vw == 0:
                         if vwidth == vwidths2[x]:
                              if vheight == vheights2[x]:
@@ -3998,7 +4002,6 @@ while True:
                     fxy = 0
                     fxz = 1
                     fyz = 1
-                    #fcount = 0
                     if (Pi_Cam == 3 and v3_af == 1) and v3_f_mode == 0:
                         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
                 restart = 1
