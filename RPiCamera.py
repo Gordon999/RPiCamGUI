@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 1.06
+version = 1.07
 
 # streaming parameters
 stream_type = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -216,7 +216,9 @@ with open("/run/shm/md.txt", "r") as file:
        if line[0:5] == "Model":
            model = line
 mod = model.split(" ")
-if mod[3] == "Zero":
+if mod[3] == "Compute":
+    Pi = int(mod[5][0:1])
+elif mod[3] == "Zero":
     Pi = 0
 else:
     Pi = int(mod[3])
