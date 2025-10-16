@@ -224,8 +224,8 @@ with open("/run/shm/md.txt", "r") as file:
            if line[0:5] == "Model":
                model = line
 mod = model.split(" ")
-if mod[4] == "Compute":
-    Pi = int(mod[6][0:1])
+if mod[3] == "Compute":
+    Pi = int(mod[5][0:1])
 elif mod[3] == "Zero":
     Pi = 0
 else:
