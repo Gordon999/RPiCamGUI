@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.68
+version = 5.70
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -674,8 +674,8 @@ def text(col,row,fColor,top,upd,msg,fsize,bkgnd_Color):
         fontObj = pygame.font.Font(None, int(fsize))
     msgSurfaceObj = fontObj.render(msg, False, Color)
     msgRectobj = msgSurfaceObj.get_rect()
-    if msg == "Save      EXIT" or msg == "CAPTURE" or msg == "CAPTURE/Stream":
-        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/3),bw-4,int(bh/3)))
+    if msg == "Save      EXIT" or msg == "Load      EXIT" or msg == "CAPTURE" or msg == "CAPTURE/Stream":
+        pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/3)-3,bw-4,int(bh/3)))
         msgRectobj.topleft = (bx+5,  by + int(bh/3) - 6)
     elif top == 0:
         pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/3),bw-4,int(bh/3)))
@@ -1038,150 +1038,154 @@ def Menu():
   text(0,16,3,1,1,str(vflip),fv,7)
   text(1,16,2,0,1,"Horiz Flip",ft,7)
   text(1,16,3,1,1,str(hflip),fv,7)
-    
-# write button texts
-text(0,0,1,0,1,"CAPTURE",ft,7)
-text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
-text(1,0,1,1,1,"Video",ft,7)
-text(0,1,5,0,1,"Mode",ft,10)
-text(0,1,3,1,1,modes[mode],fv,10)
-if mode == 0:
-    text(0,2,5,0,1,"Shutter S",ft,10)
-    if shutters[speed] < 0:
-        text(0,2,3,1,1,"1/" + str(abs(shutters[speed])),fv,10)
+
+def Menu2():
+    global mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation
+    global meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip
+    # write button texts
+    text(0,0,1,0,1,"CAPTURE",ft,7)
+    text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
+    text(1,0,1,1,1,"Video",ft,7)
+    text(0,1,5,0,1,"Mode",ft,10)
+    text(0,1,3,1,1,modes[mode],fv,10)
+    if mode == 0:
+        text(0,2,5,0,1,"Shutter S",ft,10)
+        if shutters[speed] < 0:
+            text(0,2,3,1,1,"1/" + str(abs(shutters[speed])),fv,10)
+        else:
+            text(0,2,3,1,1,str(shutters[speed]),fv,10)
     else:
-        text(0,2,3,1,1,str(shutters[speed]),fv,10)
-else:
-    text(0,2,5,0,1,"eV",ft,10)
-    text(0,2,3,1,1,str(ev),fv,10)
-text(0,3,5,0,1,"Gain    A/D",ft,10)
-if gain > 0:
+        text(0,2,5,0,1,"eV",ft,10)
+        text(0,2,3,1,1,str(ev),fv,10)
     text(0,3,5,0,1,"Gain    A/D",ft,10)
-    if gain <= mag:
-        text(0,3,3,1,1,str(gain) + " :  " + str(gain) + "/1",fv,10)
+    if gain > 0:
+        text(0,3,5,0,1,"Gain    A/D",ft,10)
+        if gain <= mag:
+            text(0,3,3,1,1,str(gain) + " :  " + str(gain) + "/1",fv,10)
+        else:
+            text(0,3,3,1,1,str(gain) + " :  " + str(int(mag)) + "/" + str(((gain/mag)*10)/10)[0:3],fv,10)
     else:
-        text(0,3,3,1,1,str(gain) + " :  " + str(int(mag)) + "/" + str(((gain/mag)*10)/10)[0:3],fv,10)
-else:
-    text(0,3,5,0,1,"Gain",ft,10)
-    text(0,3,3,1,1,"Auto",fv,10)
-text(0,4,5,0,1,"Brightness",ft,10)
-text(0,4,3,1,1,str(brightness/100)[0:4],fv,10)
-text(0,5,5,0,1,"Contrast",ft,10)
-text(0,5,3,1,1,str(contrast/100)[0:4],fv,10)
-if awb == 0:
-    text(0,7,5,0,1,"Blue",ft,10)
-    text(0,8,5,0,1,"Red",ft,10)
-    text(0,8,3,1,1,str(red/10)[0:3],fv,10)
-    text(0,7,3,1,1,str(blue/10)[0:3],fv,10)
-else:
-    text(0,7,5,0,1,"Denoise",fv,10)
-    text(0,7,3,1,1,denoises[denoise],fv,10)
-    text(0,8,5,0,1,"Sharpness",fv,10)
-    text(0,8,3,1,1,str(sharpness/10),fv,10)
-text(0,10,5,0,1,"Quality",ft,10)
-text(0,10,3,1,1,str(quality)[0:3],fv,10)
-text(0,9,5,0,1,"File Format",ft,10)
-text(0,9,3,1,1,extns[extn],fv,10)
-button(1,7,0,9)
-text(1,7,5,0,1,"FOCUS",ft,7)
-if zoom == 0:
-    button(1,8,0,9)
-    text(1,8,5,0,1,"Zoom",ft,7)
-    if Pi_Cam ==3 or ((Pi_Cam ==5 or Pi_Cam == 6)):
-        text(1,7,3,1,1,v3_f_modes[v3_f_mode],fv,7)
+        text(0,3,5,0,1,"Gain",ft,10)
+        text(0,3,3,1,1,"Auto",fv,10)
+    text(0,4,5,0,1,"Brightness",ft,10)
+    text(0,4,3,1,1,str(brightness/100)[0:4],fv,10)
+    text(0,5,5,0,1,"Contrast",ft,10)
+    text(0,5,3,1,1,str(contrast/100)[0:4],fv,10)
+    if awb == 0:
+        text(0,7,5,0,1,"Blue",ft,10)
+        text(0,8,5,0,1,"Red",ft,10)
+        text(0,8,3,1,1,str(red/10)[0:3],fv,10)
+        text(0,7,3,1,1,str(blue/10)[0:3],fv,10)
     else:
-        text(1,7,3,1,1," ",fv,7)
-    # determine if camera native format
-    vw = 0
-    x = 0
-    while x < len(vwidths2) and vw == 0:
-        if vwidth == vwidths2[x]:
-             if vheight == vheights2[x]:
-                vw = 1
-        x += 1
-    if vw == 0:
-        text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
-    if vw == 1:
-        text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
-elif zoom < 10:
-    button(1,8,1,9)
-    text(1,8,2,0,1,"ZOOMED",ft,0)
-    text(1,8,3,1,1,str(zoom),fv,0)
-    text(1,3,3,1,1,str(preview_width) + "x" + str(preview_height),fv,11)
-text(0,6,5,0,1,"AWB",ft,10)
-text(0,6,3,1,1,awbs[awb],fv,10)
-text(0,11,5,0,1,"Saturation",fv,10)
-text(0,11,3,1,1,str(saturation/10),fv,10)
-text(0,12,5,0,1,"Metering",fv,10)
-text(0,12,3,1,1,meters[meter],fv,10)
-text(1,1,5,0,1,"V_Length",ft,11)
-td = timedelta(seconds=vlen)
-text(1,1,3,1,1,str(td),fv,11)
-text(1,2,5,0,1,"V_FPS",ft,11)
-text(1,2,3,1,1,str(fps),fv,11)
-text(1,3,5,0,1,"V_Format",ft,11)
-text(1,4,5,0,1,"V_Codec",ft,11)
-text(1,4,3,1,1,codecs[codec],fv,11)
-text(1,5,5,0,1,"h264 Profile",ft,11)
-text(1,5,3,1,1,str(h264profiles[profile]),fv,11)
-text(1,6,5,0,1,"V_Preview",ft,11)
-text(1,6,3,1,1,"ON ",fv,11)
-text(1,9,1,0,1,"CAPTURE",ft,7)
-td = timedelta(seconds=tduration)
-text(1,10,5,0,1,"Duration",ft,12)
-text(1,10,3,1,1,str(td),fv,12)
-td = timedelta(seconds=tinterval)
-text(1,11,5,0,1,"Interval",ft,12)
-text(1,11,3,1,1,str(td),fv,12)
-text(1,12,5,0,1,"No. of Shots",ft,12)
-if tinterval > 0:
-    text(1,12,3,1,1,str(tshots),fv,12)
-else:
-    text(1,12,3,1,1," ",fv,12)
-text(1,13,2,0,1,"Save      EXIT",fv +2,7)
-text(1,13,2,1,1,"Config",fv,7)
-text(0,14,2,0,1,"Histogram",ft,7)
-text(0,14,3,1,1,histograms[histogram],fv,7)
-text(1,14,2,0,1,"Hist Area",ft,7)
-text(1,14,3,1,1,str(histarea),fv,7)
+        text(0,7,5,0,1,"Denoise",fv,10)
+        text(0,7,3,1,1,denoises[denoise],fv,10)
+        text(0,8,5,0,1,"Sharpness",fv,10)
+        text(0,8,3,1,1,str(sharpness/10),fv,10)
+    text(0,10,5,0,1,"Quality",ft,10)
+    text(0,10,3,1,1,str(quality)[0:3],fv,10)
+    text(0,9,5,0,1,"File Format",ft,10)
+    text(0,9,3,1,1,extns[extn],fv,10)
+    button(1,7,0,9)
+    text(1,7,5,0,1,"FOCUS",ft,7)
+    if zoom == 0:
+        button(1,8,0,9)
+        text(1,8,5,0,1,"Zoom",ft,7)
+        if Pi_Cam ==3 or ((Pi_Cam ==5 or Pi_Cam == 6)):
+            text(1,7,3,1,1,v3_f_modes[v3_f_mode],fv,7)
+        else:
+            text(1,7,3,1,1," ",fv,7)
+        # determine if camera native format
+        vw = 0
+        x = 0
+        while x < len(vwidths2) and vw == 0:
+            if vwidth == vwidths2[x]:
+                 if vheight == vheights2[x]:
+                    vw = 1
+            x += 1
+        if vw == 0:
+            text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+        if vw == 1:
+            text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+    elif zoom < 10:
+        button(1,8,1,9)
+        text(1,8,2,0,1,"ZOOMED",ft,0)
+        text(1,8,3,1,1,str(zoom),fv,0)
+        text(1,3,3,1,1,str(preview_width) + "x" + str(preview_height),fv,11)
+    text(0,6,5,0,1,"AWB",ft,10)
+    text(0,6,3,1,1,awbs[awb],fv,10)
+    text(0,11,5,0,1,"Saturation",fv,10)
+    text(0,11,3,1,1,str(saturation/10),fv,10)
+    text(0,12,5,0,1,"Metering",fv,10)
+    text(0,12,3,1,1,meters[meter],fv,10)
+    text(1,1,5,0,1,"V_Length",ft,11)
+    td = timedelta(seconds=vlen)
+    text(1,1,3,1,1,str(td),fv,11)
+    text(1,2,5,0,1,"V_FPS",ft,11)
+    text(1,2,3,1,1,str(fps),fv,11)
+    text(1,3,5,0,1,"V_Format",ft,11)
+    text(1,4,5,0,1,"V_Codec",ft,11)
+    text(1,4,3,1,1,codecs[codec],fv,11)
+    text(1,5,5,0,1,"h264 Profile",ft,11)
+    text(1,5,3,1,1,str(h264profiles[profile]),fv,11)
+    text(1,6,5,0,1,"V_Preview",ft,11)
+    text(1,6,3,1,1,"ON ",fv,11)
+    text(1,9,1,0,1,"CAPTURE",ft,7)
+    td = timedelta(seconds=tduration)
+    text(1,10,5,0,1,"Duration",ft,12)
+    text(1,10,3,1,1,str(td),fv,12)
+    td = timedelta(seconds=tinterval)
+    text(1,11,5,0,1,"Interval",ft,12)
+    text(1,11,3,1,1,str(td),fv,12)
+    text(1,12,5,0,1,"No. of Shots",ft,12)
+    if tinterval > 0:
+        text(1,12,3,1,1,str(tshots),fv,12)
+    else:
+        text(1,12,3,1,1," ",fv,12)
+    text(1,13,2,0,1,"Save      EXIT",fv +2,7)
+    text(1,13,2,1,1,"Config",fv,7)
+    text(0,14,2,0,1,"Histogram",ft,7)
+    text(0,14,3,1,1,histograms[histogram],fv,7)
+    text(1,14,2,0,1,"Hist Area",ft,7)
+    text(1,14,3,1,1,str(histarea),fv,7)
 
-# draw sliders
-draw_bar(0,1,lgrnColor,'mode',mode)
-draw_bar(0,3,lgrnColor,'gain',gain)
-draw_bar(0,4,lgrnColor,'brightness',brightness)
-draw_bar(0,5,lgrnColor,'contrast',contrast)
-if mode != 0:
-    draw_bar(0,2,lgrnColor,'ev',ev)
-if awb == 0:
-    draw_bar(0,7,lgrnColor,'blue',blue)
-    draw_bar(0,8,lgrnColor,'red',red)
-else:
-    draw_bar(0,7,lgrnColor,'denoise',denoise)
-    draw_bar(0,8,lgrnColor,'sharpness',sharpness)
-draw_bar(0,10,lgrnColor,'quality',quality)
-draw_bar(0,9,lgrnColor,'extn',extn)
-draw_bar(0,6,lgrnColor,'awb',awb)
-draw_bar(0,11,lgrnColor,'saturation',saturation)
-draw_bar(0,12,lgrnColor,'meter',meter)
-if rotate == 0:
-    draw_bar(0,14,greyColor,'histogram',histogram)
+    # draw sliders
+    draw_bar(0,1,lgrnColor,'mode',mode)
+    draw_bar(0,3,lgrnColor,'gain',gain)
+    draw_bar(0,4,lgrnColor,'brightness',brightness)
+    draw_bar(0,5,lgrnColor,'contrast',contrast)
+    if mode != 0:
+        draw_bar(0,2,lgrnColor,'ev',ev)
+    if awb == 0:
+        draw_bar(0,7,lgrnColor,'blue',blue)
+        draw_bar(0,8,lgrnColor,'red',red)
+    else:
+        draw_bar(0,7,lgrnColor,'denoise',denoise)
+        draw_bar(0,8,lgrnColor,'sharpness',sharpness)
+    draw_bar(0,10,lgrnColor,'quality',quality)
+    draw_bar(0,9,lgrnColor,'extn',extn)
+    draw_bar(0,6,lgrnColor,'awb',awb)
+    draw_bar(0,11,lgrnColor,'saturation',saturation)
+    draw_bar(0,12,lgrnColor,'meter',meter)
+    if rotate == 0:
+        draw_bar(0,14,greyColor,'histogram',histogram)
 
-draw_Vbar(1,1,lpurColor,'vlen',vlen)
-draw_Vbar(1,2,lpurColor,'fps',fps)
-draw_Vbar(1,3,lpurColor,'vformat',vformat)
-draw_Vbar(1,4,lpurColor,'codec',codec)
-draw_Vbar(1,5,lpurColor,'profile',profile)
-draw_Vbar(1,8,greyColor,'zoom',zoom)
-draw_Vbar(1,10,lyelColor,'tduration',tduration)
-draw_Vbar(1,11,lyelColor,'tinterval',tinterval)
-draw_Vbar(1,12,lyelColor,'tshots',tshots)
-if rotate == 0:
-    draw_Vbar(1,14,greyColor,'histarea',histarea)
+    draw_Vbar(1,1,lpurColor,'vlen',vlen)
+    draw_Vbar(1,2,lpurColor,'fps',fps)
+    draw_Vbar(1,3,lpurColor,'vformat',vformat)
+    draw_Vbar(1,4,lpurColor,'codec',codec)
+    draw_Vbar(1,5,lpurColor,'profile',profile)
+    draw_Vbar(1,8,greyColor,'zoom',zoom)
+    draw_Vbar(1,10,lyelColor,'tduration',tduration)
+    draw_Vbar(1,11,lyelColor,'tinterval',tinterval)
+    draw_Vbar(1,12,lyelColor,'tshots',tshots)
+    if rotate == 0:
+        draw_Vbar(1,14,greyColor,'histarea',histarea)
 
 text(0,0,6,2,1,"Please Wait, checking camera",int(fv* 1.7),1)
 text(0,0,6,2,1,"Found " + str(cameras[Pi_Cam]),int(fv*1.7),1)
 
 Menu()
+Menu2()
 
 time.sleep(1)
 pygame.display.update()
@@ -1580,7 +1584,7 @@ while True:
                 fyz = fxz
                 if fxz != 1:
                     text(1,7,3,1,1,"Spot",fv,7)
-            elif ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam ==6)) or Pi_Cam == 8) and zoom == 0:
+            elif ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6)) or Pi_Cam == 8) and zoom == 0:
                 fxx = 0
                 fxy = 0
                 fxz = 1
@@ -3741,6 +3745,7 @@ while True:
                     v3_focus = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin)) + pmin
                     draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
                     fd = 1/(v3_focus/100)
+                    fxz = 1
                     text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
                 # Pi v3 manual focus buttons
@@ -3834,6 +3839,10 @@ while True:
                         focus_mode = 1
                         v3_f_mode = 1 
                         foc_man = 1 
+                        fxx = 0
+                        fxy = 0
+                        fxz = 1
+                        fyz = 0.75
                         button(1,7,1,9)
                         restart = 1
                         time.sleep(0.25)
@@ -3842,6 +3851,7 @@ while True:
                         text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
                         time.sleep(0.25)
+                        restart = 1
                     # ARDUCAM manual focus
                     elif ((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6 or Pi_Cam == 8) and v3_f_mode == 0:
                         focus_mode = 1
@@ -3864,8 +3874,6 @@ while True:
                             v3_f_mode = 2 # continuous focus
                         else:
                             v3_f_mode = 0
-                        #fcount = 0
-                        #fcount2 = 0
                         zoom = 0
                         fxx = 0
                         fxy = 0
@@ -4209,7 +4217,7 @@ while True:
                 time.sleep(.25)
                 
             elif button_row == 14:
-                if (alt_dis == 0 and mousex < preview_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                if ((alt_dis == 0 and mousex < preview_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0)) and event.button != 3:
                    # SAVE CONFIG
                    text(1,13,3,1,1,"Config",fv,7)
                    config[0] = mode
@@ -4255,6 +4263,63 @@ while True:
                           f.write(titles[item] + " : " + str(config[item]) + "\n")
                    time.sleep(1)
                    text(1,13,2,1,1,"Config",fv,7)
+                   
+                # read config_file
+                elif ((alt_dis == 0 and mousex < preview_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0)) and event.button == 3:
+                    text(1,13,3,0,1,"Load      EXIT",fv +2,7)
+                    text(1,13,3,1,1,"Config",fv,7)
+                    config = []
+                    with open(config_file, "r") as file:
+                       line = file.readline()
+                       while line:
+                           line = line.strip()
+                           item = line.split(" : ")
+                           config.append(item[1])
+                           line = file.readline()
+                    config = list(map(int,config))
+
+                    mode        = config[0]
+                    speed       = config[1]
+                    gain        = config[2]
+                    brightness  = config[3]
+                    contrast    = config[4]
+                    red         = config[6]
+                    blue        = config[7]
+                    ev          = config[8]
+                    vlen        = config[9]
+                    fps         = config[10]
+                    vformat     = config[11]
+                    codec       = config[12]
+                    tinterval   = config[13]
+                    tshots      = config[14]
+                    extn        = config[15]
+                    zx          = config[16]
+                    zy          = config[17]
+                    zoom        = 0
+                    saturation  = config[19]
+                    meter       = config[20]
+                    awb         = config[21]
+                    sharpness   = config[22]
+                    denoise     = config[23]
+                    quality     = config[24]
+                    profile     = config[25]
+                    level       = config[26]
+                    histogram   = config[27]
+                    histarea    = config[28]
+                    v3_f_speed  = config[29]
+                    v3_f_range  = config[30]
+                    rotate      = config[31]
+                    IRF         = config[32]
+                    str_cap     = config[33]
+                    v3_hdr      = config[34]
+                    timet       = config[35]
+                    vflip       = config[36]
+                    hflip       = config[37]
+                    time.sleep(1)
+                    text(1,13,2,0,1,"Save      EXIT",fv +2,7)
+                    text(1,13,2,1,1,"Config",fv,7)
+                    Menu()
+                    Menu2()
                 else:
                    os.killpg(p.pid, signal.SIGTERM)
                    pygame.display.quit()
