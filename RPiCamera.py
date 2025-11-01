@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 1.07
+version = 1.08
 
 # streaming parameters
 stream_type = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -2482,6 +2482,7 @@ while True:
                         v3_f_mode = 1 
                         foc_man = 1 
                         restart = 1
+                        fxz = 1
                         button(0,5,1,9)
                         time.sleep(0.25)
                         draw_Vbar(0,5,dgryColor,'v3_focus',v3_focus-pmin)
@@ -2489,11 +2490,13 @@ while True:
                         text(0,5,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                         text(0,5,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
                         time.sleep(0.25)
+                        restart = 1
                     # ARDUCAM manual focus
                     elif ((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6 or Pi_Cam == 8) and v3_f_mode == 0:
                         focus_mode = 1
                         v3_f_mode = 1
                         foc_man = 1 
+                        fzx = 1
                         text(0,5,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                         if Pi_Cam == 5:
                             draw_Vbar(0,5,dgryColor,'v5_focus',focus)
