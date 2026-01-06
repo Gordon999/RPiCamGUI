@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-# SPDX-FileCopyrightText: 2025 Gordon999
+# SPDX-FileCopyrightText: 2026 Gordon999
 # SPDX-License-Identifier: MIT
 
-"""Copyright (c) 2025
+"""Copyright (c) 2026
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.70
+version = 5.71
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -50,7 +50,7 @@ udp_ip_addr = "10.42.0.52"  # IP address of the client for UDP streaming
 # 800x600, 1280x960 or 1440x1080
 # For a FULL HD screen (1920x1080) and FULLSCREEN ON set preview_width = 1440, preview_height = 1080
 preview_width  = 1280 
-preview_height =  960 
+preview_height = 960 
 fullscreen     = 0   # set to 1 for FULLSCREEN
 frame          = 1   # set to 0 for NO frame (i.e. if using Pi 7" touchscreen)
 FUP            = 21  # Pi v3 camera Focus UP GPIO button
@@ -178,9 +178,9 @@ v_max_fps    = [200,120, 40,  40,  40,  30, 120,  30,  30,  30,  30,  30,  50,  
 v3_max_fps   = [200,120,125, 120, 120, 120, 120, 120, 120, 100, 100,  50, 100,  56,  56,  20,  20,  20,  20,  20,  15,  20,  20,  20  ,20,  20,  20]
 v9_max_fps   = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60]
 v15_max_fps  = [240,200,200, 130]
-zwidths      = [640,800,1280,2592,3280,4056,4656,9152]
-zheights     = [480,600, 960,1944,2464,3040,3496,6944]
-zfs          = [1,1,0.666666,0.4166666,0.333333]
+zwidths      = [320,640,800,1280,2592,3280,4056,4656,9152]
+zheights     = [240,480,600, 960,1944,2464,3040,3496,6944]
+zfs          = [1,1,0.666666,0.4166666,0.333333,0.25]
 shutters     = [-4000,-2000,-1600,-1250,-1000,-800,-640,-500,-400,-320,-288,-250,-240,-200,-160,-144,-125,-120,-100,-96,-80,-60,-50,-48,-40,-30,-25,
                 -20,-15,-13,-10,-8,-6,-5,-4,-3,0.4,0.5,0.6,0.8,1,1.1,1.2,2,3,4,5,6,7,8,9,10,11,15,20,25,30,40,50,60,75,100,112,120,150,200,220,230,
                 239,435,500,600,650,660,670]
@@ -891,15 +891,21 @@ def preview():
             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-    if zoom > 1 and zoom < 5:
-        if igw/igh > 1.5:
-            hx = 1440
-        else:
-            hx = 1440
-        zxo = ((1920-zwidths[4 - zoom])/2)/1920
-        zyo = ((hx-zheights[4 - zoom])/2)/hx
-        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/hx)
-    if zoom == 5:
+    #if zoom > 1 and zoom < 5:
+    #    if igw/igh > 1.5:
+    #        hx = 1440
+    #    else:
+     #       hx = 1440
+    #    zxo = ((1920-zwidths[4 - zoom])/2)/1920
+    #    zyo = ((hx-zheights[4 - zoom])/2)/hx
+    #    datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/hx)
+    if zoom > 1 and zoom < 6:
+        zws = int(igw * zfs[zoom])
+        zhs = int(igh * zfs[zoom])
+        zxo = ((igw-zws)/2)/igw
+        zyo = ((igh-zhs)/2)/igh
+        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
+    elif zoom == 5:
         zxo = ((igw/2)-(preview_width/2))/igw
         if alt_dis == 2:
             zyo = ((igh/2)-((preview_height * .75)/2))/igh
@@ -1356,6 +1362,9 @@ while True:
                 lume   = [0] * 256
                 gray4  = gray3.reshape(ns * ns * 4,1)
                 lume4   = [0] * 256
+                rav = 0
+                gav = 0
+                bav = 0
                 for q in range(0,len(gray2)):
                     if (histogram == 4 or histogram == 5):
                         lume[int(gray2[q])] +=1
@@ -1367,6 +1376,14 @@ while True:
                         bluee[int(blue2[q])] +=1
                 for q in range(0,len(gray4)):
                     lume4[int(gray4[q])] +=1
+                for av in range(1,len(rede)):
+                    if rede[av] > rede[av-1]:
+                        rav = av
+                    if greene[av] > greene[av-1]:
+                        gav = av
+                    if bluee[av] > bluee[av-1]:
+                        bav = av
+                text(30,3,3,2,0,"RGB: " + str(rav) + ":" + str(gav) + ":" + str(bav),fv*2,0)
                 for t in range(0,256):
                     if histogram == 4 or histogram == 5:
                         if lume[t] > 0:
@@ -1584,7 +1601,7 @@ while True:
                 fyz = fxz
                 if fxz != 1:
                     text(1,7,3,1,1,"Spot",fv,7)
-            elif ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6)) or Pi_Cam == 8) and zoom == 0:
+            elif ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam ==6)) or Pi_Cam == 8) and zoom == 0:
                 fxx = 0
                 fxy = 0
                 fxz = 1
@@ -1796,13 +1813,13 @@ while True:
                                 datastr += " --width 9152 --height 6944"
                             elif Pi_Cam == 8:
                                 datastr += " --width 9248 --height 6944"
-                        if zoom > 1 and zoom < 5:
+                        if zoom > 1 and zoom < 6:
                             zws = int(igw * zfs[zoom])
                             zhs = int(igh * zfs[zoom])
                             zxo = ((igw-zws)/2)/igw
                             zyo = ((igh-zhs)/2)/igh
                             datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
-                        if zoom == 5:
+                        elif zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
                             if igw/igh > 1.5:
                                 zyo = ((igh/2)-((preview_height * .75)/2))/igh
@@ -2616,11 +2633,17 @@ while True:
                         if Pi_Cam == 3 or Pi == 5:
                             datastr += " --hdr " + v3_hdrs[v3_hdr]
                         datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
-                        if zoom > 0 and zoom < 5:
-                            zxo = ((1920-zwidths[4 - zoom])/2)/1920
-                            zyo = ((1440-zheights[4 - zoom])/2)/1440
-                            datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
-                        if zoom == 5:
+                        #if zoom > 0 and zoom < 6:
+                        #   zxo = ((1920-zwidths[4 - zoom])/2)/1920
+                        #    zyo = ((1440-zheights[4 - zoom])/2)/1440
+                        #    datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
+                        if zoom > 1 and zoom < 6:
+                            zws = int(igw * zfs[zoom])
+                            zhs = int(igh * zfs[zoom])
+                            zxo = ((igw-zws)/2)/igw
+                            zyo = ((igh-zhs)/2)/igh
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
+                        elif zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
                             if igw/igh > 1.5:
                                 zyo = ((igh/2)-((preview_height * .75)/2))/igh
@@ -2786,11 +2809,17 @@ while True:
                         if Pi_Cam == 3 or Pi == 5:
                             datastr += " --hdr " + v3_hdrs[v3_hdr]
                         datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
-                        if zoom > 0 and zoom < 5:
-                            zxo = ((1920-zwidths[4 - zoom])/2)/1920
-                            zyo = ((1440-zheights[4 - zoom])/2)/1440
-                            datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
-                        if zoom == 5:
+                        if zoom > 1 and zoom < 6:
+                            zws = int(igw * zfs[zoom])
+                            zhs = int(igh * zfs[zoom])
+                            zxo = ((igw-zws)/2)/igw
+                            zyo = ((igh-zhs)/2)/igh
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
+                        #if zoom > 0 and zoom < 6:
+                        #    zxo = ((1920-zwidths[4 - zoom])/2)/1920
+                        #    zyo = ((1440-zheights[4 - zoom])/2)/1440
+                        #    datastr += " --mode 1920:1440:10  --roi " + str(zxo) + "," + str(zyo) + "," + str(zwidths[4 - zoom]/1920) + "," + str(zheights[4 - zoom]/1440)
+                        elif zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
                             if igw/igh > 1.5:
                                 zyo = ((igh/2)-((preview_height * .75)/2))/igh
@@ -2956,13 +2985,13 @@ while True:
                                     datastr += " --width 9152 --height 6944"
                                 elif Pi_Cam == 8:
                                     datastr += " --width 9248 --height 6944"
-                            if zoom > 0 and zoom < 5:
+                            if zoom > 0 and zoom < 6:
                                 zws = int(igw * zfs[zoom])
                                 zhs = int(igh * zfs[zoom])
                                 zxo = ((igw-zws)/2)/igw
                                 zyo = ((igh-zhs)/2)/igh
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
-                            if zoom == 5:
+                            elif zoom == 5:
                                 zxo = ((igw/2)-(preview_width/2))/igw
                                 if igw/igh > 1.5:
                                     zyo = ((igh/2)-((preview_height * .75)/2))/igh
@@ -3165,13 +3194,13 @@ while True:
                                             datastr += " --width 9152 --height 6944"
                                         elif Pi_Cam == 8:
                                             datastr += " --width 9248 --height 6944"
-                                    if zoom > 0 and zoom < 5:
+                                    if zoom > 0 and zoom < 6:
                                         zws = int(igw * zfs[zoom])
                                         zhs = int(igh * zfs[zoom])
                                         zxo = ((igw-zws)/2)/igw
                                         zyo = ((igh-zhs)/2)/igh
                                         datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
-                                    if zoom == 5:
+                                    elif zoom == 5:
                                         zxo = ((igw/2)-(preview_width/2))/igw
                                         if igw/igh > 1.5:
                                             zyo = ((igh/2)-((preview_height * .75)/2))/igh
@@ -3332,13 +3361,13 @@ while True:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if Pi_Cam == 3 or Pi == 5:
                                 datastr += " --hdr " + v3_hdrs[v3_hdr]
-                            if zoom > 0 and zoom < 5 :
+                            if zoom > 1 and zoom < 6:
                                 zws = int(igw * zfs[zoom])
                                 zhs = int(igh * zfs[zoom])
                                 zxo = ((igw-zws)/2)/igw
                                 zyo = ((igh-zhs)/2)/igh
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
-                            if zoom == 5:
+                            elif zoom == 5:
                                 zxo = ((igw/2)-(preview_width/2))/igw
                                 if igw/igh > 1.5:
                                     zyo = ((igh/2)-((preview_height * .75)/2))/igh
@@ -3745,7 +3774,6 @@ while True:
                     v3_focus = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin)) + pmin
                     draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
                     fd = 1/(v3_focus/100)
-                    fxz = 1
                     text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
                 # Pi v3 manual focus buttons
@@ -3839,10 +3867,6 @@ while True:
                         focus_mode = 1
                         v3_f_mode = 1 
                         foc_man = 1 
-                        fxx = 0
-                        fxy = 0
-                        fxz = 1
-                        fyz = 0.75
                         button(1,7,1,9)
                         restart = 1
                         time.sleep(0.25)
@@ -3851,7 +3875,6 @@ while True:
                         text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
                         time.sleep(0.25)
-                        restart = 1
                     # ARDUCAM manual focus
                     elif ((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6 or Pi_Cam == 8) and v3_f_mode == 0:
                         focus_mode = 1
@@ -3874,6 +3897,8 @@ while True:
                             v3_f_mode = 2 # continuous focus
                         else:
                             v3_f_mode = 0
+                        #fcount = 0
+                        #fcount2 = 0
                         zoom = 0
                         fxx = 0
                         fxy = 0
