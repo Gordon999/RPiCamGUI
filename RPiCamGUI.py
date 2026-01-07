@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.71
+version = 5.72
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -138,6 +138,11 @@ lo_res      = 1
 show_cmds   = 1
 v3_af       = 1
 v5_af       = 1
+sam         = 50
+ct          = 0
+ravs        = [0] * sam
+gavs        = [0] * sam
+bavs        = [0] * sam
 
 if tinterval > 0:
     tduration  = tshots * tinterval
@@ -1376,13 +1381,25 @@ while True:
                         bluee[int(blue2[q])] +=1
                 for q in range(0,len(gray4)):
                     lume4[int(gray4[q])] +=1
+                redo = rede[0]
+                greo = greene[0]
+                bluo = bluee[0]
                 for av in range(1,len(rede)):
-                    if rede[av] > rede[av-1]:
-                        rav = av
-                    if greene[av] > greene[av-1]:
-                        gav = av
-                    if bluee[av] > bluee[av-1]:
-                        bav = av
+                    if rede[av] > redo:
+                        redo = rede[av]
+                        ravs[ct] = av
+                    if greene[av] > greo:
+                        greo = greene[av]
+                        gavs[ct] = av
+                    if bluee[av] > bluo:
+                        bluo = bluee[av]
+                        bavs[ct] = av
+                    ct +=1
+                    if ct > sam-1:
+                        ct = 0
+                rav = int(sum(ravs)/sam)
+                gav = int(sum(gavs)/sam)
+                bav = int(sum(bavs)/sam)
                 text(30,3,3,2,0,"RGB: " + str(rav) + ":" + str(gav) + ":" + str(bav),fv*2,0)
                 for t in range(0,256):
                     if histogram == 4 or histogram == 5:
