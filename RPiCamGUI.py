@@ -3685,10 +3685,10 @@ while True:
                 else:
                     if (alt_dis == 0 and mousex < preview_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                         bitrate -=1
-                        bitrate = max(bitrate,pmin)
                     else:
                         bitrate +=1
-                        bitrate = min(bitrate,pmax)
+                bitrate = max(bitrate,pmin)
+                bitrate = min(bitrate,pmax)
                 bits = bitrate * 1000000
                 text(1,6,3,1,1,str(bitrate),fv,11)
                 draw_Vbar(1,6,lpurColor,'bitrate',bitrate)
