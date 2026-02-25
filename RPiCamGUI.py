@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.73
+version = 5.74
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -80,8 +80,8 @@ meter       = 2    # metering mode (2 = average), see meters below
 awb         = 1    # auto white balance mode, off, auto etc (1 = auto), see awbs below
 sharpness   = 15   # set sharpness level
 denoise     = 1    # set denoise level, see denoises below
-quality     = 93   # set quality level for stills in %
-bitrate     = 10    # set video bitrate in MB/s
+quality     = 93   # set quality level
+bitrate     = 5    # set video bitrate in MB/s
 profile     = 0    # set h264 profile, see h264profiles below
 level       = 0    # set h264 level
 histogram   = 5    # OFF = 0, 1 = red, 2 = green, 3 = blue, 4 = luminance, 5 = ALL
@@ -872,8 +872,8 @@ def preview():
     datastr += " --saturation " + str(saturation/10)
     datastr += " --sharpness "  + str(sharpness/10)
     datastr += " --denoise "    + denoises[denoise]
-    datastr += " --quality "    + str(quality)
-    datastr += " --bitrate "    + str(bits)
+    datastr += " --quality " + str(quality)
+    datastr += " --bitrate " + str(bits)
     if vflip == 1:
         datastr += " --vflip"
     if hflip == 1:
@@ -982,11 +982,10 @@ def Menu():
         fd = 1/(v3_focus/100)
         text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
-        
     elif v3_f_mode == 0 or v3_f_mode == 2:
-        button(1,7,7,7)
-        text(1,7,5,0,1,"Bitrate",ft,11)
-        text(1,7,5,1,1,str(bitrate),fv,11)
+        button(1,7,0,9)
+        text(1,7,5,0,1,"FOCUS",ft,7)
+        text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
         
     draw_bar(0,15,greyColor,'v3_f_speed',v3_f_speed)
     draw_Vbar(1,15,greyColor,'v3_f_range',v3_f_range)
@@ -999,15 +998,8 @@ def Menu():
     text(1,15,2,0,1,"Ext Trig: " + str(STR),ft,7)
     text(1,15,3,1,1,strs[str_cap],fv,7)
     draw_Vbar(1,15,greyColor,'str_cap',str_cap)
-    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)):
-        button(1,7,7,7)
-        text(1,7,5,0,1,"Bitrate",ft,11)
-        text(1,7,3,1,1,str(bitrate),fv,11)
-    else:
-        button(1,7,0,9)
-        text(1,7,5,0,1,"FOCUS",ft,7)
-        text(1,7,3,1,1,"",fv,7)
-		
+    button(1,7,0,9)
+    text(1,7,5,0,1,"FOCUS",ft,7)
     if zoom == 0:
       button(1,8,0,9)
       text(1,8,5,0,1,"Zoom",ft,7)
@@ -1100,22 +1092,15 @@ def Menu2():
     text(0,10,3,1,1,str(quality)[0:3],fv,10)
     text(0,9,5,0,1,"File Format",ft,10)
     text(0,9,3,1,1,extns[extn],fv,10)
-    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)):
-        button(1,7,7,7)
-        text(1,7,5,0,1,"Bitrate",ft,11)
-        text(1,7,3,1,1,str(bitrate),fv,11)
-    else:
-        button(1,7,0,9)
-        text(1,7,5,0,1,"FOCUS",ft,7)
-        text(1,7,3,1,1,"",fv,7)
+    button(1,7,0,9)
+    text(1,7,5,0,1,"FOCUS",ft,7)
     if zoom == 0:
         button(1,8,0,9)
         text(1,8,5,0,1,"Zoom",ft,7)
-        if Pi_Cam ==3 or ((Pi_Cam ==5 or Pi_Cam == 6)) or Pi_Cam == 8:
+        if Pi_Cam ==3 or ((Pi_Cam ==5 or Pi_Cam == 6)):
             text(1,7,3,1,1,v3_f_modes[v3_f_mode],fv,7)
         else:
-            text(1,7,3,1,1,str(bitrate),fv,11)
-            #text(1,7,3,1,1," ",fv,7)
+            text(1,7,3,1,1," ",fv,7)
         # determine if camera native format
         vw = 0
         x = 0
@@ -1149,8 +1134,9 @@ def Menu2():
     text(1,4,3,1,1,codecs[codec],fv,11)
     text(1,5,5,0,1,"h264 Profile",ft,11)
     text(1,5,3,1,1,str(h264profiles[profile]),fv,11)
-    text(1,6,5,0,1,"V_Preview",ft,11)
-    text(1,6,3,1,1,"ON ",fv,11)
+    button(1,6,7,7)
+    text(1,6,5,0,1,"V_Bitrate",ft,11)
+    text(1,6,3,1,1,str(bitrate),fv,11)
     text(1,9,1,0,1,"CAPTURE",ft,7)
     td = timedelta(seconds=tduration)
     text(1,10,5,0,1,"Duration",ft,12)
@@ -1196,10 +1182,7 @@ def Menu2():
     draw_Vbar(1,3,lpurColor,'vformat',vformat)
     draw_Vbar(1,4,lpurColor,'codec',codec)
     draw_Vbar(1,5,lpurColor,'profile',profile)
-    if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8:
-        pass
-    else:
-        draw_Vbar(1,7,lpurColor,'bitrate',bitrate)
+    draw_Vbar(1,6,lpurColor,'bitrate',bitrate)
     draw_Vbar(1,8,greyColor,'zoom',zoom)
     draw_Vbar(1,10,lyelColor,'tduration',tduration)
     draw_Vbar(1,11,lyelColor,'tinterval',tinterval)
@@ -2623,11 +2606,11 @@ while True:
                             datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
                         else:
                             datastr += " --awb " + awbs[awb]
-                        datastr += " --metering "   + meters[meter]
+                        datastr += " --metering " + meters[meter]
                         datastr += " --saturation " + str(saturation/10)
-                        datastr += " --sharpness "  + str(sharpness/10)
+                        datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --denoise "    + denoises[denoise]
-                        datastr += " --bitrate "    + str(bits)
+                        datastr += " --bitrate " + str(bits)
                         if vflip == 1:
                             datastr += " --vflip"
                         if hflip == 1:
@@ -2811,7 +2794,7 @@ while True:
                         datastr += " --saturation " + str(saturation/10)
                         datastr += " --sharpness " + str(sharpness/10)
                         datastr += " --denoise "    + denoises[denoise]
-                        datastr += " --bitrate "    + str(bits)
+                        datastr += " --bitrate " + str(bits)
                         if vflip == 1:
                             datastr += " --vflip"
                         if hflip == 1:
@@ -3365,7 +3348,7 @@ while True:
                             datastr += " --saturation " + str(saturation/10)
                             datastr += " --sharpness "  + str(sharpness/10)
                             datastr += " --denoise "    + denoises[denoise]
-                            datastr += " --bitrate "    + str(bits)
+                            datastr += " --bitrate " + str(bits)
                             if vflip == 1:
                                 datastr += " --vflip"
                             if hflip == 1:
@@ -3688,47 +3671,28 @@ while True:
                 time.sleep(.25)
 
             elif button_row == 7:
-                # V_PREVIEW
-                if (alt_dis == 0 and mousex > preview_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                    vpreview +=1
-                    vpreview  = min(vpreview ,1)
+				# BITRATE
+                for f in range(0,len(video_limits)-1,3):
+                    if video_limits[f] == 'bitrate':
+                        pmin = video_limits[f+1]
+                        pmax = video_limits[f+2]
+                if (mousex > preview_width and mousey < ((button_row-1)*bh) + int(bh/3)):
+                    bitrate = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height + (bh*3)  and mousey < preview_height + (bh*3) + int(bh/3)) and alt_dis == 1:
+                    bitrate = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
+                elif (mousey > preview_height * .75 + (bh*3)  and mousey < preview_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
+                    bitrate = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
                 else:
-                    vpreview  -=1
-                    vpreview = max(vpreview ,0)
-
-                if vpreview == 0:
-                    text(1,6,3,1,1,"Off",fv,11)
-                else:
-                    text(1,6,3,1,1,"ON ",fv,11)
-                vwidth  = vwidths[vformat]
-                vheight = vheights[vformat]
-                if Pi_Cam == 3:
-                    vfps = v3_max_fps[vformat]
-                    if vwidth == 1920 and codec == 0:
-                        prof = h264profiles[profile].split(" ")
-                        if str(prof[1]) == "4.2":
-                            if vpreview == 1:
-                                vfps = 45
-                            else:
-                                vfps = 60
-                    elif vwidth == 1536 and codec == 0:
-                        prof = h264profiles[profile].split(" ")
-                        if str(prof[1]) == "4.2":
-                            if vpreview == 1:
-                                vfps = 60
-                            else:
-                                vfps = 90
-                elif Pi_Cam == 9:
-                    vfps = v9_max_fps[vformat]
-                elif Pi_Cam == 15:
-                    vfps = v15_max_fps[vformat]
-                else:
-                    vfps = v_max_fps[vformat]
-                fps = min(fps,vfps)
-                video_limits[5] = vfps
-                text(1,2,3,1,1,str(fps),fv,11)
-                draw_Vbar(1,2,lpurColor,'fps',fps)
-                time.sleep(0.25)
+                    if (alt_dis == 0 and mousex < preview_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        bitrate -=1
+                        bitrate = max(bitrate,pmin)
+                    else:
+                        bitrate +=1
+                        bitrate = min(bitrate,pmax)
+                bits = bitrate * 1000000
+                text(1,6,3,1,1,str(bitrate),fv,11)
+                draw_Vbar(1,6,lpurColor,'bitrate',bitrate)
+                restart = 1
 
             elif button_row == 8:
                 # FOCUS
@@ -3860,32 +3824,35 @@ while True:
                              if vheight == vheights2[x]:
                                 vw = 1
                         x += 1
-                    # FOCUS button NON AF camera set bitrate
-                    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)):
-                        for f in range(0,len(video_limits)-1,3):
-                            if video_limits[f] == 'bitrate':
-                                pmin = video_limits[f+1]
-                                pmax = video_limits[f+2]
-                        if (mousex > preview_width and mousey < ((button_row-1)*bh) + int(bh/3)):
-                            bitrate = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin))
-                        elif (mousey > preview_height + (bh*3)  and mousey < preview_height + (bh*3) + int(bh/3)) and alt_dis == 1:
-                            bitrate = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                        elif (mousey > preview_height * .75 + (bh*3)  and mousey < preview_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
-                            bitrate = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                        else:
-                            if (alt_dis == 0 and mousex < preview_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
-                                bitrate -=1
-                                bitrate = max(bitrate,pmin)
-                            else:
-                                bitrate +=1
-                                bitrate = min(bitrate,pmax)
-                        bits = bitrate * 1000000
-                        button(1,7,7,7)
-                        text(1,7,5,0,1,"Bitrate",ft,11)
-                        text(1,7,3,1,1,str(bitrate),fv,11)
-                        draw_Vbar(1,7,lpurColor,'bitrate',bitrate)
+                    # FOCUS button NON AF camera
+                    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 0:
+                        zoom = 4
+                        focus_mode = 1
+                        button(1,7,1,9)
+                        text(1,7,3,0,1,"FOCUS",ft,0)
+                        text(1,3,3,1,1,str(preview_width) + "x" + str(preview_height),fv,11)
+                        button(1,8,1,9)
+                        text(1,8,2,0,1,"ZOOMED",ft,0)
+                        text(1,8,3,1,1,str(zoom),fv,0)
+                        draw_Vbar(1,8,dgryColor,'zoom',zoom)
                         time.sleep(0.25)
-                        #restart = 1
+                        restart = 1
+                    # CANCEL FOCUS NON AF camera
+                    elif (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 1:
+                        zoom = 0
+                        focus_mode = 0
+                        button(1,7,0,9)
+                        text(1,7,5,0,1,"FOCUS",ft,7)
+                        text(1,7,3,1,1,"",fv,7)
+                        if vw == 0:
+                            text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                        if vw == 1:
+                            text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                        button(1,8,0,9)
+                        text(1,8,5,0,1,"Zoom",ft,7)
+                        text(1,8,3,1,1,"",fv,7)
+                        draw_Vbar(1,8,greyColor,'zoom',zoom)
+                        restart = 1
                     # Pi V3 manual focus    
                     elif (Pi_Cam == 3 and v3_af == 1) and v3_f_mode == 0:
                         focus_mode = 1
@@ -3921,6 +3888,8 @@ while True:
                             v3_f_mode = 2 # continuous focus
                         else:
                             v3_f_mode = 0
+                        #fcount = 0
+                        #fcount2 = 0
                         zoom = 0
                         fxx = 0
                         fxy = 0
@@ -4024,15 +3993,8 @@ while True:
                         draw_Vbar(1,8,dgryColor,'zoom',zoom)
                         
                     if foc_man == 0:
-                        if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam == 3 and v3_af == 0)):
-                            button(1,7,7,7)
-                            text(1,7,5,0,1,"Bitrate",ft,11)
-                            text(1,7,3,1,1,str(bitrate),fv,11)
-                            draw_Vbar(1,7,lpurColor,'bitrate',bitrate)
-                        else:
-                            button(1,7,0,9)
-                            text(1,7,5,0,1,"FOCUS",ft,7)
-                            text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
+                        button(1,7,0,9)
+                        text(1,7,5,0,1,"FOCUS",ft,7)
                     # determine if camera native format
                     vw = 0
                     x = 0
