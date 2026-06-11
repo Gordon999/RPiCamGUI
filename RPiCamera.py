@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-# SPDX-FileCopyrightText: 2025 Gordon999
+# SPDX-FileCopyrightText: 2026 Gordon999
 # SPDX-License-Identifier: MIT
 
-"""Copyright (c) 2025
+"""Copyright (c) 2026
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 1.08
+version = 1.10
 
 # streaming parameters
 stream_type = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -139,6 +139,7 @@ still       = 0
 video       = 0
 timelapse   = 0
 stream      = 0
+lver        = ""
 
 # set button sizes
 bw = int(preview_width/5.66)
@@ -155,13 +156,13 @@ dis_height = preview_height
 dis_width  = preview_width
     
 # data
-cameras      = [  '', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283','imx500','ov9281']
-camids       = [  '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500','ov9281']
-x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472,    4056,    1280]
-y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040,     800]
-max_gains    = [  64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64,      64]
-max_shutters = [ 100,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100,     100,     100]
-max_vfs      = [  10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23,      20,       3]
+cameras      = [  '', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283','imx500','ov9281','imx415']
+camids       = [  '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500','ov9281','imx415']
+x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472,    4056,    1280,    3864]
+y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040,     800,    2912]
+max_gains    = [  64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64,      64,      64]
+max_shutters = [ 100,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100,     100,     100,     100]
+max_vfs      = [  10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23,      20,       3,      15]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
@@ -191,37 +192,24 @@ strs         = ["Still","Video","Stream","Timelapse"]
 v3_hdrs      = ["off","single-exp","auto","sensor"]
 
 #check linux version.
-if os.path.exists ("/run/shm/lv.txt"): 
-    os.remove("/run/shm/lv.txt")
-os.system("cat /etc/os-release >> /run/shm/lv.txt")
-with open("/run/shm/lv.txt", "r") as file:
-    line = file.readline()
-    while line:
-       line = file.readline()
-       if line[0:16] == "VERSION_CODENAME":
-           lver = line
-lvers = lver.split("=")
-lver = lvers[1][0:6]
+lv = os.popen("cat /etc/os-release").read()
+lva = lv.split("\n")
+for w in range(0,len(lva)):
+    if lva[w][0:16] == "VERSION_CODENAME":
+        lvers = lva[w].split("=")
+        lver = lvers[1][0:6]
 print(lver)
 
 #check Pi model.
 Pi = -1
-if os.path.exists ('/run/shm/md.txt'): 
-    os.remove("/run/shm/md.txt")
-os.system("cat /proc/cpuinfo >> /run/shm/md.txt")
-with open("/run/shm/md.txt", "r") as file:
-    line = file.readline()
-    while line:
-       line = file.readline()
-       if line[0:5] == "Model":
-           model = line
+model = os.popen("cat /proc/device-tree/model").read()
 mod = model.split(" ")
-if mod[3] == "Compute":
-    Pi = int(mod[5][0:1])
-elif mod[3] == "Zero":
+if mod[2] == "Compute":
+    Pi = int(mod[4][0:1])
+elif mod[2] == "Zero":
     Pi = 0
 else:
-    Pi = int(mod[3])
+    Pi = int(mod[2])
 print("Pi:",Pi)
 if Pi == 5:
     codecs.append('mp4')
@@ -444,7 +432,7 @@ def Camera_Version():
     if max_camera == 1 and cam0 == cam1:
         same_cams = 1
     configtxt = []
-    if Pi_Cam == 9:
+    if Pi_Cam == 9 or Pi_Cam == 16:
         if IRF == 0:
             led_sw_ir.off()
         else:
@@ -985,7 +973,7 @@ def Menu():
         if (Pi_Cam == 3 or Pi == 5):
             text(0,6,5,0,1,"HDR",fv,10)
             text(0,6,3,1,1,v3_hdrs[v3_hdr],fv,10)
-        elif Pi_Cam == 9:
+        elif Pi_Cam == 9 or Pi_Cam == 16:
             button(0,6,6,4)
             text(0,6,5,0,1,"IR Filter",fv,10)
             if IRF == 0:
@@ -2452,7 +2440,7 @@ while True:
                                 vw = 1
                         x += 1
                     # FOCUS button NON AF camera
-                    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 0:
+                    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9  or Pi_Cam == 16 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 0:
                         zoom = 4
                         focus_mode = 1
                         button(0,5,1,9)
@@ -2464,7 +2452,7 @@ while True:
                         time.sleep(0.25)
                         restart = 1
                     # CANCEL FOCUS NON AF camera
-                    elif (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 1:
+                    elif (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9  or Pi_Cam == 16 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 1:
                         zoom = 0
                         focus_mode = 0
                         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,preview_height/4))
@@ -3214,8 +3202,8 @@ while True:
                 time.sleep(.25)
                 restart = 1
                 
-              elif button_row == 6 and Pi_Cam == 9:
-                # Waveshare imx290 IR Filter
+              elif button_row == 6 and (Pi_Cam == 9 or Pi_Cam == 16):
+                # Waveshare imx290 / imx415 IR Filter
                 if mousex < preview_width + (bw/2):
                     IRF -=1
                     IRF = max(IRF ,0)
