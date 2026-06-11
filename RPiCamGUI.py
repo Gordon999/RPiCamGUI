@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.74
+version = 5.76
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -136,6 +136,7 @@ buttonSTR   = Button(STR)
 led_sw_ir   = LED(sw_ir)
 str_btn     = 0
 lo_res      = 1
+lver        = ""
 show_cmds   = 1
 v3_af       = 1
 v5_af       = 1
@@ -169,13 +170,13 @@ else:
     dis_width  = preview_width
     
 # data
-cameras      = [  '', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283','imx500','ov9281']
-camids       = [  '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500','ov9281']
-x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472,    4056,    1280]
-y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040,     800]
-max_gains    = [  64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64,      64]
-max_shutters = [ 100,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100,     100,     100]
-max_vfs      = [  10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23,      20,       3]
+cameras      = [  '', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283','imx500','ov9281','imx415']
+camids       = [  '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500','ov9281','imx415']
+x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472,    4056,    1280,    3864]
+y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040,     800,    2192]
+max_gains    = [  64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64,      64,      64]
+max_shutters = [ 100,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100,     100,     100,     100]
+max_vfs      = [  10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23,      20,       3,      20]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
@@ -205,38 +206,24 @@ strs         = ["Still","Video","Stream","Timelapse"]
 v3_hdrs      = ["off","single-exp","auto","sensor"]
 
 #check linux version.
-if os.path.exists ("/run/shm/lv.txt"): 
-    os.remove("/run/shm/lv.txt")
-os.system("cat /etc/os-release >> /run/shm/lv.txt")
-with open("/run/shm/lv.txt", "r") as file:
-        line = file.readline()
-        while line:
-           line = file.readline()
-           if line[0:16] == "VERSION_CODENAME":
-               lver = line
-print(lver)
-lvers = lver.split("=")
-lver = lvers[1][0:6]
+lv = os.popen("cat /etc/os-release").read()
+lva = lv.split("\n")
+for w in range(0,len(lva)):
+    title = lva[w].split("=")
+    if title[0] == "VERSION_ID":
+        lver = int(title[1][1:3])
 print(lver)
 
 #check Pi model.
 Pi = -1
-if os.path.exists ('/run/shm/md.txt'): 
-    os.remove("/run/shm/md.txt")
-os.system("cat /proc/cpuinfo >> /run/shm/md.txt")
-with open("/run/shm/md.txt", "r") as file:
-        line = file.readline()
-        while line:
-           line = file.readline()
-           if line[0:5] == "Model":
-               model = line
+model = os.popen("cat /proc/device-tree/model").read()
 mod = model.split(" ")
-if mod[3] == "Compute":
-    Pi = int(mod[5][0:1])
-elif mod[3] == "Zero":
+if mod[2] == "Compute":
+    Pi = int(mod[4][0:1])
+elif mod[2] == "Zero":
     Pi = 0
 else:
-    Pi = int(mod[3])
+    Pi = int(mod[2])
 print("Pi:",Pi)
 if Pi == 5:
     codecs.append('mp4')
@@ -337,7 +324,7 @@ def Camera_Version():
     # DETERMINE NUMBER OF CAMERAS (FOR ARDUCAM MULITPLEXER or Pi5)
     if os.path.exists('rpicams.txt'):
         os.rename('rpicams.txt', 'oldrpicams.txt')
-    if lver != "bookwo" and lver != "trixie":
+    if lver < 12:
         os.system("libcamera-vid --list-cameras >> rpicams.txt")
     else:
         os.system("rpicam-vid --list-cameras >> rpicams.txt")
@@ -460,7 +447,7 @@ def Camera_Version():
     if max_camera == 1 and cam0 == cam1:
         same_cams = 1
     configtxt = []
-    if Pi_Cam == 9:
+    if Pi_Cam == 9 or Pi_Cam == 16:
         if IRF == 0:
             led_sw_ir.off()
         else:
@@ -469,7 +456,7 @@ def Camera_Version():
         v3_hdr = 1
     if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8:
         # read /boot/config.txt file
-        if lver != "bookwo" and lver != "trixie":
+        if lver < 12:
           with open("/boot/config.txt", "r") as file:
             line = file.readline()
             while line:
@@ -811,7 +798,7 @@ def preview():
         os.remove(f)
     speed2 = sspeed
     speed2 = min(speed2,2000000)
-    if lver != "bookwo" and lver != "trixie":
+    if lver < 12:
         datastr = "libcamera-vid"
     else:
         datastr = "rpicam-vid"
@@ -1030,7 +1017,7 @@ def Menu():
         text(0,15,3,1,1,"Off",fv,10)
     else:
         text(0,15,3,1,1,"ON ",fv,10)
-  if Pi_Cam == 9:
+  if Pi_Cam == 9 or Pi_Cam == 16:
     button(0,15,6,4)
     text(0,15,5,0,1,"IR Filter",fv,10)
     if IRF == 0:
@@ -1760,7 +1747,7 @@ while True:
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         if extns[extn] != 'raw':
                             fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
-                            if lver != "bookwo" and lver != "trixie":
+                            if lver < 12:
                                 datastr = "libcamera-still"
                             else:
                                 datastr = "rpicam-still"
@@ -1770,7 +1757,7 @@ while True:
                             datastr += "-t " + str(timet) + " -o " + fname
                         else:
                             fname =  pic_dir + str(timestamp) + '.' + extns2[extn]
-                            if lver != "bookwo" and lver != "trixie":
+                            if lver < 12:
                                 datastr = "libcamera-still"
                             else:
                                  datastr = "rpicam-still"
@@ -2468,8 +2455,8 @@ while True:
                 time.sleep(0.25)
                 restart = 1
 
-            elif button_row == 16 and Pi_Cam == 9:
-                # Waveshare imx290 IR Filter
+            elif button_row == 16 and (Pi_Cam == 9 or Pi_Cam == 16):
+                # Waveshare imx290 / imx415 IR Filter
                 if (alt_dis == 0 and mousex < preview_width + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                     IRF -=1
                     IRF = max(IRF ,0)
@@ -2554,7 +2541,7 @@ while True:
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
                         if codecs2[codec] != 'raw':
-                            if lver != "bookwo" and lver != "trixie":
+                            if lver < 12:
                                 datastr = "libcamera-vid"
                             else:
                                 datastr = "rpicam-vid"
@@ -2572,7 +2559,7 @@ while True:
                                 #datastr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
                                 datastr += " --level " + str(prof[1])
                         else:
-                            if lver != "bookwo" and lver != "trixie":
+                            if lver < 12:
                                 datastr = "libcamera-raw"
                             else:
                                  datastr = "rpicam-raw"
@@ -2748,7 +2735,7 @@ while True:
                         now = datetime.datetime.now()
                         timestamp = now.strftime("%y%m%d%H%M%S")
                         vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
-                        if lver != "bookwo" and lver != "trixie":
+                        if lver < 12:
                             datastr = "libcamera-vid "
                         else:
                             datastr = "rpicam-vid "
@@ -2923,7 +2910,7 @@ while True:
                             timestamp = now.strftime("%y%m%d%H%M%S")
                             count = 0
                             fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
-                            if lver != "bookwo" and lver != "trixie":
+                            if lver < 12:
                                 datastr = "libcamera-still"
                             else:
                                 datastr = "rpicam-still"
@@ -3021,7 +3008,7 @@ while True:
                             old_count = 0
                             while count < tshots and stop == 0:
                                 if time.monotonic() - start2 >= tinterval:
-                                    if lver != "bookwo" and lver != "trixie":
+                                    if lver < 12:
                                         os.system('pkill -SIGUSR1 libcamera-still')
                                     else:
                                         os.system('pkill -SIGUSR1 rpicam-still')
@@ -3103,7 +3090,7 @@ while True:
                                             stop = 1
                                             count = tshots
                                         if button_column == 1 and button_row == 1:
-                                            if lver != "bookwo" and lver != "trixie":
+                                            if lver < 12:
                                                 os.system('pkill -SIGUSR1 libcamera-still')
                                             else:
                                                 os.system('pkill -SIGUSR1 rpicam-still')
@@ -3118,7 +3105,7 @@ while True:
                                                 text(0,0,1,1,1,"STILL    2x2",ft,7)
                                             else:
                                                 text(0,0,1,1,1,"Still ",ft,7)
-                            if lver != "bookwo" and lver != "trixie":
+                            if lver < 12:
                                 os.system('pkill -SIGUSR2 libcamera-still')
                             else:
                                 os.system('pkill -SIGUSR2 rpicam-still')
@@ -3143,7 +3130,7 @@ while True:
                                         poll = p.poll()
                                         time.sleep(0.1)
                                     fname =  pic_dir + str(timestamp) + "_" + str(count) + "." + extns2[extn]
-                                    if lver != "bookwo" and lver != "trixie":
+                                    if lver < 12:
                                         datastr = "libcamera-still"
                                     else:
                                         datastr = "rpicam-still"
@@ -3310,14 +3297,14 @@ while True:
                             timestamp = now.strftime("%y%m%d%H%M%S")
                             fname =  pic_dir + str(timestamp) + '_%04d.' + extns2[extn]
                             if codecs2[codec] != 'raw':
-                                if lver != "bookwo" and lver != "trixie":
+                                if lver < 12:
                                     datastr = "libcamera-vid"
                                 else:
                                     datastr = "rpicam-vid"
                                 datastr += " --camera " + str(camera) + " -n --codec mjpeg -t " + str(tduration*1000) + " --segment 1 -o " + fname
                             else:
                                 fname =  pic_dir + str(timestamp) + '_%04d.' + codecs2[codec]
-                                if lver != "bookwo" and lver != "trixie":
+                                if lver < 12:
                                     datastr = "libcamera-raw"
                                 else:
                                     datastr = "rpicam-raw"
@@ -3825,7 +3812,7 @@ while True:
                                 vw = 1
                         x += 1
                     # FOCUS button NON AF camera
-                    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 0:
+                    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9  or Pi_Cam == 16 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 0:
                         zoom = 4
                         focus_mode = 1
                         button(1,7,1,9)
@@ -3838,7 +3825,7 @@ while True:
                         time.sleep(0.25)
                         restart = 1
                     # CANCEL FOCUS NON AF camera
-                    elif (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 1:
+                    elif (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or Pi_Cam == 16 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 1:
                         zoom = 0
                         focus_mode = 0
                         button(1,7,0,9)
