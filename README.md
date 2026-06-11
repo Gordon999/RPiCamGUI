@@ -41,11 +41,17 @@ On a Pi4 In /boot/firmware/config.txt add  dtoverlay=vc4-kms-v3d,cma-512 and the
 
 The 64MP OWLSIGHT camera should work without needing the Arducam install just add dtoverlay=ov64a40 to /boot/config.txt or /boot/firmware/config.txt as appropriate. (No guarantee 16/64MP will work on less than a Pi4!)
 
-## Waveshare imx290-83
+## Waveshare imx290-83 or Waveshare imx415-98
+
+imx290
 add dtoverlay=imx290,clock-frequency=37125000 to config.txt , add cam0 or cam1 if using a Pi5.
 You may need to add https://github.com/raspberrypi/libcamera/blob/next/src/ipa/rpi/pisp/data/imx290.json as imx290.json to /usr/share/libcamera/ipa/rpi/pisp if using a Pi5.
 
-To add IR Filter switching put a wire between GPIO26 (pin37) on the Pi and the GPIO 'hole' on the camera.
+imx415
+add dtoverlay=imx415,clk-37125 to config.txt , add cam0 or cam1 if using a Pi5.
+
+To add IR Filter for camera0 switching put a wire between GPIO26 (pin37) on the Pi and the GPIO 'hole' on the camera.
+To add IR Filter for camera1 switching put a wire between GPIO19 (pin35) on the Pi and the GPIO 'hole' on the camera.
 
 ## Arducam ov9281
 Use their installation instructions https://docs.arducam.com/Raspberry-Pi-Camera/Native-camera/Global-Shutter/1MP-OV9281-OV9282/
