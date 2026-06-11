@@ -48,7 +48,7 @@ add dtoverlay=imx290,clock-frequency=37125000 to config.txt , add cam0 or cam1 i
 You may need to add https://github.com/raspberrypi/libcamera/blob/next/src/ipa/rpi/pisp/data/imx290.json as imx290.json to /usr/share/libcamera/ipa/rpi/pisp if using a Pi5.
 
 imx415
-add dtoverlay=imx415,clk-37125 to config.txt , add cam0 or cam1 if using a Pi5.
+add dtoverlay=imx415,4lane,clock-clk-37125 to config.txt , add cam0 or cam1 if using a Pi5.
 
 To add IR Filter for camera0 switching put a wire between GPIO26 (pin37) on the Pi and the GPIO 'hole' on the camera.
 To add IR Filter for camera1 switching put a wire between GPIO19 (pin35) on the Pi and the GPIO 'hole' on the camera.
