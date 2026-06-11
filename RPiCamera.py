@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 1.10
+version = 1.11
 
 # streaming parameters
 stream_type = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -162,7 +162,7 @@ x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,  
 y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040,     800,    2912]
 max_gains    = [  64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64,      64,      64]
 max_shutters = [ 100,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100,     100,     100,     100]
-max_vfs      = [  10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23,      20,       3,      15]
+max_vfs      = [  10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23,      20,       3,      30]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
