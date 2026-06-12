@@ -1,6 +1,6 @@
 # RPiCamGUI
 
-Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ, GS and imx500. Also Arducam 16MP or 64MP Autofocus cameras, Waveshare imx290-83 camera, imx585 and ov9281. It should also recognise other cameras if you have a dtoverlay for it, and added in the config.txt, but it may not be optimal.
+Script to allow control of a Pi Camera. Will work with all Pi camera models, v1, v2, v3, HQ, GS and imx500. Also Arducam 16MP or 64MP Autofocus cameras, Waveshare imx290-83 or imx415-98 cameras, imx585 and ov9281. It should also recognise other cameras if you have a dtoverlay for it, and added in the config.txt, but it may not be optimal.
 
 To work with RaspiOS based on BULLSEYE (libcamera) / BOOKWORM or TRIXIE (rpicam).
 
