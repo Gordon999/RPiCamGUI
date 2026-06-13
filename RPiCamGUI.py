@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.77
+version = 5.78
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -176,14 +176,15 @@ x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,  
 y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040,     800,    2192]
 max_gains    = [  64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64,      64,      64]
 max_shutters = [ 100,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100,     100,     100,     100]
-max_vfs      = [  10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23,      20,       3,      30]
+max_vfs      = [  10,      15,      16,      22,      21,        15,       23,       7,        23,      10,      18,      18,      19,      24,      21,       3,      19]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
-vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,1928,2028,2028,2304,2592,3280,3840,3856,4032,4056,4608,4656,5472,8000,9152,9248]
-vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1090,1080,1520,1296,1944,2464,2160,2180,3024,3040,2592,3496,3648,6000,6944,6944]
-v_max_fps    = [200,120, 40,  40,  40,  30, 120,  30,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  20,  10,  20,  20,  20,  20,  20,  20]
-v3_max_fps   = [200,120,125, 120, 120, 120, 120, 120, 120, 100, 100,  50, 100,  56,  56,  20,  20,  20,  20,  20,  15,  20,  20,  20  ,20,  20,  20]
+vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,1928,2028,2028,2304,2592,3280,3840,3856,3864,4032,4056,4608,4656,5472,8000,9152,9248]
+vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1090,1080,1520,1296,1944,2464,2160,2180,2192,3024,3040,2592,3496,3648,6000,6944,6944]
+v_max_fps    = [200,120, 40,  40,  40,  30, 120,  30,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  60,  20,  10,  20,  20,  20,  20,  20,  20]
+v3_max_fps   = [200,120,125, 120, 120, 120, 120, 120, 120, 100, 100,  50, 100,  56,  56,  20,  20,  20,  20,  30,  20,  15,  20,  20,  20,  20,  20,  20]
+v16_max_fps  = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  20,  20,  20,  20,  15,  15,  15,  15,  15,  15,  15,  15,  15]
 v9_max_fps   = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60]
 v15_max_fps  = [240,200,200, 130]
 zwidths      = [320,640,800,1280,2592,3280,4056,4656,9152]
@@ -442,7 +443,6 @@ def Camera_Version():
 
     if igw/igh > 1.5 and rotate == 0:
         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(preview_height * .75),preview_width,int(preview_height *.25) ))
-
             
     if max_camera == 1 and cam0 == cam1:
         same_cams = 1
@@ -454,7 +454,7 @@ def Camera_Version():
             led_sw_ir.on()
     if Pi_Cam != 3 and v3_hdr > 0:
         v3_hdr = 1
-    if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8:
+    if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8: # AF cameras
         # read /boot/config.txt file
         if lver < 12:
           with open("/boot/config.txt", "r") as file:
@@ -471,8 +471,7 @@ def Camera_Version():
         # determine /dev/v4l-subdevX for Pi v3 and Arducam 16/64MP cameras
         foc_sub3 = -1
         foc_sub5 = -1
-        if Pi_Cam == 3 or Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8: # AF cameras
-          for x in range(0,10):
+        for x in range(0,10):
             if os.path.exists("ctrls1.txt"):
                 os.remove("ctrls1.txt")
             os.system("v4l2-ctl -d /dev/v4l-subdev" + str(x) + " --list-ctrls >> ctrls1.txt")
@@ -480,9 +479,12 @@ def Camera_Version():
             ctrlstxt = []
             with open("ctrls1.txt", "r") as file:
                 line = file.readline()
+                print(x,line)
                 while line:
                     ctrlstxt.append(line.strip())
                     line = file.readline()
+                    print(x,line)
+            
             for a in range(0,len(ctrlstxt)):
                 if ctrlstxt[a][0:45] == "exposure 0x00980911 (int)    : min=9 max=7079" and foc_sub5 == -1 and Pi_Cam == 6: # arducam 64mp hawkeye
                     foc_sub5 = x + 1
@@ -510,8 +512,8 @@ def Camera_Version():
             scientif = 1
         else:
             scientif = 0
-    vwidth    = vwidths[vformat]
-    vheight   = vheights[vformat]
+    vwidth  = vwidths[vformat]
+    vheight = vheights[vformat]
     # set max fps
     if Pi_Cam == 3:
         vfps = v3_max_fps[vformat]
@@ -519,8 +521,11 @@ def Camera_Version():
         vfps = v9_max_fps[vformat]
     elif Pi_Cam == 15:
         vfps = v15_max_fps[vformat]
+    elif Pi_Cam == 16:
+        vfps = v16_max_fps[vformat]
     else:
         vfps = v_max_fps[vformat]
+    print(Pi_Cam,vfps)
     video_limits[5] = vfps
     if tinterval > 0:
         tduration = tinterval * tshots
@@ -1624,7 +1629,6 @@ while True:
             focus_mode = 0
             v3_f_mode = 0 
             foc_man = 0
-            #if same_cams == 0:
             Camera_Version()
             Menu()
             restart = 1
@@ -3475,6 +3479,7 @@ while True:
                     setmaxvformat()
                     pmax = max_vformat
                     vformat = int(((mousex-preview_width-bw) / bw) * (pmax+1-pmin))
+                    print(vformat)
                 elif (mousey > preview_height  + (bh*2) and mousey < preview_height + (bh*2) + int(bh/3)) and alt_dis == 1:
                     # set max video format    
                     setmaxvformat()
@@ -3519,6 +3524,8 @@ while True:
                     vfps = v9_max_fps[vformat]
                 elif Pi_Cam == 15:
                     vfps = v15_max_fps[vformat]
+                elif Pi_Cam == 16:
+                    vfps = v16_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
@@ -3586,6 +3593,8 @@ while True:
                     vfps = v9_max_fps[vformat]
                 elif Pi_Cam == 15:
                     vfps = v15_max_fps[vformat]
+                elif Pi_Cam == 16:
+                    vfps = v16_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
@@ -3649,6 +3658,8 @@ while True:
                     vfps = v9_max_fps[vformat]
                 elif Pi_Cam == 15:
                     vfps = v15_max_fps[vformat]
+                elif Pi_Cam == 16:
+                    vfps = v16_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
