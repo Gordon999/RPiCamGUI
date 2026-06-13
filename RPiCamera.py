@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 1.11
+version = 1.12
 
 # streaming parameters
 stream_type = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -159,10 +159,10 @@ dis_width  = preview_width
 cameras      = [  '', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283','imx500','ov9281','imx415']
 camids       = [  '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500','ov9281','imx415']
 x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472,    4056,    1280,    3864]
-y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040,     800,    2912]
+y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040,     800,    2192]
 max_gains    = [  64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64,      64,      64]
 max_shutters = [ 100,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100,     100,     100,     100]
-max_vfs      = [  10,      15,      16,      21,      20,        15,       22,       7,        22,      10,      18,      18,      18,      23,      20,       3,      30]
+max_vfs      = [  10,      15,      16,      22,      21,        15,       23,       7,        23,      10,      18,      18,      19,      24,      21,       3,      19]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
@@ -170,6 +170,7 @@ vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,1928,2028,20
 vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1090,1080,1520,1296,1944,2464,2160,2180,3024,3040,2592,3496,3648,6000,6944,6944]
 v_max_fps    = [200,120, 40,  40,  40,  30,  60,  30,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  20,  10,  20,  20,  20,  20,  20,  20]
 v3_max_fps   = [200,120,125, 120, 120, 120, 120, 120, 120, 100, 100,  50, 100,  56,  56,  20,  20,  20,  20,  20,  15,  20,  20,  20  ,20,  20,  20]
+v16_max_fps  = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  20,  20,  20,  20,  15,  15,  15,  15,  15,  15,  15,  15,  15]
 v9_max_fps   = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60]
 v15_max_fps  = [240,200,200, 130]
 zwidths      = [640,800,1280,2592,3280,4056,4656,9152]
@@ -504,6 +505,8 @@ def Camera_Version():
         vfps = v9_max_fps[vformat]
     elif Pi_Cam == 15:
         vfps = v15_max_fps[vformat]
+    elif Pi_Cam == 16:
+        vfps = v16_max_fps[vformat]
     else:
         vfps = v_max_fps[vformat]
     video_limits[5] = vfps
@@ -3448,6 +3451,8 @@ while True:
                     vfps = v9_max_fps[vformat]
                 elif Pi_Cam == 15:
                     vfps = v15_max_fps[vformat]
+                elif Pi_Cam == 16:
+                    vfps = v16_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
@@ -3515,6 +3520,8 @@ while True:
                     vfps = v9_max_fps[vformat]
                 elif Pi_Cam == 15:
                     vfps = v15_max_fps[vformat]
+                elif Pi_Cam == 16:
+                    vfps = v16_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
@@ -3578,6 +3585,8 @@ while True:
                     vfps = v9_max_fps[vformat]
                 elif Pi_Cam == 15:
                     vfps = v15_max_fps[vformat]
+                elif Pi_Cam == 16:
+                    vfps = v16_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
@@ -3621,6 +3630,8 @@ while True:
                     vfps = v9_max_fps[vformat]
                 elif Pi_Cam == 15:
                     vfps = v15_max_fps[vformat]
+                elif Pi_Cam == 16:
+                    vfps = v16_max_fps[vformat]
                 else:
                     vfps = v_max_fps[vformat]
                 fps = min(fps,vfps)
