@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.78
+version = 5.79
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -170,6 +170,7 @@ else:
     dis_width  = preview_width
     
 # data
+ID           = [   0,       1,       2,       3,       4,         5,        6,       7,         8,       9,      10,      11,      12,      13,      14,      15,      16]
 cameras      = [  '', 'Pi v1', 'Pi v2', 'Pi v3', 'Pi HQ','Ard 16MP','Hawkeye', 'Pi GS','Owlsight',"imx290",'imx585','imx293','imx294','imx283','imx500','ov9281','imx415']
 camids       = [  '','ov5647','imx219','imx708','imx477',  'imx519', 'arduca','imx296',  'ov64a4','imx290','imx585','imx293','imx294','imx283','imx500','ov9281','imx415']
 x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,    1456,      9248,    1920,    3856,    3856,    4168,    5472,    4056,    1280,    3864]
@@ -184,9 +185,9 @@ vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,1928,2028,20
 vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1090,1080,1520,1296,1944,2464,2160,2180,2192,3024,3040,2592,3496,3648,6000,6944,6944]
 v_max_fps    = [200,120, 40,  40,  40,  30, 120,  30,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  60,  20,  10,  20,  20,  20,  20,  20,  20]
 v3_max_fps   = [200,120,125, 120, 120, 120, 120, 120, 120, 100, 100,  50, 100,  56,  56,  20,  20,  20,  20,  30,  20,  15,  20,  20,  20,  20,  20,  20]
-v16_max_fps  = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  20,  20,  20,  20,  15,  15,  15,  15,  15,  15,  15,  15,  15]
 v9_max_fps   = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60]
 v15_max_fps  = [240,200,200, 130]
+v16_max_fps  = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  20,  20,  20,  20,  20]
 zwidths      = [320,640,800,1280,2592,3280,4056,4656,9152]
 zheights     = [240,480,600, 960,1944,2464,3040,3496,6944]
 zfs          = [1,1,0.666666,0.4166666,0.333333,0.25]
@@ -479,12 +480,9 @@ def Camera_Version():
             ctrlstxt = []
             with open("ctrls1.txt", "r") as file:
                 line = file.readline()
-                print(x,line)
                 while line:
                     ctrlstxt.append(line.strip())
                     line = file.readline()
-                    print(x,line)
-            
             for a in range(0,len(ctrlstxt)):
                 if ctrlstxt[a][0:45] == "exposure 0x00980911 (int)    : min=9 max=7079" and foc_sub5 == -1 and Pi_Cam == 6: # arducam 64mp hawkeye
                     foc_sub5 = x + 1
@@ -1587,10 +1585,11 @@ while True:
       if event.type == QUIT:
           os.killpg(p.pid, signal.SIGTERM)
           pygame.quit()
-      # MOVE HISTAREA
-      elif (event.type == MOUSEBUTTONUP):
+          
+      # MOVE HISTAREA or switch to SPOT FOCUS on AF camera (left mouse button)
+      elif event.type == MOUSEBUTTONUP:
         mousex, mousey = event.pos
-        if mousex < preview_width and ((mousey < preview_height and alt_dis < 2) or (mousey < preview_height *.75 and alt_dis == 2)) and mousex != 0 and mousey != 0 and rotate == 0 and event.button != 3:
+        if mousex < preview_width and ((mousey < preview_height and alt_dis < 2) or (mousey < preview_height *.75 and alt_dis == 2)) and mousex != 0 and mousey != 0 and rotate == 0 and event.button == 1:
             xx = mousex
             xx = min(xx,preview_width - histarea)
             xx = max(xx,histarea)
@@ -1600,6 +1599,7 @@ while True:
             else:
                 xy = min(xy,preview_height - histarea)
             xy = max(xy,histarea)
+            # switch to SPOT focus
             if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6)) or Pi_Cam == 8) and mousex < preview_width and mousey < preview_height *.75 and zoom == 0 and (v3_f_mode == 0 or v3_f_mode == 2):
                 fxx = (xx - 25)/preview_width
                 xy  = min(xy,int((preview_height - 25) * .75))
@@ -1608,6 +1608,7 @@ while True:
                 fyz = fxz
                 if fxz != 1:
                     text(1,7,3,1,1,"Spot",fv,7)
+            # switch out of SPOT focus
             elif ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam ==6)) or Pi_Cam == 8) and zoom == 0:
                 fxx = 0
                 fxy = 0
@@ -1617,8 +1618,65 @@ while True:
                     text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
             if ((Pi_Cam == 3 and v3_af == 1) or ((Pi_Cam == 5 or Pi_Cam == 6)) or Pi_Cam == 8) and zoom == 0:
                 restart = 1
+                
+        # goto ZOOM 5 (mouse centre button)
+        if mousex < preview_width and ((mousey < preview_height and alt_dis < 2) or (mousey < preview_height *.75 and alt_dis == 2)) and mousex != 0 and mousey != 0 and rotate == 0 and event.button == 2:
+            if zoom < 5:
+                zoom = 5
+            else:
+                zoom = 0 
+            if zoom < 2:
+                if zoom == 0:
+                    button(1,8,0,9)
+                    text(1,8,5,0,1,"Zoom",ft,7)
+                    text(1,8,3,1,1,"",fv,7)
+                    draw_Vbar(1,8,greyColor,'zoom',zoom)
+                else:
+                    button(1,8,1,9)
+                    text(1,8,2,0,1,"ZOOMED",ft,0)
+                    text(1,8,3,1,1,str(zoom),fv,0)
+                    draw_Vbar(1,8,dgryColor,'zoom',zoom)
+                        
+                if foc_man == 0:
+                    button(1,7,0,9)
+                    text(1,7,5,0,1,"FOCUS",ft,7)
+                # determine if camera native format
+                vw = 0
+                x = 0
+                xx = int(preview_width/2)
+                xy = int(preview_height/2)
+                if igw/igh > 1.5:
+                    xy = int(xy * .75)
+                while x < len(vwidths2) and vw == 0:
+                    if vwidth == vwidths2[x]:
+                         if vheight == vheights2[x]:
+                            vw = 1
+                    x += 1
+                if vw == 0:
+                    text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                if vw == 1:
+                    text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                     
-        # SWITCH CAMERA
+            else:
+                button(1,8,1,9)
+                text(1,8,2,0,1,"ZOOMED",ft,0)
+                text(1,8,3,1,1,str(zoom),fv,0)
+                if igw/igh > 1.5:
+                    text(1,3,3,1,1,str(preview_width) + "x" + str(int(preview_height * .75)),fv,11)
+                else:
+                    text(1,3,3,1,1,str(preview_width) + "x" + str(preview_height),fv,11)
+                draw_Vbar(1,8,dgryColor,'zoom',zoom)
+            if zoom > 0:
+                fxx = 0
+                fxy = 0
+                fxz = 1
+                fyz = 1
+                if (Pi_Cam == 3 and v3_af == 1) and v3_f_mode == 0:
+                    text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
+            restart = 1
+            time.sleep(.2) 
+                       
+        # SWITCH CAMERA (right mouse button)
         if mousex < preview_width and mousey < preview_height and mousex != 0 and mousey != 0 and event.button == 3:
             camera += 1
             if camera > max_camera:
@@ -1632,8 +1690,28 @@ while True:
             Camera_Version()
             Menu()
             restart = 1
-                
-
+        
+        # HISTOGRAM SIZE (Mouse Wheel)
+        if mousex < preview_width and mousey < preview_height and mousex != 0 and mousey != 0 and (event.button == 4 or event.button == 5) and zoom > 0:
+            for f in range(0,len(video_limits)-1,3):
+                if video_limits[f] == 'histarea':
+                    pmin = video_limits[f+1]
+                    pmax = video_limits[f+2]
+            if event.button == 5:
+                histarea -=1
+                histarea = max(histarea,pmin)
+            else:
+                histarea +=1
+                histarea = min(histarea,pmax)
+            if xx - histarea < 0 or xy - histarea < 0:
+                histarea = old_histarea
+            if xy + histarea > preview_height or xx + histarea > preview_width:
+                histarea = old_histarea
+            if (Pi_Cam == 3 and v3_af == 1) and (xy + histarea > preview_height * 0.75 or xx + histarea > preview_width):
+                histarea = old_histarea
+            text(1,14,3,1,1,str(histarea),fv,7)
+            draw_Vbar(1,14,greyColor,'histarea',histarea)
+            old_histarea = histarea
 
         if mousex == 0 and mousey == 0:
             str_btn = 1
