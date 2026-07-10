@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.79
+version = 5.80
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -102,7 +102,7 @@ hflip       = 0    # set tp 1 tp horizontally flip images
 # default directories and files
 pic         = "Pictures"
 vid         = "Videos"
-con_file    = "PiLCConfig555.txt"
+con_file    = "PiLCConfig556.txt"
 
 # setup directories
 Home_Files  = []
@@ -137,7 +137,7 @@ led_sw_ir   = LED(sw_ir)
 str_btn     = 0
 lo_res      = 1
 lver        = ""
-show_cmds   = 1
+show_cmds   = 0
 v3_af       = 1
 v5_af       = 1
 sam         = 50
@@ -194,8 +194,8 @@ zfs          = [1,1,0.666666,0.4166666,0.333333,0.25]
 shutters     = [-4000,-2000,-1600,-1250,-1000,-800,-640,-500,-400,-320,-288,-250,-240,-200,-160,-144,-125,-120,-100,-96,-80,-60,-50,-48,-40,-30,-25,
                 -20,-15,-13,-10,-8,-6,-5,-4,-3,0.4,0.5,0.6,0.8,1,1.1,1.2,2,3,4,5,6,7,8,9,10,11,15,20,25,30,40,50,60,75,100,112,120,150,200,220,230,
                 239,435,500,600,650,660,670]
-codecs       = ['h264','mjpeg','yuv420','raw']
-codecs2      = ['h264','mjpeg','data','raw']
+codecs       = ['h264','mjpeg','yuv420','raw','mp4']
+codecs2      = ['h264','mjpeg','data','raw','mp4']
 h264profiles = ['baseline 4','baseline 4.1','baseline 4.2','main 4','main 4.1','main 4.2','high 4','high 4.1','high 4.2']
 meters       = ['centre','spot','average']
 awbs         = ['off','auto','incandescent','tungsten','fluorescent','indoor','daylight','cloudy']
@@ -227,9 +227,9 @@ elif mod[2] == "Zero":
 else:
     Pi = int(mod[2])
 print("Pi:",Pi)
-if Pi == 5:
-    codecs.append('mp4')
-    codecs2.append('mp4')
+#if Pi == 5:
+#    codecs.append('mp4')
+#    codecs2.append('mp4')
     
 still_limits = ['mode',0,len(modes)-1,'speed',0,len(shutters)-1,'gain',0,30,'brightness',-100,100,'contrast',0,200,'ev',-10,10,'blue',1,80,'sharpness',0,30,
                 'denoise',0,len(denoises)-1,'quality',0,100,'red',1,80,'extn',0,len(extns)-1,'saturation',0,20,'meter',0,len(meters)-1,'awb',0,len(awbs)-1,
@@ -1690,8 +1690,8 @@ while True:
             Camera_Version()
             Menu()
             restart = 1
-        
-        # HISTOGRAM SIZE (Mouse Wheel)
+
+        # HISTOGRAM SIZE IF ZOOMED (Mouse Wheel)
         if mousex < preview_width and mousey < preview_height and mousex != 0 and mousey != 0 and (event.button == 4 or event.button == 5) and zoom > 0:
             for f in range(0,len(video_limits)-1,3):
                 if video_limits[f] == 'histarea':
@@ -1790,7 +1790,6 @@ while True:
                       button_pos = 1
                   else:
                       button_pos = 0
-              #print(button_column,button_row,button_pos)
                       
           # capture on STR button press
           if str_btn == 1:
@@ -2640,6 +2639,9 @@ while True:
                                 prof = h264profiles[profile].split(" ")
                                 #datastr += " --profile " + str(prof[0]) + " --level " + str(prof[1])
                                 datastr += " --level " + str(prof[1])
+                            elif codecs[codec] == 'mp4' and Pi != 5:
+                                datastr += " --codec libav"
+                                
                         else:
                             if lver < 12:
                                 datastr = "libcamera-raw"
@@ -2736,7 +2738,7 @@ while True:
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(preview_width/igw) + "," + str(preview_height/igh)
                         if show_cmds == 1:
                             print (datastr)
-                        if Pi == 5 and codecs[codec] == 'mp4':
+                        if codecs[codec] == 'mp4':
                             os.system(datastr)
                         else:
                           p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
