@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.80
+version = 5.81
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -49,8 +49,8 @@ udp_ip_addr = "10.42.0.52"  # IP address of the client for UDP streaming
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
 # 800x600, 1280x960 or 1440x1080
 # For a FULL HD screen (1920x1080) and FULLSCREEN ON set preview_width = 1440, preview_height = 1080
-preview_width  = 1280 
-preview_height = 960 
+preview_width  = 1440 
+preview_height = 1080 
 fullscreen     = 0   # set to 1 for FULLSCREEN
 frame          = 1   # set to 0 for NO frame (i.e. if using Pi 7" touchscreen)
 FUP            = 21  # Pi v3 camera Focus UP GPIO button
@@ -137,7 +137,7 @@ led_sw_ir   = LED(sw_ir)
 str_btn     = 0
 lo_res      = 1
 lver        = ""
-show_cmds   = 0
+show_cmds   = 1
 v3_af       = 1
 v5_af       = 1
 sam         = 50
@@ -190,7 +190,7 @@ v15_max_fps  = [240,200,200, 130]
 v16_max_fps  = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  20,  20,  20,  20,  20]
 zwidths      = [320,640,800,1280,2592,3280,4056,4656,9152]
 zheights     = [240,480,600, 960,1944,2464,3040,3496,6944]
-zfs          = [1,1,0.666666,0.4166666,0.333333,0.25]
+zfs          = [1,1,0.666666,0.473372781,0.333333,0.25]
 shutters     = [-4000,-2000,-1600,-1250,-1000,-800,-640,-500,-400,-320,-288,-250,-240,-200,-160,-144,-125,-120,-100,-96,-80,-60,-50,-48,-40,-30,-25,
                 -20,-15,-13,-10,-8,-6,-5,-4,-3,0.4,0.5,0.6,0.8,1,1.1,1.2,2,3,4,5,6,7,8,9,10,11,15,20,25,30,40,50,60,75,100,112,120,150,200,220,230,
                 239,435,500,600,650,660,670]
@@ -227,9 +227,6 @@ elif mod[2] == "Zero":
 else:
     Pi = int(mod[2])
 print("Pi:",Pi)
-#if Pi == 5:
-#    codecs.append('mp4')
-#    codecs2.append('mp4')
     
 still_limits = ['mode',0,len(modes)-1,'speed',0,len(shutters)-1,'gain',0,30,'brightness',-100,100,'contrast',0,200,'ev',-10,10,'blue',1,80,'sharpness',0,30,
                 'denoise',0,len(denoises)-1,'quality',0,100,'red',1,80,'extn',0,len(extns)-1,'saturation',0,20,'meter',0,len(meters)-1,'awb',0,len(awbs)-1,
@@ -303,7 +300,7 @@ if codec > len(codecs)-1:
 
 def setmaxvformat():
     # set max video format
-    global codec,Pi_Cam,configtxt,max_vformat,max_vfs
+    global codec,Pi_Cam,configtxt,max_vformat,max_vfs,Pi
     if codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and ("dtoverlay=vc4-kms-v3d,cma-512" in configtxt): # Arducam IMX519 16MP or 64MP
         max_vformat = max_vfs[6]
     elif codec > 0 and (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8): # Arducam IMX519 16MP or 64MP
@@ -316,6 +313,8 @@ def setmaxvformat():
         max_vformat = max_vfs[0]
     if Pi_Cam == 4 and codec == 0:
         max_vformat = 12
+    if Pi < 5 and codec == 4: # limit mp4 to 1920x1080 for < Pi5
+        max_vformat = 10
     
 def Camera_Version():
     # Check for Pi Camera version
@@ -2651,13 +2650,13 @@ while True:
                         if vpreview == 0:
                             datastr += " -n "
                         datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
-                        if zoom > 0:
+                        if Pi_Cam == 4 and zoom == 3:
+                            datastr += " --mode 4056:3040:10 --width 1920 --height 1080"
+                        elif zoom > 0:
                             if igw/igh > 1.5:
                                 datastr += " --width " + str(preview_width) + " --height " + str(int(preview_height * .75))
                             else:
                                 datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
-                        #elif Pi_Cam == 15 and vwidth == 1280:
-                        #    datastr += " --mode 1280:720:10"
                         elif Pi_Cam == 4 and vwidth == 2028:
                             datastr += " --mode 2028:1520:12"
                         elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
@@ -2721,10 +2720,11 @@ while True:
                             datastr += " --hdr " + v3_hdrs[v3_hdr]
                         datastr += " -p 0,0," + str(preview_width) + "," + str(preview_height)
                         if zoom > 1 and zoom < 6:
-                            zws = int(igw * zfs[zoom])
-                            zhs = int(igh * zfs[zoom])
-                            zxo = ((igw-zws)/2)/igw
-                            zyo = ((igh-zhs)/2)/igh
+                            zws = (igw * zfs[zoom])
+                            zhs = (igh * zfs[zoom])
+                            zxo = ((igw-int(zws))/2)/igw
+                            zyo = ((igh-int(zhs))/2)/igh
+                            print(zws/igw,zhs/igh)
                             datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                         elif zoom == 5:
                             zxo = ((igw/2)-(preview_width/2))/igw
@@ -2842,6 +2842,8 @@ while True:
                         datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
                         if zoom > 0:
                             datastr += " --width " + str(preview_width) + " --height " + str(preview_height)
+                        if Pi_Cam == 4 and zoom == 3:
+                            datastr += " --mode 4056:3040:10 --width 1920 --height 1080"
                         elif Pi_Cam == 4 and vwidth == 2028:
                             datastr += " --mode 2028:1520:12"
                         elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
@@ -3393,7 +3395,9 @@ while True:
                                 else:
                                     datastr = "rpicam-raw"
                                 datastr += " --camera " + str(camera) + " -n -t " + str(tduration*1000) + " --segment 1 -o " + fname  
-                            if zoom > 0:
+                            if Pi_Cam == 4 and zoom == 3:
+                                datastr += " --mode 4056:3040:10 --width 1920 --height 1080"
+                            elif zoom > 0:
                                 if igw/igh > 1.5:
                                     datastr += " --width " + str(int(preview_width)) + " --height " + str(int(preview_height * .75))
                                 else:
@@ -3966,8 +3970,6 @@ while True:
                             v3_f_mode = 2 # continuous focus
                         else:
                             v3_f_mode = 0
-                        #fcount = 0
-                        #fcount2 = 0
                         zoom = 0
                         fxx = 0
                         fxy = 0
