@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 1.00 
+version = 1.01 
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -177,7 +177,7 @@ x_sens       = [   0,    2592,    3280,    4608,    4056,      4656,     9152,  
 y_sens       = [   0,    1944,    2464,    2592,    3040,      3496,     6944,    1088,      6944,    1080,    2180,    2180,    2824,    3648,    3040,     800,    2192]
 max_gains    = [  64,     255,      40,      64,      88,        64,       64,      64,        64,      64,      64,      64,      64,      64,      64,      64,      64]
 max_shutters = [ 100,       1,      11,     112,     650,       200,      435,      15,       435,     100,     670,     100,     100,     100,     100,     100,     100]
-max_vfs      = [  10,      15,      16,      22,      21,        15,       23,       7,        23,      10,      18,      18,      19,      24,      21,       3,      19]
+max_vfs      = [  10,      15,      16,      23,      22,        15,       24,       7,        24,      10,      19,      19,      20,      25,      21,       3,      20]
 modes        = ['manual','normal','sport']
 extns        = ['jpg','png','bmp','rgb','yuv420','raw']
 extns2       = ['jpg','png','bmp','data','data','dng']
@@ -191,7 +191,7 @@ v16_max_fps  = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  
 zwidths      = [320,640,800,1280,2592,3280,4056,4656,9152]
 zheights     = [240,480,600, 960,1944,2464,3040,3496,6944]
 zfs          = [1,1,0.666666,0.473372781,0.333333,0.25,0.2]
-crop4_f      = [0,0,  18,  15,  10,   3,   0]
+crop4_f      = [0,22,18,15,10,3,0]
 shutters     = [-4000,-2000,-1600,-1250,-1000,-800,-640,-500,-400,-320,-288,-250,-240,-200,-160,-144,-125,-120,-100,-96,-80,-60,-50,-48,-40,-30,-25,
                 -20,-15,-13,-10,-8,-6,-5,-4,-3,0.4,0.5,0.6,0.8,1,1.1,1.2,2,3,4,5,6,7,8,9,10,11,15,20,25,30,40,50,60,75,100,112,120,150,200,220,230,
                 239,435,500,600,650,660,670]
@@ -3406,6 +3406,14 @@ while True:
                                 vwidth  = vwidths[vformat]
                                 vheight = vheights[vformat]
                                 datastr += " --mode 4056:2160:10  --width " + str(vwidth) + " --height " + str(vheight)
+                            elif Pi_Cam == 4 and zoom == 1:  # HQ FULL sensor
+                                vformat = crop4_f[zoom]
+                                vwidth  = vwidths[vformat]
+                                vheight = vheights[vformat]
+                                if Pi == 5:
+                                    datastr += " --mode 4056:3040:12:U  --width 4056 --height 3040"
+                                else:
+                                    datastr += " --mode 4056:3040:12  --width 4056 --height 3040"
                             elif zoom > 0:
                                 if igw/igh > 1.5:
                                     datastr += " --width " + str(int(preview_width)) + " --height " + str(int(preview_height * .75))
