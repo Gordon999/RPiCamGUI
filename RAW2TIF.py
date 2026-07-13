@@ -15,7 +15,7 @@ print("PRESS ESC to EXIT !! (or you may need to REBOOT !!")
 
 
 # check for RAW files
-files = glob.glob('/home/gt64tr/Pictures/*.raw')
+files = glob.glob('/home/USER/Pictures/*.raw')
 valid = 0
 if len(files) > 1:
     # load an image
