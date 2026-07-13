@@ -11,11 +11,10 @@ import datetime
 
 # v1.00
 
-print("PRESS ESC to EXIT !! (or you may need to REBOOT !!")
-
-
 # check for RAW files
-files = glob.glob('/home/USER/Pictures/*.raw')
+Home_Files  = []
+Home_Files.append(os.getlogin())
+files = glob.glob('/home/' + Home_Files[0] + '/Pictures/*.raw')
 valid = 0
 if len(files) > 1:
     # load an image
