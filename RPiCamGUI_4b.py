@@ -35,7 +35,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 1.02 
+version = 1.03
 
 # set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
 alt_dis = 0
@@ -3411,17 +3411,17 @@ while True:
                                 vwidth  = vwidths[vformat]
                                 vheight = vheights[vformat]
                                 if Pi == 5:
-                                    datastr += " --mode 4056:3040:12:U  --width 4056 --height 3040"
+                                    datastr += " --mode 4056:3040:12:U --width 4056 --height 3040"
                                 else:
-                                    datastr += " --mode 4056:3040:12  --width 4056 --height 3040"
+                                    datastr += " --mode 4056:3040:8 --width 4056 --height 3040"
                             elif Pi_Cam == 7 and zoom == 1:  # GS FULL sensor
                                 vformat = crop4_f[zoom]
                                 vwidth  = vwidths[vformat]
                                 vheight = vheights[vformat]
                                 if Pi == 5:
-                                    datastr += " --mode 1456:1088:12:U  --width 1456 --height 1088"
+                                    datastr += " --mode 1456:1088:12:U  --width 4056 --height 3040"
                                 else:
-                                    datastr += " --mode 1456:1088:12  --width 1456 --height 1088"
+                                    datastr += " --mode 1456:1088:8  --width 4056 --height 3040"
                             elif zoom > 0:
                                 if igw/igh > 1.5:
                                     datastr += " --width " + str(int(preview_width)) + " --height " + str(int(preview_height * .75))
