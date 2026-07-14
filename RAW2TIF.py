@@ -9,7 +9,7 @@ import signal
 import sys
 import datetime
 
-# v1.05
+# v1.07
 
 #check Pi model.
 Pi = -1
@@ -32,6 +32,7 @@ valid = 0
 
 if len(files) > 1:
     # load an image
+    # ignore files[0] it may not be complete
     f = open(files[1],'rb')
     if Pi == 5:
         image = np.fromfile(f,dtype=np.uint16,count=-1)
@@ -58,6 +59,14 @@ if len(files) > 1:
     elif image.size == 5038848:  #Piv1 2592x1944 
         cols = 2592
         rows = 1944
+        valid = 1
+    elif image.size == 64218112: #Arducam OWLsight 9248x6944 
+        cols = 9248
+        rows = 6944
+        valid = 1
+    elif image.size == 8487424:  #Waveshare imx415 3864x2192 
+        cols = 3872
+        rows = 2192
         valid = 1
     else:
         valid = 0
