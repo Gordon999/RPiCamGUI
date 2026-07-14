@@ -9,7 +9,19 @@ import signal
 import sys
 import datetime
 
-# v1.02
+# v1.03
+
+#check Pi model.
+Pi = -1
+model = os.popen("cat /proc/device-tree/model").read()
+mod = model.split(" ")
+if mod[2] == "Compute":
+    Pi = int(mod[4][0:1])
+elif mod[2] == "Zero":
+    Pi = 0
+else:
+    Pi = int(mod[2])
+print("Pi:",Pi)
 
 # check for RAW files
 Home_Files  = []
@@ -19,14 +31,17 @@ valid = 0
 if len(files) > 1:
     # load an image
     f = open(files[1],'rb')
-    image = np.fromfile(f,dtype=np.uint16,count=-1)
+    if Pi == 5:
+        image = np.fromfile(f,dtype=np.uint16,count=-1)
+    else:
+        image = np.fromfile(f,dtype=np.uint8,count=-1)
     f.close()
     # check size
-    if image.size == 12354560: #PiHQ 4056x3040 Pi5 or Pi4
+    if image.size == 12354560: #PiHQ 4056x3040 
         cols = 4064
         rows = 3040
         valid = 1
-    elif image.size == 1601536: #PiGS 1456x1088 Pi5 or Pi4
+    elif image.size == 1601536: #PiGS 1456x1088 
         cols = 1472
         rows = 1088
         valid = 1
