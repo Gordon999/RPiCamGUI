@@ -10,6 +10,7 @@ import sys
 import datetime
 
 # v1.07
+# Works with RAW files produced by RPiCamGUI.py, using Timelapse Capture, Zoom = 1, Interval = 00:00:00, v_format = raw.
 
 #check Pi model.
 Pi = -1
