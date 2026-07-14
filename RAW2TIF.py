@@ -9,7 +9,7 @@ import signal
 import sys
 import datetime
 
-# v1.01
+# v1.02
 
 # check for RAW files
 Home_Files  = []
@@ -22,11 +22,11 @@ if len(files) > 1:
     image = np.fromfile(f,dtype=np.uint16,count=-1)
     f.close()
     # check size
-    if image.size == 12354560: #PiHQ 4056x3040 Pi5
+    if image.size == 12354560: #PiHQ 4056x3040 Pi5 or Pi4
         cols = 4064
         rows = 3040
         valid = 1
-    elif image.size == 1601536: #PiGS 1456x1088 Pi5
+    elif image.size == 1601536: #PiGS 1456x1088 Pi5 or Pi4
         cols = 1472
         rows = 1088
         valid = 1
