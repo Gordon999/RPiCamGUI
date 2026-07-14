@@ -3419,9 +3419,9 @@ while True:
                                 vwidth  = vwidths[vformat]
                                 vheight = vheights[vformat]
                                 if Pi == 5:
-                                    datastr += " --mode 1456:1088:12:U  --width 4056 --height 3040"
+                                    datastr += " --mode 1456:1088:12:U  --width 1456 --height 1088"
                                 else:
-                                    datastr += " --mode 1456:1088:8  --width 4056 --height 3040"
+                                    datastr += " --mode 1456:1088:8  --width 1456 --height 1088"
                             elif zoom > 0:
                                 if igw/igh > 1.5:
                                     datastr += " --width " + str(int(preview_width)) + " --height " + str(int(preview_height * .75))
