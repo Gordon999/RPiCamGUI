@@ -9,7 +9,7 @@ import signal
 import sys
 import datetime
 
-# v1.03
+# v1.05
 
 #check Pi model.
 Pi = -1
@@ -27,7 +27,9 @@ print("Pi:",Pi)
 Home_Files  = []
 Home_Files.append(os.getlogin())
 files = glob.glob('/home/' + Home_Files[0] + '/Pictures/*.raw')
+files = sorted(files,reverse=True)
 valid = 0
+
 if len(files) > 1:
     # load an image
     f = open(files[1],'rb')
@@ -37,13 +39,25 @@ if len(files) > 1:
         image = np.fromfile(f,dtype=np.uint8,count=-1)
     f.close()
     # check size
-    if image.size == 12354560: #PiHQ 4056x3040 
+    if image.size == 12354560:   #PiHQ or imx500 4056x3040 
         cols = 4064
         rows = 3040
         valid = 1
-    elif image.size == 1601536: #PiGS 1456x1088 
+    elif image.size == 1601536:  #PiGS 1456x1088 
         cols = 1472
         rows = 1088
+        valid = 1
+    elif image.size == 11943936: #Piv3 4608x2592 
+        cols = 4608
+        rows = 2592
+        valid = 1
+    elif image.size == 8121344:  #Piv2 3280x2464 
+        cols = 3296
+        rows = 2464
+        valid = 1
+    elif image.size == 5038848:  #Piv1 2592x1944 
+        cols = 2592
+        rows = 1944
         valid = 1
     else:
         valid = 0
@@ -79,11 +93,9 @@ if len(files) > 1:
         R2 = cv2.resize(Red, dsize=(640,480), interpolation=cv2.INTER_CUBIC)
         B2 = cv2.resize(Blue, dsize=(640,480), interpolation=cv2.INTER_CUBIC)
         G2 = cv2.resize(Green, dsize=(640,480), interpolation=cv2.INTER_CUBIC)
-        RGB = cv2.resize(res, dsize=(640,480), interpolation=cv2.INTER_CUBIC)
         cv2.imshow('RED',R2)
         cv2.imshow('BLUE',B2)
         cv2.imshow('GREEN',G2)
-        cv2.imshow('RGB', RGB)
             
         # save outputs as TIFs
         now = datetime.datetime.now()
@@ -98,3 +110,5 @@ if len(files) > 1:
         time.sleep(10)
         cv2.destroyAllWindows()
         sys.exit()
+else:
+	print("No RAW files found...")
