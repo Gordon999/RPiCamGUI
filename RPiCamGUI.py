@@ -29,16 +29,16 @@ import subprocess
 import signal
 import cv2
 import glob
+import shutil
 from datetime import timedelta
 import numpy as np
 import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.83
+version = 5.84
 
-# set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
-alt_dis = 0
+PiHQ_ON     = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
 # streaming parameters
 stream_type = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -57,6 +57,9 @@ FUP         = 21  # Pi v3 camera Focus UP GPIO button
 FDN         = 16  # Pi v3 camera Focus DN GPIO button
 sw_ir       = 26  # Waveshare IR Filter switch GPIO
 STR         = 12  # external GPIO trigger for capture
+
+# set alt_dis = 0 for normal, 1 for a square display, 2 for a 16x9 camera ONLY !! 
+alt_dis     = 0
 
 # set default values (see limits below)
 camera      = 0    # choose camera to use, usually 0 unless using a Pi5 or multiswitcher
@@ -97,6 +100,8 @@ timet       = 5000 # -t setting when capturing STILLS
 rotate      = 0    # rotate preview & stills ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
 vflip       = 0    # set to 1 to vertically flip images
 hflip       = 0    # set tp 1 tp horizontally flip images
+vpreview    = 1    # show video preview during recording
+save2ram    = 0    # save videos to RAM, and then copy to SD card /Pictures
 # NOTE if you change any of the above defaults you need to delete the con_file and restart.
 
 # default directories and files
@@ -112,14 +117,13 @@ vid_dir     = "/home/" + Home_Files[0]+ "/" + vid + "/"
 config_file = "/home/" + Home_Files[0]+ "/" + con_file
 
 # inital parameters
-prev_fps    = 10 
+prev_fps    = 20 
 focus_fps   = 25
 focus       = 700
 foc_man     = 0
 focus_mode  = 0
 v3_focus    = 480
 v3_hdr      = 0
-vpreview    = 1
 scientific  = 0
 scientif    = 0
 zx          = int(pre_width/2)
@@ -154,7 +158,7 @@ else:
 
 # set button sizes
 bw = int(pre_width/8)
-bh = int(pre_height/17)
+bh = int(pre_height/18)
 # set font sizes
 ft = int(bh/3) + 2
 fv = int(bh/3) + 2
@@ -184,15 +188,16 @@ extns2       = ['jpg','png','bmp','data','data','dng']
 vID          = [  0,  1,  2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15, 16,   17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28]  
 vwidths      = [640,720,800,1280,1280,1296,1332,1456,1536,1640,1920,1928,2028,2028,2304,2560,2592,3280,3840,3856,3864,4032,4056,4608,4656,5472,8000,9152,9248]
 vheights     = [480,540,600, 720, 960, 972, 990,1088, 864,1232,1080,1090,1080,1520,1296,1440,1944,2464,2160,2180,2192,3024,3040,2592,3496,3648,6000,6944,6944]
-v_max_fps    = [200,120, 40,  40,  40,  30, 120,  30,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  20,  60,  20,  10,  20,  20,  20,  20,  20,  20]
+v_max_fps    = [200,120, 40,  40,  40,  30, 120,  30,  30,  30,  30,  30,  50,  40,  25,  20,  20,  20,  30,  60,  20,  10,  30,  20,  20,  20,  20,  20]
 v3_max_fps   = [200,120,125, 120, 120, 120, 120, 120, 120, 100, 100,  50, 100,  56,  56,  20,  20,  20,  20,  30,  20,  15,  20,  20,  20,  20,  20,  20]
 v9_max_fps   = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60]
 v15_max_fps  = [240,200,200, 130]
-v16_max_fps  = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  20,  20,  20,  20,  20]
+v16_max_fps  = [ 60, 60, 60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  60,  20,  20,  20,  20,  20,  20]
 zwidths      = [320,640,800,1280,2592,3280,4056,4656,9152]
 zheights     = [240,480,600, 960,1944,2464,3040,3496,6944]
 zfs          = [1,1,0.666666,0.473372781,0.333333,0.25,0.2]
-crop4_f      = [0,22,18,15,10,3,0]
+crop4_f      = [ 0,22,  18,  15,   10,   3,   0]
+crop4_t      = ["","","4k","2k","FHD","HD","SD"]
 shutters     = [-4000,-2000,-1600,-1250,-1000,-800,-640,-500,-400,-320,-288,-250,-240,-200,-160,-144,-125,-120,-100,-96,-80,-60,-50,-48,-40,-30,-25,
                 -20,-15,-13,-10,-8,-6,-5,-4,-3,0.4,0.5,0.6,0.8,1,1.1,1.2,2,3,4,5,6,7,8,9,10,11,15,20,25,30,40,50,60,75,100,112,120,150,200,220,230,
                 239,435,500,600,650,660,670]
@@ -807,7 +812,7 @@ def preview():
     else:
         datastr = "rpicam-vid"
     datastr += " --camera " + str(camera) + " -n --codec mjpeg -t 0 --segment 1"
-    if Pi_Cam == 4 and zoom > 1:  # HQ cropped
+    if Pi_Cam == 4 and zoom > 1 and PiHQ_ON == 1:  # HQ cropped
         vformat = crop4_f[zoom]
         vwidth  = vwidths[vformat]
         vheight = vheights[vformat]
@@ -830,7 +835,7 @@ def preview():
         datastr += " --width 2048 --height 1080 -o /run/shm/test%04d.jpg "
     elif Pi_Cam == 13: # imx283
         datastr += " --width 1920 --height 1080 -o /run/shm/test%04d.jpg "
-    elif Pi_Cam == 14: # imx500
+    elif Pi_Cam == 14 or Pi_Cam == 4: # imx500 or Pi HQ
         datastr += " --width 2028 --height 1520 -o /run/shm/test%04d.jpg "
     elif Pi_Cam == 15: # ov9281
         datastr += " --width 1280 --height  800 -o /run/shm/test%04d.jpg "
@@ -934,6 +939,8 @@ button(0,14,0,5)
 button(0,13,6,4)
 button(1,16,0,5)
 button(0,16,0,5)
+button(1,17,0,5)
+button(0,17,0,5)
 
 def Menu():
   global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,pre_width,pre_height,ft,fv,focus,fxz,v3_hdr,v3_hdrs
@@ -1041,6 +1048,16 @@ def Menu():
   text(0,16,3,1,1,str(vflip),fv,7)
   text(1,16,2,0,1,"Horiz Flip",ft,7)
   text(1,16,3,1,1,str(hflip),fv,7)
+  text(0,17,2,0,1,"V_Preview",ft,7)
+  if vpreview == 0:
+      text(0,17,3,1,1,"OFF",fv,7)
+  else:
+	  text(0,17,3,1,1,"ON",fv,7)
+  text(1,17,2,0,1,"Video to RAM",ft,7)
+  if save2ram == 0:
+      text(1,17,3,1,1,"OFF",fv,7)
+  else:
+	  text(1,17,3,1,1,"ON",fv,7)
 
 def Menu2():
     global mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation
@@ -1368,17 +1385,15 @@ while True:
                 rav = 0
                 gav = 0
                 bav = 0
-                for q in range(0,len(gray2)):
-                    if (histogram == 4 or histogram == 5):
-                        lume[int(gray2[q])] +=1
-                    if (histogram == 1 or histogram == 5):
-                        rede[int(red2[q])] +=1
-                    if (histogram == 2 or histogram == 5):
-                        greene[int(green2[q])] +=1
-                    if (histogram == 3 or histogram == 5):
-                        bluee[int(blue2[q])] +=1
-                for q in range(0,len(gray4)):
-                    lume4[int(gray4[q])] +=1
+                # make RGBL graphs
+                for q in range(0,255):
+                    lume[q] = np.sum(gray2 == q)
+                    rede[q] = np.sum(red2 == q)
+                    greene[q] = np.sum(green2 == q)
+                    bluee[q] = np.sum(blue2 == q)
+                #make noise graph
+                for q in range(0,255):
+                    lume4[q] = np.sum(gray4 == q)
                 redo = rede[0]
                 greo = greene[0]
                 bluo = bluee[0]
@@ -2601,11 +2616,26 @@ while True:
                 text(0,16,3,1,1,str(vflip),fv,7)
                 restart = 1
                 time.sleep(.25)
+                
+               
+            if button_row == 18:
+                # VIDEO PREVIEW
+                vpreview +=1
+                if vpreview > 1:
+                    vpreview = 0
+                    text(0,17,3,1,1,"OFF",fv,7)
+                else:
+                    text(0,17,3,1,1,"ON",fv,7)
+                #restart = 1
+                time.sleep(.25)
                
           elif button_column == 2:
             if button_row == 1 and event.button != 3:
                         # TAKE VIDEO
                         os.killpg(p.pid, signal.SIGTERM)
+                        # get RAM free space
+                        st = os.statvfs("/run/shm/")
+                        freeram = (st.f_bavail * st.f_frsize)/1100000
                         button(1,0,1,3)
                         if Pi == 5:
                             text(1,0,3,0,1,"Video",ft,0)
@@ -2625,7 +2655,10 @@ while True:
                         text(0,0,6,2,1,"Please Wait, taking video ...",int(fv*1.7),1)
                         now = datetime.datetime.now()
                         timestamp = now.strftime("%y%m%d%H%M%S")
-                        vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
+                        if save2ram == 1:
+                            vname =  "/run/shm/" + str(timestamp) + "." + codecs2[codec]
+                        else:
+                            vname =  vid_dir + str(timestamp) + "." + codecs2[codec]
                         if codecs2[codec] != 'raw':
                             if lver < 12:
                                 datastr = "libcamera-vid"
@@ -2646,7 +2679,6 @@ while True:
                                 datastr += " --level " + str(prof[1])
                             elif codecs[codec] == 'mp4' and Pi != 5:
                                 datastr += " --codec libav"
-                                
                         else:
                             if lver < 12:
                                 datastr = "libcamera-raw"
@@ -2656,17 +2688,17 @@ while True:
                         if vpreview == 0:
                             datastr += " -n "
                         datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
-                        if Pi_Cam == 4 and zoom > 1:  # HQ cropped
+                        if Pi_Cam == 4 and zoom > 1 and PiHQ_ON == 1:  # HQ cropped
                             vformat = crop4_f[zoom]
                             vwidth  = vwidths[vformat]
                             vheight = vheights[vformat]
                             datastr += " --mode 4056:2160:10  --width " + str(vwidth) + " --height " + str(vheight)
-                        elif zoom > 0:
+                        elif zoom > 1:
                             if igw/igh > 1.5:
                                 datastr += " --width " + str(pre_width) + " --height " + str(int(pre_height * .75))
                             else:
                                 datastr += " --width " + str(pre_width) + " --height " + str(pre_height)
-                        elif Pi_Cam == 4 and vwidth == 2028:
+                        elif Pi_Cam == 4 and vwidth == 2028 and vheight == 1520:
                             datastr += " --mode 2028:1520:12"
                         elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
                             datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
@@ -2728,35 +2760,40 @@ while True:
                         if Pi_Cam == 3 or Pi == 5:
                             datastr += " --hdr " + v3_hdrs[v3_hdr]
                         datastr += " -p 0,0," + str(pre_width) + "," + str(pre_height)
-                        if zoom > 1 and Pi_Cam != 4:
-                            zws = (igw * zfs[zoom])
-                            zhs = (igh * zfs[zoom])
-                            zxo = ((igw-int(zws))/2)/igw
-                            zyo = ((igh-int(zhs))/2)/igh
-                            print(zws/igw,zhs/igh)
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
-                        elif zoom > 1 and Pi_Cam == 4:
+                        if zoom > 1 and Pi_Cam == 4 and PiHQ_ON == 1:
                             zws = vwidths[vformat]
                             zhs = vheights[vformat]
                             zxo = ((igw-int(zws))/2)/igw
                             zyo = ((igh-int(zhs))/2)/igh
-                            print(zws/igw,zhs/igh)
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
+                        elif zoom > 1:
+                            zws = (igw * zfs[zoom])
+                            zhs = (igh * zfs[zoom])
+                            zxo = ((igw-int(zws))/2)/igw
+                            zyo = ((igh-int(zhs))/2)/igh
                             datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                         if show_cmds == 1:
                             print (datastr)
-                        if codecs[codec] == 'mp4':
-                            os.system(datastr)
-                        else:
-                          p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
-                          start_video = time.monotonic()
-                          stop = 0
-                          while (time.monotonic() - start_video < vlen or vlen == 0) and stop == 0:
+                        #if codecs[codec] == 'mp4':
+                        #    os.system(datastr)
+                        #else:
+                        p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
+                        start_video = time.monotonic()
+                        stop = 0
+                        while (time.monotonic() - start_video < vlen or vlen == 0) and stop == 0:
                             if vlen != 0:
                                 vlength = int(vlen - (time.monotonic()-start_video))
                             else:
                                 vlength = int(time.monotonic()-start_video)
                             td = timedelta(seconds=vlength)
                             text(1,1,1,1,1,str(td),fv,11)
+                            if save2ram == 1:
+                                st = os.statvfs("/run/shm/")
+                                freeram = (st.f_bavail * st.f_frsize)/1100000
+                                # stop if low RAM whilst recording Video to RAM
+                                if freeram < 100:
+                                    os.killpg(p.pid, signal.SIGTERM)
+                                    stop = 1
                             for event in pygame.event.get():
                                 if (event.type == MOUSEBUTTONUP):
                                     mousex, mousey = event.pos
@@ -2803,6 +2840,8 @@ while True:
                             text(1,9,1,1,1,"T'lapse  2x2",ft,7)
                         else:
                             text(1,9,1,1,1,"Timelapse",ft,7)
+                        if save2ram == 1:
+                            shutil.move("/run/shm/" + str(timestamp) + "." + codecs2[codec],vid_dir)
                         restart = 2
                                        
             elif button_row == 1 and event.button == 3:
@@ -2904,19 +2943,17 @@ while True:
                         if Pi_Cam == 3 or Pi == 5:
                             datastr += " --hdr " + v3_hdrs[v3_hdr]
                         datastr += " -p 0,0," + str(pre_width) + "," + str(pre_height)
-                        if zoom > 1 and Pi_Cam != 4:
-                            zws = (igw * zfs[zoom])
-                            zhs = (igh * zfs[zoom])
-                            zxo = ((igw-int(zws))/2)/igw
-                            zyo = ((igh-int(zhs))/2)/igh
-                            print(zws/igw,zhs/igh)
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
-                        elif zoom > 1 and Pi_Cam == 4:
+                        if zoom > 1 and Pi_Cam == 4 and PiHQ_ON == 1:
                             zws = vwidths[vformat]
                             zhs = vheights[vformat]
                             zxo = ((igw-int(zws))/2)/igw
                             zyo = ((igh-int(zhs))/2)/igh
-                            print(zws/igw,zhs/igh)
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
+                        elif zoom > 1:
+                            zws = (igw * zfs[zoom])
+                            zhs = (igh * zfs[zoom])
+                            zxo = ((igw-int(zws))/2)/igw
+                            zyo = ((igh-int(zhs))/2)/igh
                             datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                         if stream_type == 2:
                             data = "#rtp{sdp=rtsp://:" + str(stream_port) + "/stream1}"
@@ -4111,7 +4148,7 @@ while True:
                         x += 1
                     if vw == 0:
                         text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
-                    if vw == 1:
+                    else:
                         text(1,3,1,1,1,str(vwidth) + "x" + str(vheight),fv,11)
                     
                 else:
@@ -4122,7 +4159,7 @@ while True:
                          vformat = crop4_f[zoom]
                          vwidth  = vwidths[vformat]
                          vheight = vheights[vformat]
-                         text(1,3,3,1,1,str(vwidth) + "x" + str(vheight),fv,11)
+                         text(1,3,3,1,1,str(vwidth) + "x" + str(vheight) + " " + crop4_t[zoom],fv,11)
                     elif igw/igh > 1.5:
                         text(1,3,3,1,1,str(pre_width) + "x" + str(int(pre_height * .75)),fv,11)
                     else:
@@ -4338,6 +4375,17 @@ while True:
                     hflip = 0
                 text(1,16,3,1,1,str(hflip),fv,7)
                 restart = 1
+                time.sleep(.25)
+                
+            if button_row == 18:
+                # SAVE VIDEO TO RAM
+                save2ram +=1
+                if save2ram > 1:
+                    save2ram = 0
+                    text(1,17,3,1,1,"OFF",fv,7)
+                else:
+                    text(1,17,3,1,1,"ON",fv,7)
+                #restart = 1
                 time.sleep(.25)
                 
             elif button_row == 14:
