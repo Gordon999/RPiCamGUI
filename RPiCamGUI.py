@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.84
+version = 5.85
 
 PiHQ_ON     = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -913,7 +913,6 @@ def preview():
         zxo = ((igw-zws)/2)/igw
         zyo = ((igh-zhs)/2)/igh
         datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
-        
     p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
     if show_cmds == 1:
         print(datastr)
@@ -1366,34 +1365,28 @@ while True:
             gray3 = cv2.cvtColor(crop3,cv2.COLOR_RGB2GRAY)
             if zoom > 0 and histogram > 0:
                 if (histogram == 1 or histogram == 5):
-                    red1   = crop2[:,:,0]
-                    red2   = red1.reshape(histarea * histarea * 4,1)
+                    red2   = crop2[:,:,0]
                     rede   = [0] * 256
                 if (histogram == 2 or histogram == 5):
-                    green1 = crop2[:,:,1]
-                    green2 = green1.reshape(histarea * histarea * 4,1)
+                    green2 = crop2[:,:,1]
                     greene = [0] * 256
                 if (histogram == 3 or histogram == 5):
-                    blue1  = crop2[:,:,2]
-                    blue2  = blue1.reshape(histarea * histarea * 4,1)
+                    blue2  = crop2[:,:,2]
                     bluee  = [0] * 256
-
-                gray2  = gray.reshape(histarea * histarea * 4,1)
                 lume   = [0] * 256
-                gray4  = gray3.reshape(ns * ns * 4,1)
-                lume4   = [0] * 256
-                rav = 0
-                gav = 0
-                bav = 0
-                # make RGBL graphs
+                lume4  = [0] * 256
+                rav    = 0
+                gav    = 0
+                bav    = 0
                 for q in range(0,255):
-                    lume[q] = np.sum(gray2 == q)
-                    rede[q] = np.sum(red2 == q)
+					# make RGBL graphs
+                    lume[q]   = np.sum(gray == q)
+                    rede[q]   = np.sum(red2 == q)
                     greene[q] = np.sum(green2 == q)
-                    bluee[q] = np.sum(blue2 == q)
-                #make noise graph
-                for q in range(0,255):
-                    lume4[q] = np.sum(gray4 == q)
+                    bluee[q]  = np.sum(blue2 == q)
+                    #make noise graph
+                    lume4[q] = np.sum(gray3 == q)
+                # calculate RGB values
                 redo = rede[0]
                 greo = greene[0]
                 bluo = bluee[0]
@@ -3960,7 +3953,7 @@ while True:
                                 vw = 1
                         x += 1
                     # FOCUS button NON AF camera
-                    if (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9  or Pi_Cam == 16 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 0:
+                    if (Pi_Cam != 3 and Pi_Cam != 5 and Pi_Cam != 6 and Pi_Cam != 8)  and focus_mode == 0:
                         zoom = 4
                         focus_mode = 1
                         button(1,7,1,9)
@@ -3979,7 +3972,7 @@ while True:
                         time.sleep(0.25)
                         restart = 1
                     # CANCEL FOCUS NON AF camera
-                    elif (Pi_Cam < 3 or Pi_Cam == 4 or Pi_Cam == 7 or Pi_Cam == 9 or Pi_Cam == 16 or (Pi_Cam ==3 and v3_af == 0)) and focus_mode == 1:
+                    elif (Pi_Cam != 3 and Pi_Cam != 5 and Pi_Cam != 6 and Pi_Cam != 8) and focus_mode == 1:
                         zoom = 0
                         focus_mode = 0
                         button(1,7,0,9)
