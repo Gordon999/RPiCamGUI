@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.85
+version = 5.86
 
 PiHQ_ON     = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -141,7 +141,7 @@ led_sw_ir   = LED(sw_ir)
 str_btn     = 0
 lo_res      = 1
 lver        = ""
-show_cmds   = 0
+show_cmds   = 1
 v3_af       = 1
 v5_af       = 1
 sam         = 50
@@ -943,11 +943,11 @@ button(0,17,0,5)
 
 def Menu():
   global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,pre_width,pre_height,ft,fv,focus,fxz,v3_hdr,v3_hdrs
-  if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
+  if Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4:
     text(0,0,1,1,1,"STILL    2x2",ft,7)
   else:
     text(0,0,1,1,1,"Still ",ft,7)
-  if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
+  if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4) and tinterval > 0:
     text(1,9,1,1,1,"T'lapse  2x2",ft,7)
   else:
     text(1,9,1,1,1,"Timelapse",ft,7)
@@ -1830,14 +1830,14 @@ while True:
                         if os.path.exists("PiLibtext.txt"):
                              os.remove("PiLibtext.txt")
                         text(0,0,2,0,1,"CAPTURING",ft,0)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 1:
+                        if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4) and button_pos == 1:
                             text(0,0,2,1,1,"STILL    2x2",ft,0)
                         else:
                             text(0,0,2,1,1,"STILL",ft,0)
                         text(1,0,0,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,0,1,1,"Video",ft,7)
                         text(1,9,0,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
+                        if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4) and tinterval > 0:
                             text(1,9,0,1,1,"T'lapse  2x2",ft,7)
                         else:
                             text(1,9,0,1,1,"Timelapse",ft,7)
@@ -1910,6 +1910,9 @@ while True:
                             vwidth  = vwidths[vformat]
                             vheight = vheights[vformat]
                             datastr += " --mode 4056:2160:10  --width " + str(vwidth) + " --height " + str(vheight)
+                        elif Pi_Cam == 4 and button_pos == 1: # HQ 2x2 binned
+                            datastr += " --mode 2028:1520:12  --width 2028 --height 1520"
+						
                         if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 1:
                             datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                         elif Pi_Cam == 6 or Pi_Cam == 8:
@@ -2001,12 +2004,12 @@ while True:
                         text(0,0,1,0,1,"CAPTURE",ft,7)
                         text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,1,1,1,"Video",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
+                        if Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4:
                             text(0,0,1,1,1,"STILL    2x2",ft,7)
                         else:
                             text(0,0,1,1,1,"Still ",ft,7)
                         text(1,9,1,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
+                        if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4) and tinterval > 0:
                             text(1,9,1,1,1,"T'lapse  2x2",ft,7)
                         else:
                             text(1,9,1,1,1,"Timelapse",ft,7)
@@ -3019,7 +3022,7 @@ while True:
                         text(0,0,1,0,1,"CAPTURE",ft,7)
                         text(1,0,0,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,0,1,1,"Video",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
+                        if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4):
                             text(0,0,1,1,1,"STILL    2x2",ft,7)
                         else:
                             text(0,0,1,1,1,"Still ",ft,7)
@@ -3095,6 +3098,8 @@ while True:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if Pi_Cam == 3 or Pi == 5:
                                 datastr += " --hdr " + v3_hdrs[v3_hdr]
+                            if Pi_Cam == 4 and button_pos == 3: # HQ 2x2 binned
+                                datastr += " --mode 2028:1520:12  --width 2028 --height 1520"
                             if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
                                 datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                             elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
@@ -3218,7 +3223,7 @@ while True:
                                             else:
                                                 os.system('pkill -SIGUSR1 rpicam-still')
                                             text(0,0,3,0,1,"CAPTURE",ft,7)
-                                            if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
+                                            if Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4:
                                                 text(0,0,3,1,1,"STILL    2x2",ft,7)
                                             else:
                                                 text(0,0,3,1,1,"Still ",ft,7)
@@ -3304,6 +3309,8 @@ while True:
                                         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                                     if Pi_Cam == 3:
                                         datastr += " --hdr " + v3_hdrs[v3_hdr]
+                                    if Pi_Cam == 4 and button_pos == 3: # HQ 2x2 binned
+                                        datastr += " --mode 2028:1520:12  --width 2028 --height 1520"
                                     if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
                                         datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                                     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
@@ -4218,7 +4225,7 @@ while True:
                     else:
                         tinterval +=1
                         tinterval = min(tinterval,pmax)
-                if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
+                if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4) and tinterval > 0:
                     text(1,9,1,1,1,"T'lapse  2x2",ft,7)
                 else:
                     text(1,9,1,1,1,"Timelapse",ft,7)
