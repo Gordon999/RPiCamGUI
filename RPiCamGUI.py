@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.86
+version = 5.87
 
 PiHQ_ON     = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -107,7 +107,7 @@ save2ram    = 0    # save videos to RAM, and then copy to SD card /Pictures
 # default directories and files
 pic         = "Pictures"
 vid         = "Videos"
-con_file    = "PiLCConfig556.txt"
+con_file    = "PiLCConfig0.txt"
 
 # setup directories
 Home_Files  = []
@@ -150,6 +150,7 @@ ravs        = [0] * sam
 gavs        = [0] * sam
 bavs        = [0] * sam
 bits        = bitrate * 1000000
+st_scale    = 1
 
 if tinterval > 0:
     tduration  = tshots * tinterval
@@ -213,6 +214,7 @@ v3_f_speeds  = ['normal','fast']
 histograms   = ["OFF","Red","Green","Blue","Lum","ALL"]
 strs         = ["Still","Video","Stream","Timelapse"]
 v3_hdrs      = ["off","single-exp","auto","sensor"]
+st_scales    = ["","FULL","/2","","/4","","","","2x2"]
 
 #check linux version.
 lv = os.popen("cat /etc/os-release").read()
@@ -252,55 +254,62 @@ if not os.path.exists(config_file):
         for item in range(0,len(titles)):
             f.write( titles[item] + " : " + str(points[item]) + "\n")
 
-# read config_file
-config = []
-with open(config_file, "r") as file:
-   line = file.readline()
-   while line:
-       line = line.strip()
-       item = line.split(" : ")
-       config.append(item[1])
-       line = file.readline()
-config = list(map(int,config))
+def read_config(): 
+    global config_file,config,mode,camera,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation
+    global meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip,bitrate 
+    # read config_file
+    config_file = "PiLCConfig" + str(camera) + ".txt"
+    if os.path.exists(config_file):
+        config = []
+        with open(config_file, "r") as file:
+            line = file.readline()
+            while line:
+                line = line.strip()
+                item = line.split(" : ")
+                config.append(item[1])
+                line = file.readline()
+        config = list(map(int,config))
 
-mode        = config[0]
-speed       = config[1]
-gain        = config[2]
-brightness  = config[3]
-contrast    = config[4]
-red         = config[6]
-blue        = config[7]
-ev          = config[8]
-vlen        = config[9]
-fps         = config[10]
-vformat     = config[11]
-codec       = config[12]
-tinterval   = config[13]
-tshots      = config[14]
-extn        = config[15]
-zx          = config[16]
-zy          = config[17]
-zoom        = 0
-saturation  = config[19]
-meter       = config[20]
-awb         = config[21]
-sharpness   = config[22]
-denoise     = config[23]
-quality     = config[24]
-profile     = config[25]
-level       = config[26]
-histogram   = config[27]
-histarea    = config[28]
-v3_f_speed  = config[29]
-v3_f_range  = config[30]
-rotate      = config[31]
-IRF         = config[32]
-str_cap     = config[33]
-v3_hdr      = config[34]
-timet       = config[35]
-vflip       = config[36]
-hflip       = config[37]
-bitrate     = config[38]
+        mode        = config[0]
+        speed       = config[1]
+        gain        = config[2]
+        brightness  = config[3]
+        contrast    = config[4]
+        red         = config[6]
+        blue        = config[7]
+        ev          = config[8]
+        vlen        = config[9]
+        fps         = config[10]
+        vformat     = config[11]
+        codec       = config[12]
+        tinterval   = config[13]
+        tshots      = config[14]
+        extn        = config[15]
+        zx          = config[16]
+        zy          = config[17]
+        zoom        = 0
+        saturation  = config[19]
+        meter       = config[20]
+        awb         = config[21]
+        sharpness   = config[22]
+        denoise     = config[23]
+        quality     = config[24]
+        profile     = config[25]
+        level       = config[26]
+        histogram   = config[27]
+        histarea    = config[28]
+        v3_f_speed  = config[29]
+        v3_f_range  = config[30]
+        rotate      = config[31]
+        IRF         = config[32]
+        str_cap     = config[33]
+        v3_hdr      = config[34]
+        timet       = config[35]
+        vflip       = config[36]
+        hflip       = config[37]
+        bitrate     = config[38]
+
+read_config()
 
 if codec > len(codecs)-1:
     codec = 0
@@ -943,14 +952,11 @@ button(0,17,0,5)
 
 def Menu():
   global vwidths2,vheights2,Pi_Cam,scientif,mode,v3_hdr,scientific,tinterval,zoom,vwidth,vheight,pre_width,pre_height,ft,fv,focus,fxz,v3_hdr,v3_hdrs
-  if Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4:
-    text(0,0,1,1,1,"STILL    2x2",ft,7)
+  text(0,0,3,1,1,str(st_scales[st_scale]),ft,7)
+  if tinterval > 0:
+    text(1,9,3,1,1,str(st_scales[st_scale]),ft,7)
   else:
-    text(0,0,1,1,1,"Still ",ft,7)
-  if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4) and tinterval > 0:
-    text(1,9,1,1,1,"T'lapse  2x2",ft,7)
-  else:
-    text(1,9,1,1,1,"Timelapse",ft,7)
+    text(1,9,1,1,1," ",ft,7)
   if (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
     text(1,7,3,1,1,"auto",fv,7)
     if foc_man == 1:
@@ -1062,7 +1068,7 @@ def Menu2():
     global mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation
     global meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip
     # write button texts
-    text(0,0,1,0,1,"CAPTURE",ft,7)
+    text(0,0,1,0,1,"CAPTURE STILL",ft,7)
     text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
     text(1,0,1,1,1,"Video",ft,7)
     text(0,1,5,0,1,"Mode",ft,10)
@@ -1149,7 +1155,7 @@ def Menu2():
     button(1,6,7,7)
     text(1,6,5,0,1,"V_Bitrate",ft,11)
     text(1,6,3,1,1,str(bitrate),fv,11)
-    text(1,9,1,0,1,"CAPTURE",ft,7)
+    text(1,9,1,0,1,"CAP T/LPSE",ft,7)
     td = timedelta(seconds=tduration)
     text(1,10,5,0,1,"Duration",ft,12)
     text(1,10,3,1,1,str(td),fv,12)
@@ -1706,7 +1712,9 @@ while True:
             v3_f_mode = 0 
             foc_man = 0
             Camera_Version()
+            read_config()
             Menu()
+            Menu2()
             restart = 1
 
         # HISTOGRAM SIZE IF ZOOMED (Mouse Wheel)
@@ -1824,23 +1832,21 @@ while True:
           
           if button_column == 1:
             if button_row == 1 :
+                if event.button == 1:
                         # TAKE STILL
                         os.killpg(p.pid, signal.SIGTERM)
                         button(0,0,1,4)
                         if os.path.exists("PiLibtext.txt"):
                              os.remove("PiLibtext.txt")
                         text(0,0,2,0,1,"CAPTURING",ft,0)
-                        if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4) and button_pos == 1:
-                            text(0,0,2,1,1,"STILL    2x2",ft,0)
-                        else:
-                            text(0,0,2,1,1,"STILL",ft,0)
+                        text(0,0,2,1,1,str(st_scales[st_scale]),ft,0)
                         text(1,0,0,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,0,1,1,"Video",ft,7)
-                        text(1,9,0,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4) and tinterval > 0:
-                            text(1,9,0,1,1,"T'lapse  2x2",ft,7)
+                        text(1,9,0,0,1,"CAP T/LPSE",ft,7)
+                        if tinterval > 0:
+                            text(1,9,0,1,1,str(st_scales[st_scale]),ft,7)
                         else:
-                            text(1,9,0,1,1,"Timelapse",ft,7)
+                            text(1,9,0,1,1,"   ",ft,7)
                         text(0,0,6,2,1,"Please Wait, taking still ...",int(fv*1.7),1)
                         now = datetime.datetime.now()
                         timestamp = now.strftime("%y%m%d%H%M%S")
@@ -1910,10 +1916,7 @@ while True:
                             vwidth  = vwidths[vformat]
                             vheight = vheights[vformat]
                             datastr += " --mode 4056:2160:10  --width " + str(vwidth) + " --height " + str(vheight)
-                        elif Pi_Cam == 4 and button_pos == 1: # HQ 2x2 binned
-                            datastr += " --mode 2028:1520:12  --width 2028 --height 1520"
-						
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 1:
+                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and st_scale == 8:
                             datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                         elif Pi_Cam == 6 or Pi_Cam == 8:
                             if Pi != 5 and lo_res == 1:
@@ -1922,6 +1925,10 @@ while True:
                                 datastr += " --width 9152 --height 6944"
                             elif Pi_Cam == 8:
                                 datastr += " --width 9248 --height 6944"
+                        elif Pi_Cam == 4 and st_scale == 8: # HQ 2x2 binning
+                            datastr += " --mode 2028:1520:10  --width 2028 --height 1520"
+                        elif st_scale > 1: # image reduced by st_scale
+                            datastr += " --mode " + str(x_sens[Pi_Cam]) + ":" + str(y_sens[Pi_Cam]) + ":10" + " --width " + str(int(x_sens[Pi_Cam]/int(st_scale))) + " --height " + str(int(y_sens[Pi_Cam]/int(st_scale)))
                         if zoom > 1:
                             zws = int(igw * zfs[zoom])
                             zhs = int(igh * zfs[zoom])
@@ -2001,20 +2008,28 @@ while True:
                         if rotate == 0 and alt_dis < 2:
                             pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,int(pre_height * .75),pre_width,pre_height /4),0)
                         button(0,0,0,4)
-                        text(0,0,1,0,1,"CAPTURE",ft,7)
+                        text(0,0,1,0,1,"CAPTURE STILL",ft,7)
                         text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,1,1,1,"Video",ft,7)
-                        if Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4:
-                            text(0,0,1,1,1,"STILL    2x2",ft,7)
+                        text(0,0,3,1,1,str(st_scales[st_scale]),ft,7)
+                        text(1,9,1,0,1,"CAP T/LPSE",ft,7)
+                        if tinterval > 0:
+                            text(1,9,3,1,1,str(st_scales[st_scale]),ft,7)
                         else:
-                            text(0,0,1,1,1,"Still ",ft,7)
-                        text(1,9,1,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4) and tinterval > 0:
-                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
-                        else:
-                            text(1,9,1,1,1,"Timelapse",ft,7)
+                            text(1,9,3,1,1,"",ft,7)
                         restart = 2
-
+                else:
+                    st_scale = int(st_scale * 2)
+                    if st_scale > 8:
+                        st_scale = 1
+                    if st_scale > 4 and Pi_Cam != 4 and Pi_Cam != 6 and Pi_Cam != 8:
+                        st_scale = 1
+                    text(0,0,3,1,1,str(st_scales[st_scale]),ft,7)
+                    if tinterval > 0:
+                        text(1,9,3,1,1,str(st_scales[st_scale]),ft,7)
+                    else:
+                        text(1,9,1,1,1,"",ft,7)
+                        
             if button_row == 2:
                 # MODE
                 for f in range(0,len(still_limits)-1,3):
@@ -2695,7 +2710,7 @@ while True:
                             else:
                                 datastr += " --width " + str(pre_width) + " --height " + str(pre_height)
                         elif Pi_Cam == 4 and vwidth == 2028 and vheight == 1520:
-                            datastr += " --mode 2028:1520:12"
+                            datastr += " --mode 4056:3040:12"
                         elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
                             datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
                         elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
@@ -2889,7 +2904,7 @@ while True:
                             vheight = vheights[vformat]
                             datastr += " --mode 4056:2160:10  --width " + str(vwidth) + " --height " + str(vheight)
                         elif Pi_Cam == 4 and vwidth == 2028:
-                            datastr += " --mode 2028:1520:12"
+                            datastr += " --mode 4056:3040:12"
                         elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
                             datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
                         elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
@@ -3019,13 +3034,10 @@ while True:
                         button(1,9,1,2)
                         text(1,9,3,0,1,"STOP",ft,0)
                         text(1,9,3,1,1,"Timelapse",ft,0)
-                        text(0,0,1,0,1,"CAPTURE",ft,7)
+                        text(0,0,3,1,1,str(st_scales[st_scale]),ft,7)
                         text(1,0,0,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,0,1,1,"Video",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4):
-                            text(0,0,1,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,1,1,1,"Still ",ft,7)
+                        text(1,9,0,0,1,"CAPTURE",ft,7)
                         tcount = 0
                         
                         if tinterval > 0 and mode != 0: # normal mode
@@ -3098,8 +3110,8 @@ while True:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if Pi_Cam == 3 or Pi == 5:
                                 datastr += " --hdr " + v3_hdrs[v3_hdr]
-                            if Pi_Cam == 4 and button_pos == 3: # HQ 2x2 binned
-                                datastr += " --mode 2028:1520:12  --width 2028 --height 1520"
+                            if Pi_Cam == 4 and button_pos == 3: # HQ reduced by 2
+                                datastr += " --mode 4056:3040:12  --width 2028 --height 1520"
                             if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
                                 datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                             elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
@@ -3309,8 +3321,8 @@ while True:
                                         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                                     if Pi_Cam == 3:
                                         datastr += " --hdr " + v3_hdrs[v3_hdr]
-                                    if Pi_Cam == 4 and button_pos == 3: # HQ 2x2 binned
-                                        datastr += " --mode 2028:1520:12  --width 2028 --height 1520"
+                                    if Pi_Cam == 4 and button_pos == 3: # HQ reduced by 2
+                                        datastr += " --mode 4056:3040:12  --width 2028 --height 1520"
                                     if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
                                         datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                                     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
@@ -3536,18 +3548,15 @@ while True:
                                 pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,pre_width,pre_height * .75),0)
                         td = timedelta(seconds=tduration)
                         text(1,10,3,1,1,str(td),fv,12)
-                        text(0,0,1,0,1,"CAPTURE",ft,7)
+                        text(0,0,1,0,1,"CAPTURE STILL",ft,7)
                         text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,1,1,1,"Video",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
-                            text(0,0,1,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,1,1,1,"Still ",ft,7)
+                        text(0,0,3,1,1,str(st_scales[st_scale]),ft,7)
                         text(1,9,1,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
-                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
+                        if tinterval > 0:
+                            text(1,9,3,1,1,str(st_scales[st_scale]),ft,7)
                         else:
-                            text(1,9,1,1,1,"Timelapse",ft,7)
+                            text(1,9,3,1,1,"",ft,7)
                         restart = 2
 
             if button_row == 2:
@@ -4431,6 +4440,7 @@ while True:
                    config[36] = vflip
                    config[37] = hflip
                    config[38] = bitrate
+                   config_file = "PiLCConfig" + str(camera) + ".txt"
                    with open(config_file, 'w') as f:
                       for item in range(0,len(titles)):
                           f.write(titles[item] + " : " + str(config[item]) + "\n")
@@ -4441,60 +4451,64 @@ while True:
                 elif ((alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0)) and event.button == 3:
                     text(1,13,3,0,1,"Load      EXIT",fv +2,7)
                     text(1,13,3,1,1,"Config",fv,7)
-                    config = []
-                    with open(config_file, "r") as file:
-                       line = file.readline()
-                       while line:
-                           line = line.strip()
-                           item = line.split(" : ")
-                           config.append(item[1])
+                    config_file = "PiLCConfig" + str(camera) + ".txt"
+                    if os.path.exists(config_file):
+                        config = []
+                        with open(config_file, "r") as file:
                            line = file.readline()
-                    config = list(map(int,config))
+                           while line:
+                               line = line.strip()
+                               item = line.split(" : ")
+                               config.append(item[1])
+                               line = file.readline()
+                        config = list(map(int,config))
 
-                    mode        = config[0]
-                    speed       = config[1]
-                    gain        = config[2]
-                    brightness  = config[3]
-                    contrast    = config[4]
-                    red         = config[6]
-                    blue        = config[7]
-                    ev          = config[8]
-                    vlen        = config[9]
-                    fps         = config[10]
-                    vformat     = config[11]
-                    codec       = config[12]
-                    tinterval   = config[13]
-                    tshots      = config[14]
-                    extn        = config[15]
-                    zx          = config[16]
-                    zy          = config[17]
-                    zoom        = 0
-                    saturation  = config[19]
-                    meter       = config[20]
-                    awb         = config[21]
-                    sharpness   = config[22]
-                    denoise     = config[23]
-                    quality     = config[24]
-                    profile     = config[25]
-                    level       = config[26]
-                    histogram   = config[27]
-                    histarea    = config[28]
-                    v3_f_speed  = config[29]
-                    v3_f_range  = config[30]
-                    rotate      = config[31]
-                    IRF         = config[32]
-                    str_cap     = config[33]
-                    v3_hdr      = config[34]
-                    timet       = config[35]
-                    vflip       = config[36]
-                    hflip       = config[37]
-                    bitrate     = config[38]
-                    bits        = bitrate * 1000000
-                    time.sleep(1)
-                    text(1,13,2,0,1,"Save      EXIT",fv +2,7)
-                    text(1,13,2,1,1,"Config",fv,7)
-                    Menu()
-                    Menu2()
+                        mode        = config[0]
+                        speed       = config[1]
+                        gain        = config[2]
+                        brightness  = config[3]
+                        contrast    = config[4]
+                        red         = config[6]
+                        blue        = config[7]
+                        ev          = config[8]
+                        vlen        = config[9]
+                        fps         = config[10]
+                        vformat     = config[11]
+                        codec       = config[12]
+                        tinterval   = config[13]
+                        tshots      = config[14]
+                        extn        = config[15]
+                        zx          = config[16]
+                        zy          = config[17]
+                        zoom        = 0
+                        saturation  = config[19]
+                        meter       = config[20]
+                        awb         = config[21]
+                        sharpness   = config[22]
+                        denoise     = config[23]
+                        quality     = config[24]
+                        profile     = config[25]
+                        level       = config[26]
+                        histogram   = config[27]
+                        histarea    = config[28]
+                        v3_f_speed  = config[29]
+                        v3_f_range  = config[30]
+                        rotate      = config[31]
+                        IRF         = config[32]
+                        str_cap     = config[33]
+                        v3_hdr      = config[34]
+                        timet       = config[35]
+                        vflip       = config[36]
+                        hflip       = config[37]
+                        bitrate     = config[38]
+                        bits        = bitrate * 1000000
+                        time.sleep(1)
+                        text(1,13,2,0,1,"Save      EXIT",fv +2,7)
+                        text(1,13,2,1,1,"Config",fv,7)
+                        Menu()
+                        Menu2()
+                        os.killpg(p.pid, signal.SIGTERM)
+                        preview()
                 else:
                    os.killpg(p.pid, signal.SIGTERM)
                    pygame.display.quit()
