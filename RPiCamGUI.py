@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.87
+version = 5.88
 
 PiHQ_ON     = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -240,7 +240,7 @@ print("Pi:",Pi)
 still_limits = ['mode',0,len(modes)-1,'speed',0,len(shutters)-1,'gain',0,30,'brightness',-100,100,'contrast',0,200,'ev',-10,10,'blue',1,80,'sharpness',0,30,
                 'denoise',0,len(denoises)-1,'quality',0,100,'red',1,80,'extn',0,len(extns)-1,'saturation',0,20,'meter',0,len(meters)-1,'awb',0,len(awbs)-1,
                 'histogram',0,len(histograms)-1,'v3_f_speed',0,len(v3_f_speeds)-1]
-video_limits = ['vlen',0,3600,'fps',1,40,'v5_focus',10,2500,'vformat',0,20,'0',0,0,'zoom',0,6,'Focus',0,1,'tduration',1,86400,'tinterval',0,3600,'tshots',1,999,
+video_limits = ['vlen',0,3600,'fps',1,40,'v5_focus',10,2500,'vformat',0,20,'0',0,0,'zoom',0,6,'Focus',0,1,'tduration',1,86400,'tinterval',0,3600,'tshots',1,10000,
                 'flicker',0,3,'codec',0,len(codecs)-1,'profile',0,len(h264profiles)-1,'v3_focus',10,2000,'histarea',10,50,'v3_f_range',0,len(v3_f_ranges)-1,
                 'str_cap',0,len(strs)-1,'v6_focus',10,1020,'bitrate',1,25]
 
@@ -4278,13 +4278,28 @@ while True:
                     tshots = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
                 elif (mousey > pre_height * .75 + (bh*3)  and mousey < pre_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
                     tshots = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
-                else:
+                elif event.button == 1:
                     if (alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                         tshots -=1
                         tshots = max(tshots,pmin)
                     else:
                         tshots +=1
                         tshots = min(tshots,pmax)
+                elif event.button == 3:
+                    if (alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        tshots -=20
+                        tshots = max(tshots,pmin)
+                    else:
+                        tshots +=20
+                        tshots = min(tshots,pmax)
+                elif event.button == 4 or event.button == 5:
+                    if event.button == 5:
+                        tshots -=100
+                        tshots = max(tshots,pmin)
+                    else:
+                        tshots +=100
+                        tshots = min(tshots,pmax)
+                    
                 text(1,12,3,1,1,str(tshots),fv,12)
                 draw_Vbar(1,12,lyelColor,'tshots',tshots)
                 if tduration > 0:
