@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.88
+version = 5.89
 
 PiHQ_ON     = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -4192,17 +4192,32 @@ while True:
                         pmin = video_limits[f+1]
                         pmax = video_limits[f+2]
                 if (mousex > pre_width and mousey < ((button_row-1)*bh) + int(bh/3)):
-                    tduration = int(((mousex-pre_width-bw) / bw) * (pmax+1-pmin))
+                    bpos = pow(((mousex-pre_width-bw) / bw),3)
+                    tduration = int(bpos * (pmax+1-pmin)) + 1
                 elif (mousey > pre_height + (bh*3)  and mousey < pre_height + (bh*3) + int(bh/3)) and alt_dis == 1:
                     tduration = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
                 elif (mousey > pre_height * .75 + (bh*3)  and mousey < pre_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
                     tduration = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                else:
+                elif event.button == 1:
                     if (alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                         tduration -=1
                         tduration = max(tduration,pmin)
                     else:
                         tduration +=1
+                        tduration = min(tduration,pmax)
+                elif event.button == 3:
+                    if (alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        tduration -=60
+                        tduration = max(tduration,pmin)
+                    else:
+                        tduration +=60
+                        tduration = min(tduration,pmax)
+                elif event.button == 4 or event.button == 5:
+                    if event.button == 5:
+                        tduration -=600
+                        tduration = max(tduration,pmin)
+                    else:
+                        tduration +=600
                         tduration = min(tduration,pmax)
                 td = timedelta(seconds=tduration)
                 text(1,10,3,1,1,str(td),fv,12)
@@ -4222,22 +4237,34 @@ while True:
                         pmin = video_limits[f+1]
                         pmax = video_limits[f+2]
                 if (mousex > pre_width and mousey < ((button_row-1)*bh) + int(bh/3)):
-                    tinterval = int(((mousex-pre_width-bw) / bw) * (pmax+1-pmin))
+                    bpos = pow(((mousex-pre_width-bw) / bw),3)
+                    tinterval = int(bpos * (pmax+1-pmin))
                 elif (mousey > pre_height + (bh*3)  and mousey < pre_height + (bh*3) + int(bh/3)) and alt_dis == 1:
                     tinterval = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
                 elif (mousey > pre_height * .75 + (bh*3)  and mousey < pre_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
                     tinterval = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
-                else:
+                elif event.button == 1:
                     if (alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                         tinterval -=1
                         tinterval = max(tinterval,pmin)
                     else:
                         tinterval +=1
                         tinterval = min(tinterval,pmax)
-                if (Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4) and tinterval > 0:
-                    text(1,9,1,1,1,"T'lapse  2x2",ft,7)
-                else:
-                    text(1,9,1,1,1,"Timelapse",ft,7)
+                elif event.button == 3:
+                    if (alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        tinterval -=60
+                        tinterval = max(tinterval,pmin)
+                    else:
+                        tinterval +=60
+                        tinterval = min(tinterval,pmax)
+                elif event.button == 4 or event.button == 5:
+                    if event.button == 5:
+                        tinterval -=600
+                        tinterval = max(tinterval,pmin)
+                    else:
+                        tinterval +=600
+                        tinterval = min(tinterval,pmax)
+                text(1,9,1,0,1,"CAP T/LPSE",ft,7)
                 td = timedelta(seconds=tinterval)
                 text(1,11,3,1,1,str(td),fv,12)
                 draw_Vbar(1,11,lyelColor,'tinterval',tinterval)
@@ -4273,7 +4300,8 @@ while True:
                         pmin = video_limits[f+1]
                         pmax = video_limits[f+2]
                 if (mousex > pre_width and mousey < ((button_row-1)*bh) + int(bh/3)):
-                    tshots = int(((mousex-pre_width-bw) / bw) * (pmax+1-pmin))
+                    bpos = pow(((mousex-pre_width-bw) / bw),3)
+                    tshots = int(bpos * (pmax+1-pmin)) + 1
                 elif (mousey > pre_height + (bh*3)  and mousey < pre_height + (bh*3) + int(bh/3)) and alt_dis == 1:
                     tshots = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
                 elif (mousey > pre_height * .75 + (bh*3)  and mousey < pre_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
