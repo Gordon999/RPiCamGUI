@@ -4241,7 +4241,6 @@ while True:
                         pmax = video_limits[f+2]
                 bpos3 = pow(tshots/(pmax-pmin),.333)
                 draw_Vbar(bpos3,1,12,lyelColor,'tshots',tshots)
-                time.sleep(.25)
 
             elif button_row == 12:
                 # TIMELAPSE INTERVAL
@@ -4314,7 +4313,6 @@ while True:
                         restart = 1
                 else:
                     text(1,12,3,1,1,str(tshots),fv,12)
-                time.sleep(.25)
                 
             elif button_row == 13 and tinterval > 0:
                 # TIMELAPSE SHOTS
@@ -4369,7 +4367,7 @@ while True:
                         pmax = video_limits[f+2]
                 bpos1 = pow(tduration/(pmax-pmin),.333)
                 draw_Vbar(bpos1,1,10,lyelColor,'tduration',tduration)
-                time.sleep(.25)
+
 
             elif button_row == 15:
                 # HISTOGRAM SIZE
