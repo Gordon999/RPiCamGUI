@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.89
+version = 5.90
 
 PiHQ_ON     = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -4190,6 +4190,7 @@ while True:
 
             elif button_row == 11:
                 # TIMELAPSE DURATION
+                bpos1 = 0
                 for f in range(0,len(video_limits)-1,3):
                     if video_limits[f] == 'tduration':
                         pmin = video_limits[f+1]
@@ -4209,6 +4210,7 @@ while True:
                     else:
                         tduration +=1
                         tduration = min(tduration,pmax)
+                    bpos1 = pow(tduration/(pmax-pmin),.333)
                 elif event.button == 3:
                     if (alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                         tduration -=60
@@ -4216,6 +4218,7 @@ while True:
                     else:
                         tduration +=60
                         tduration = min(tduration,pmax)
+                    bpos1 = pow(tduration/(pmax-pmin),.333)
                 elif event.button == 4 or event.button == 5:
                     if event.button == 5:
                         tduration -=600
@@ -4223,6 +4226,7 @@ while True:
                     else:
                         tduration +=600
                         tduration = min(tduration,pmax)
+                    bpos1 = pow(tduration/(pmax-pmin),.333)
                 td = timedelta(seconds=tduration)
                 text(1,10,3,1,1,str(td),fv,12)
                 draw_Vbar(bpos1,1,10,lyelColor,'tduration',tduration)
@@ -4231,11 +4235,17 @@ while True:
                     text(1,12,3,1,1,str(tshots),fv,12)
                 else:
                     text(1,12,3,1,1," ",fv,12)
-                draw_Vbar(0,1,12,lyelColor,'tshots',tshots)
+                for f in range(0,len(video_limits)-1,3):
+                    if video_limits[f] == 'tshots':
+                        pmin = video_limits[f+1]
+                        pmax = video_limits[f+2]
+                bpos3 = pow(tshots/(pmax-pmin),.333)
+                draw_Vbar(bpos3,1,12,lyelColor,'tshots',tshots)
                 time.sleep(.25)
 
             elif button_row == 12:
                 # TIMELAPSE INTERVAL
+                bpos2 = 0
                 for f in range(0,len(video_limits)-1,3):
                     if video_limits[f] == 'tinterval':
                         pmin = video_limits[f+1]
@@ -4255,6 +4265,7 @@ while True:
                     else:
                         tinterval +=1
                         tinterval = min(tinterval,pmax)
+                    bpos2 = pow(tinterval/(pmax-pmin),.333)
                 elif event.button == 3:
                     if (alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                         tinterval -=60
@@ -4262,6 +4273,7 @@ while True:
                     else:
                         tinterval +=60
                         tinterval = min(tinterval,pmax)
+                    bpos2 = pow(tinterval/(pmax-pmin),.333)
                 elif event.button == 4 or event.button == 5:
                     if event.button == 5:
                         tinterval -=600
@@ -4269,6 +4281,7 @@ while True:
                     else:
                         tinterval +=600
                         tinterval = min(tinterval,pmax)
+                    bpos2 = pow(tinterval/(pmax-pmin),.333)
                 text(1,9,1,0,1,"CAP T/LPSE",ft,7)
                 td = timedelta(seconds=tinterval)
                 text(1,11,3,1,1,str(td),fv,12)
@@ -4277,7 +4290,12 @@ while True:
                     tduration = tinterval * tshots
                     td = timedelta(seconds=tduration)
                     text(1,10,3,1,1,str(td),fv,12)
-                    draw_Vbar(0,1,10,lyelColor,'tduration',tduration)
+                    for f in range(0,len(video_limits)-1,3):
+                        if video_limits[f] == 'tduration':
+                            pmin = video_limits[f+1]
+                            pmax = video_limits[f+2]
+                    bpos1 = pow(tduration/(pmax-pmin),.333)
+                    draw_Vbar(bpos1,1,10,lyelColor,'tduration',tduration)
                 if tinterval == 0:
                     text(1,12,3,1,1," ",fv,12)
                     if mode == 0:
@@ -4304,6 +4322,7 @@ while True:
                     if video_limits[f] == 'tshots':
                         pmin = video_limits[f+1]
                         pmax = video_limits[f+2]
+                bpos3 = 0
                 if (mousex > pre_width and mousey < ((button_row-1)*bh) + int(bh/3)):
                     bpos3 = (mousex-pre_width-bw) / bw
                     bpos4 = pow(bpos3,3)
@@ -4319,6 +4338,7 @@ while True:
                     else:
                         tshots +=1
                         tshots = min(tshots,pmax)
+                    bpos3 = pow(tshots/(pmax-pmin),.333)
                 elif event.button == 3:
                     if (alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                         tshots -=20
@@ -4326,6 +4346,7 @@ while True:
                     else:
                         tshots +=20
                         tshots = min(tshots,pmax)
+                    bpos3 = pow(tshots/(pmax-pmin),.333)
                 elif event.button == 4 or event.button == 5:
                     if event.button == 5:
                         tshots -=100
@@ -4333,7 +4354,7 @@ while True:
                     else:
                         tshots +=100
                         tshots = min(tshots,pmax)
-                    
+                    bpos3 = pow(tshots/(pmax-pmin),.333)
                 text(1,12,3,1,1,str(tshots),fv,12)
                 draw_Vbar(bpos3,1,12,lyelColor,'tshots',tshots)
                 if tduration > 0:
@@ -4342,7 +4363,12 @@ while True:
                     tduration = 1
                 td = timedelta(seconds=tduration)
                 text(1,10,3,1,1,str(td),fv,12)
-                draw_Vbar(0,1,10,lyelColor,'tduration',tduration)
+                for f in range(0,len(video_limits)-1,3):
+                    if video_limits[f] == 'tduration':
+                        pmin = video_limits[f+1]
+                        pmax = video_limits[f+2]
+                bpos1 = pow(tduration/(pmax-pmin),.333)
+                draw_Vbar(bpos1,1,10,lyelColor,'tduration',tduration)
                 time.sleep(.25)
 
             elif button_row == 15:
