@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.90
+version = 5.92
 
 PiHQ_ON     = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -214,7 +214,7 @@ v3_f_speeds  = ['normal','fast']
 histograms   = ["OFF","Red","Green","Blue","Lum","ALL"]
 strs         = ["Still","Video","Stream","Timelapse"]
 v3_hdrs      = ["off","single-exp","auto","sensor"]
-st_scales    = ["","FULL","/2","","/4","","","","2x2"]
+st_scales    = ["","FULL","1/2 Scale","","1/4 Scale","","","","2x2 Binning"]
 
 #check linux version.
 lv = os.popen("cat /etc/os-release").read()
@@ -687,7 +687,7 @@ def text(col,row,fColor,top,upd,msg,fsize,bkgnd_Color):
         fontObj = pygame.font.Font(None, int(fsize))
     msgSurfaceObj = fontObj.render(msg, False, Color)
     msgRectobj = msgSurfaceObj.get_rect()
-    if msg == "Save      EXIT" or msg == "Load      EXIT" or msg == "CAPTURE" or msg == "CAPTURE/Stream":
+    if msg == "Save      EXIT" or msg == "Load      EXIT" or msg == "CAPTURE STILL" or msg == "CAPTURE/Stream" or msg == "CAP T/LPSE" :
         pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/3)-3,bw-4,int(bh/3)))
         msgRectobj.topleft = (bx+5,  by + int(bh/3) - 6)
     elif top == 0:
@@ -2656,12 +2656,8 @@ while True:
                         else:
                             text(1,0,3,0,1,"STOP ",ft,0)
                         text(1,0,3,1,1,"Recording",ft,0)
-                        text(0,0,0,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
-                            text(0,0,0,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,0,1,1,"Still ",ft,7)
-                        text(1,9,0,0,1,"CAPTURE",ft,7)
+                        text(0,0,0,0,1,"CAPTURE STILL",ft,7)
+                        text(1,9,0,0,1,"CAP T/LPSE",ft,7)
                         if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
                             text(1,9,0,1,1,"T'lapse  2x2",ft,7)
                         else:
@@ -2842,18 +2838,15 @@ while True:
                             pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,pre_width,pre_height),0)
                         text(1,1,3,1,1,str(td),fv,11)
                         button(1,0,0,3)
-                        text(0,0,1,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
-                            text(0,0,1,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,1,1,1,"Still ",ft,7)
+                        text(0,0,1,0,1,"CAPTURE STILL",ft,7)
                         text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,1,1,1,"Video",ft,7)
-                        text(1,9,1,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
-                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
+                        text(0,0,3,1,1,str(st_scales[st_scale]),ft,7)
+                        text(1,9,1,0,1,"CAP T/LPSE",ft,7)
+                        if tinterval > 0:
+                            text(1,9,3,1,1,str(st_scales[st_scale]),ft,7)
                         else:
-                            text(1,9,1,1,1,"Timelapse",ft,7)
+                            text(1,9,3,1,1,"",ft,7)
                         if save2ram == 1:
                             shutil.move("/run/shm/" + str(timestamp) + "." + codecs2[codec],vid_dir)
                         restart = 2
@@ -2864,16 +2857,8 @@ while True:
                         button(1,0,1,3)
                         text(1,0,3,0,1,"STOP ",ft,0)
                         text(1,0,3,1,1,"STREAM",ft,0)
-                        text(0,0,0,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
-                            text(0,0,0,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,0,1,1,"Still ",ft,7)
-                        text(1,9,0,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
-                            text(1,9,0,1,1,"T'lapse  2x2",ft,7)
-                        else:
-                            text(1,9,0,1,1,"Timelapse",ft,7)
+                        text(0,0,0,0,1,"CAPTURE STILL",ft,7)
+                        text(1,9,0,0,1,"CAP T/LPSE",ft,7)
                         text(0,0,6,2,1,"Streaming Video ...",int(fv*1.7),1)
                         now = datetime.datetime.now()
                         timestamp = now.strftime("%y%m%d%H%M%S")
@@ -3016,31 +3001,28 @@ while True:
                             pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,pre_width,pre_height),0)
                         text(1,1,3,1,1,str(td),fv,11)
                         button(1,0,0,3)
-                        text(0,0,1,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
-                            text(0,0,1,1,1,"STILL    2x2",ft,7)
-                        else:
-                            text(0,0,1,1,1,"Still ",ft,7)
+                        text(0,0,1,0,1,"CAPTURE STILL",ft,7)
                         text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,1,1,1,"Video",ft,7)
-                        text(1,9,1,0,1,"CAPTURE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
-                            text(1,9,1,1,1,"T'lapse  2x2",ft,7)
+                        text(0,0,3,1,1,str(st_scales[st_scale]),ft,7)
+                        text(1,9,1,0,1,"CAP T/LPSE",ft,7)
+                        if tinterval > 0:
+                            text(1,9,3,1,1,str(st_scales[st_scale]),ft,7)
                         else:
-                            text(1,9,1,1,1,"Timelapse",ft,7)
+                            text(1,9,3,1,1,"",ft,7)
                         restart = 2
                         
             elif button_row == 10:
+                if event.button == 1:
                         # TAKE TIMELAPSE
                         os.killpg(p.pid, signal.SIGTERM)
                         restart = 1
-                        button(1,9,1,2)
+                        button(1,9,1,1)
                         text(1,9,3,0,1,"STOP",ft,0)
                         text(1,9,3,1,1,"Timelapse",ft,0)
                         text(0,0,3,1,1,str(st_scales[st_scale]),ft,7)
                         text(1,0,0,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,0,1,1,"Video",ft,7)
-                        text(1,9,0,0,1,"CAPTURE",ft,7)
                         tcount = 0
                         
                         if tinterval > 0 and mode != 0: # normal mode
@@ -3113,10 +3095,8 @@ while True:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if Pi_Cam == 3 or Pi == 5:
                                 datastr += " --hdr " + v3_hdrs[v3_hdr]
-                            if Pi_Cam == 4 and button_pos == 3: # HQ reduced by 2
-                                datastr += " --mode 4056:3040:12  --width 2028 --height 1520"
-                            if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
-                                datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
+                            if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and st_scale == 8:
+                                datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity 2x2 binning
                             elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
                                 if Pi != 5 and lo_res == 1:
                                     datastr += " --width 4624 --height 3472"
@@ -3124,6 +3104,11 @@ while True:
                                     datastr += " --width 9152 --height 6944"
                                 elif Pi_Cam == 8:
                                     datastr += " --width 9248 --height 6944"
+                            elif Pi_Cam == 4 and st_scale == 8: # HQ 2x2 binning
+                                datastr += " --mode 2028:1520:10  --width 2028 --height 1520"
+                            elif st_scale > 1: # image reduced by st_scale
+                                print("scaled")
+                                datastr += " --mode " + str(x_sens[Pi_Cam]) + ":" + str(y_sens[Pi_Cam]) + ":10" + " --width " + str(int(x_sens[Pi_Cam]/int(st_scale))) + " --height " + str(int(y_sens[Pi_Cam]/int(st_scale)))
                             if zoom > 0 and zoom < 6:
                                 zws = int(igw * zfs[zoom])
                                 zhs = int(igh * zfs[zoom])
@@ -3324,9 +3309,7 @@ while True:
                                         datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                                     if Pi_Cam == 3:
                                         datastr += " --hdr " + v3_hdrs[v3_hdr]
-                                    if Pi_Cam == 4 and button_pos == 3: # HQ reduced by 2
-                                        datastr += " --mode 4056:3040:12  --width 2028 --height 1520"
-                                    if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and button_pos == 3:
+                                    if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and st_scale == 8:
                                         datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                                     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8):
                                         if Pi != 5 and lo_res == 1:
@@ -3335,6 +3318,10 @@ while True:
                                             datastr += " --width 9152 --height 6944"
                                         elif Pi_Cam == 8:
                                             datastr += " --width 9248 --height 6944"
+                                    elif Pi_Cam == 4 and st_scale == 8: # HQ 2x2 binning
+                                        datastr += " --mode 2028:1520:10  --width 2028 --height 1520"
+                                    elif st_scale > 1: # image reduced by st_scale
+                                        datastr += " --mode " + str(x_sens[Pi_Cam]) + ":" + str(y_sens[Pi_Cam]) + ":10" + " --width " + str(int(x_sens[Pi_Cam]/int(st_scale))) + " --height " + str(int(y_sens[Pi_Cam]/int(st_scale)))
                                     if zoom > 0 and zoom < 6:
                                         zws = int(igw * zfs[zoom])
                                         zhs = int(igh * zfs[zoom])
@@ -3555,13 +3542,24 @@ while True:
                         text(1,0,1,0,1,"CAPTURE/Stream",ft-2,7)
                         text(1,0,1,1,1,"Video",ft,7)
                         text(0,0,3,1,1,str(st_scales[st_scale]),ft,7)
-                        text(1,9,1,0,1,"CAPTURE",ft,7)
+                        text(1,9,1,0,1,"CAP T/LPSE",ft,7)
                         if tinterval > 0:
                             text(1,9,3,1,1,str(st_scales[st_scale]),ft,7)
                         else:
                             text(1,9,3,1,1,"",ft,7)
                         restart = 2
-
+                else:
+                    st_scale = int(st_scale * 2)
+                    if st_scale > 8:
+                        st_scale = 1
+                    if st_scale > 4 and Pi_Cam != 4 and Pi_Cam != 6 and Pi_Cam != 8:
+                        st_scale = 1
+                    text(0,0,3,1,1,str(st_scales[st_scale]),ft,7)
+                    if tinterval > 0:
+                        text(1,9,3,1,1,str(st_scales[st_scale]),ft,7)
+                    else:
+                        text(1,9,1,1,1,"",ft,7)
+					
             if button_row == 2:
                 # VIDEO LENGTH
                 for f in range(0,len(video_limits)-1,3):
@@ -4282,6 +4280,10 @@ while True:
                         tinterval = min(tinterval,pmax)
                     bpos2 = pow(tinterval/(pmax-pmin),.333)
                 text(1,9,1,0,1,"CAP T/LPSE",ft,7)
+                if tinterval == 0:
+                    text(1,9,1,1,1," ",ft,7)
+                else:
+                    text(1,9,3,1,1,str(st_scales[st_scale]),ft,7)
                 td = timedelta(seconds=tinterval)
                 text(1,11,3,1,1,str(td),fv,12)
                 draw_Vbar(bpos2,1,11,lyelColor,'tinterval',tinterval)
