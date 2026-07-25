@@ -758,7 +758,7 @@ def draw_bar(col,row,color,msg,value):
                 pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(((row-8)*bw) + j) ,int((pre_height *.75) + bh),3,int(bh/3)))
     pygame.display.update()
 
-def draw_Vbar(col,row,color,msg,value):
+def draw_Vbar(bpos,col,row,color,msg,value):
     global bw,bh,pre_width,video_limits
     for f in range(0,len(video_limits)-1,3):
         if video_limits[f] == msg:
@@ -784,9 +784,12 @@ def draw_Vbar(col,row,color,msg,value):
     else:
         j = int(((bw/2) + (value / (pmax - pmin)  * bw)) * 0.92)
     j = min(j,bw-5)
-    if alt_dis == 0:
+    if alt_dis == 0 and bpos == 0:
         pygame.draw.rect(windowSurfaceObj,(150,120,150),Rect(int(pre_width + int(col*bw) + 2),int(row * bh)+1,int(j-1),int(bh/3)-1))
         pygame.draw.rect(windowSurfaceObj,(155,0,150),  Rect(int(pre_width + int(col*bw) + j + 2),int(row * bh)+1,3,int(bh/3)-1))
+    elif alt_dis == 0 and bpos > 0:
+        pygame.draw.rect(windowSurfaceObj,(150,120,150),Rect(int(pre_width + int(col*bw) + 2),int(row * bh)+1,int(bpos * bw),int(bh/3)-1))
+        pygame.draw.rect(windowSurfaceObj,(155,0,150),  Rect(int(pre_width + int(col*bw) + int(bpos * bw) + 2),int(row * bh)+1,3,int(bh/3)-1))
     else:
         if row < 8:
             if alt_dis == 1:
@@ -972,7 +975,7 @@ def Menu():
       text(0,13,5,0,1,"STILL -t",fv,10)
       text(0,13,3,1,1,str(timet),fv,10)
    
-  draw_Vbar(1,3,lpurColor,'vformat',vformat)
+  draw_Vbar(0,1,3,lpurColor,'vformat',vformat)
   if Pi_Cam == 3 and v3_af == 1:
     button(0,15,0,5)
     button(1,15,0,5)
@@ -983,7 +986,7 @@ def Menu():
     text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
     if v3_f_mode == 1 :
         button(1,7,1,9)
-        draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
+        draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus-pmin)
         fd = 1/(v3_focus/100)
         text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
@@ -993,7 +996,7 @@ def Menu():
         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,7)
         
     draw_bar(0,15,greyColor,'v3_f_speed',v3_f_speed)
-    draw_Vbar(1,15,greyColor,'v3_f_range',v3_f_range)
+    draw_Vbar(0,1,15,greyColor,'v3_f_range',v3_f_range)
     if fxz != 1:
         text(1,7,3,1,1,"Spot",fv,7)
     
@@ -1002,7 +1005,7 @@ def Menu():
     button(1,15,0,5)
     text(1,15,2,0,1,"Ext Trig: " + str(STR),ft,7)
     text(1,15,3,1,1,strs[str_cap],fv,7)
-    draw_Vbar(1,15,greyColor,'str_cap',str_cap)
+    draw_Vbar(0,1,15,greyColor,'str_cap',str_cap)
     button(1,7,0,9)
     text(1,7,5,0,1,"FOCUS",ft,7)
     if zoom == 0:
@@ -1029,7 +1032,7 @@ def Menu():
           text(1,3,3,1,1,"1920 x 1080",fv,11)
       else:
           text(1,3,3,1,1,str(pre_width) + "x" + str(pre_height),fv,11)
-      draw_Vbar(1,8,greyColor,'zoom',zoom)
+      draw_Vbar(0,1,8,greyColor,'zoom',zoom)
       
   if Pi_Cam == 4 and scientif == 1:
     button(0,15,6,4)
@@ -1195,18 +1198,18 @@ def Menu2():
     if rotate == 0:
         draw_bar(0,14,greyColor,'histogram',histogram)
 
-    draw_Vbar(1,1,lpurColor,'vlen',vlen)
-    draw_Vbar(1,2,lpurColor,'fps',fps)
-    draw_Vbar(1,3,lpurColor,'vformat',vformat)
-    draw_Vbar(1,4,lpurColor,'codec',codec)
-    draw_Vbar(1,5,lpurColor,'profile',profile)
-    draw_Vbar(1,6,lpurColor,'bitrate',bitrate)
-    draw_Vbar(1,8,greyColor,'zoom',zoom)
-    draw_Vbar(1,10,lyelColor,'tduration',tduration)
-    draw_Vbar(1,11,lyelColor,'tinterval',tinterval)
-    draw_Vbar(1,12,lyelColor,'tshots',tshots)
+    draw_Vbar(0,1,1,lpurColor,'vlen',vlen)
+    draw_Vbar(0,1,2,lpurColor,'fps',fps)
+    draw_Vbar(0,1,3,lpurColor,'vformat',vformat)
+    draw_Vbar(0,1,4,lpurColor,'codec',codec)
+    draw_Vbar(0,1,5,lpurColor,'profile',profile)
+    draw_Vbar(0,1,6,lpurColor,'bitrate',bitrate)
+    draw_Vbar(0,1,8,greyColor,'zoom',zoom)
+    draw_Vbar(0,1,10,lyelColor,'tduration',tduration)
+    draw_Vbar(0,1,11,lyelColor,'tinterval',tinterval)
+    draw_Vbar(0,1,12,lyelColor,'tshots',tshots)
     if rotate == 0:
-        draw_Vbar(1,14,greyColor,'histarea',histarea)
+        draw_Vbar(0,1,14,greyColor,'histarea',histarea)
 
 text(0,0,6,2,1,"Please Wait, checking camera",int(fv* 1.7),1)
 text(0,0,6,2,1,"Found " + str(cameras[Pi_Cam]),int(fv*1.7),1)
@@ -1277,11 +1280,11 @@ while True:
         v3_focus = min(v3_focus,v3_pmax)
         focus = v3_focus
         if Pi_Cam == 3:
-            draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus * 4)
+            draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus * 4)
             fd = 1/(v3_focus/100)
             text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
         else:
-            draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus)
+            draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus)
             text(1,7,3,0,1,'<<< ' + str(v3_focus) + ' >>>',fv,0)
         poll = p.poll()
         if poll == None:
@@ -1307,11 +1310,11 @@ while True:
         v3_focus = max(v3_focus,v3_pmin)
         focus = v3_focus
         if Pi_Cam == 3:
-            draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus * 4)
+            draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus * 4)
             fd = 1/(v3_focus/100)
             text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
         else:
-            draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus)
+            draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus)
             text(1,7,3,0,1,'<<< ' + str(v3_focus) + ' >>>',fv,0)
         poll = p.poll()
         if poll == None:
@@ -1654,12 +1657,12 @@ while True:
                     button(1,8,0,9)
                     text(1,8,5,0,1,"Zoom",ft,7)
                     text(1,8,3,1,1,"",fv,7)
-                    draw_Vbar(1,8,greyColor,'zoom',zoom)
+                    draw_Vbar(0,1,8,greyColor,'zoom',zoom)
                 else:
                     button(1,8,1,9)
                     text(1,8,2,0,1,"ZOOMED",ft,0)
                     text(1,8,3,1,1,str(zoom),fv,0)
-                    draw_Vbar(1,8,dgryColor,'zoom',zoom)
+                    draw_Vbar(0,1,8,dgryColor,'zoom',zoom)
                         
                 if foc_man == 0:
                     button(1,7,0,9)
@@ -1689,7 +1692,7 @@ while True:
                     text(1,3,3,1,1,str(pre_width) + "x" + str(int(pre_height * .75)),fv,11)
                 else:
                     text(1,3,3,1,1,str(pre_width) + "x" + str(pre_height),fv,11)
-                draw_Vbar(1,8,dgryColor,'zoom',zoom)
+                draw_Vbar(0,1,8,dgryColor,'zoom',zoom)
             if zoom > 0:
                 fxx = 0
                 fxy = 0
@@ -1736,7 +1739,7 @@ while True:
             if (Pi_Cam == 3 and v3_af == 1) and (xy + histarea > pre_height * 0.75 or xx + histarea > pre_width):
                 histarea = old_histarea
             text(1,14,3,1,1,str(histarea),fv,7)
-            draw_Vbar(1,14,greyColor,'histarea',histarea)
+            draw_Vbar(0,1,14,greyColor,'histarea',histarea)
             old_histarea = histarea
 
         if mousex == 0 and mousey == 0:
@@ -2084,7 +2087,7 @@ while True:
                 draw_bar(0,1,lgrnColor,'mode',mode)
                 td = timedelta(seconds=tinterval)
                 text(1,11,3,1,1,str(td),fv,12)
-                draw_Vbar(1,10,lyelColor,'tinterval',tinterval)
+                draw_Vbar(0,1,10,lyelColor,'tinterval',tinterval)
                 if tinterval > 0:
                     tduration = tinterval * tshots
                 if mode == 0 and tinterval == 0 :
@@ -2140,11 +2143,11 @@ while True:
                         tinterval = max(tinterval,1)
                         td = timedelta(seconds=tinterval)
                         text(1,11,3,1,1,str(td),fv,12)
-                        draw_Vbar(1,11,lyelColor,'tinterval',tinterval)
+                        draw_Vbar(0,1,11,lyelColor,'tinterval',tinterval)
                         tduration = tinterval * tshots
                         td = timedelta(seconds=tduration)
                         text(1,10,3,1,1,str(td),fv,12)
-                        draw_Vbar(1,10,lyelColor,'tduration',tduration)
+                        draw_Vbar(0,1,10,lyelColor,'tduration',tduration)
                         
                     time.sleep(.25)
                     restart = 1
@@ -3580,7 +3583,7 @@ while True:
                         vlen = min(vlen ,pmax)
                 td = timedelta(seconds=vlen)
                 text(1,1,3,1,1,str(td),fv,11)
-                draw_Vbar(1,1,lpurColor,'vlen',vlen)
+                draw_Vbar(0,1,1,lpurColor,'vlen',vlen)
                 time.sleep(.25)
  
             elif button_row == 3:
@@ -3610,7 +3613,7 @@ while True:
                         fps = min(fps ,pmax)
                 
                 text(1,2,3,1,1,str(fps),fv,11)
-                draw_Vbar(1,2,lpurColor,'fps',fps)
+                draw_Vbar(0,1,2,lpurColor,'fps',fps)
                 time.sleep(.25)
                 restart = 1
                    
@@ -3647,7 +3650,7 @@ while True:
                         # set max video format
                         setmaxvformat()
                         vformat = min(vformat,max_vformat)
-                draw_Vbar(1,3,lpurColor,'vformat',vformat)
+                draw_Vbar(0,1,3,lpurColor,'vformat',vformat)
                 vwidth  = vwidths[vformat]
                 vheight = vheights[vformat]
                 if Pi_Cam == 3:
@@ -3677,7 +3680,7 @@ while True:
                 fps = min(fps,vfps)
                 video_limits[5] = vfps
                 text(1,2,3,1,1,str(fps),fv,11)
-                draw_Vbar(1,2,lpurColor,'fps',fps)
+                draw_Vbar(0,1,2,lpurColor,'fps',fps)
                 # determine if camera native format
                 vw = 0
                 x = 0
@@ -3715,8 +3718,8 @@ while True:
                 setmaxvformat()
                 vformat = min(vformat,max_vformat)
                 text(1,4,3,1,1,codecs[codec],fv,11)
-                draw_Vbar(1,4,lpurColor,'codec',codec)
-                draw_Vbar(1,3,lpurColor,'vformat',vformat)
+                draw_Vbar(0,1,4,lpurColor,'codec',codec)
+                draw_Vbar(0,1,3,lpurColor,'vformat',vformat)
                 vwidth  = vwidths[vformat]
                 vheight = vheights[vformat]
                 if Pi_Cam == 3:
@@ -3746,7 +3749,7 @@ while True:
                 fps = min(fps,vfps)
                 video_limits[5] = vfps
                 text(1,2,3,1,1,str(fps),fv,11)
-                draw_Vbar(1,2,lpurColor,'fps',fps)
+                draw_Vbar(0,1,2,lpurColor,'fps',fps)
                 # determine if camera native format
                 vw = 0
                 x = 0
@@ -3781,7 +3784,7 @@ while True:
                         profile  +=1
                         profile = min(profile ,pmax)
                 text(1,5,3,1,1,h264profiles[profile],fv,11)
-                draw_Vbar(1,5,lpurColor,'profile',profile)
+                draw_Vbar(0,1,5,lpurColor,'profile',profile)
                 vwidth  = vwidths[vformat]
                 vheight = vheights[vformat]
                 if Pi_Cam == 3:
@@ -3811,7 +3814,7 @@ while True:
                 fps = min(fps,vfps)
                 video_limits[5] = vfps
                 text(1,2,3,1,1,str(fps),fv,11)
-                draw_Vbar(1,2,lpurColor,'fps',fps)
+                draw_Vbar(0,1,2,lpurColor,'fps',fps)
                 time.sleep(.25)
 
             elif button_row == 7:
@@ -3835,7 +3838,7 @@ while True:
                 bitrate = min(bitrate,pmax)
                 bits = bitrate * 1000000
                 text(1,6,3,1,1,str(bitrate),fv,11)
-                draw_Vbar(1,6,lpurColor,'bitrate',bitrate)
+                draw_Vbar(0,1,6,lpurColor,'bitrate',bitrate)
                 restart = 1
 
             elif button_row == 8:
@@ -3860,9 +3863,9 @@ while True:
                 if (mousex > pre_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and ((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6 or Pi_Cam == 8) and foc_man == 1:
                     focus = int(((mousex-pre_width-bw) / bw) * pmax)
                     if Pi_Cam == 5:
-                        draw_Vbar(1,7,dgryColor,'v5_focus',focus)
+                        draw_Vbar(0,1,7,dgryColor,'v5_focus',focus)
                     elif Pi_Cam == 6 or Pi_Cam == 8:
-                        draw_Vbar(1,7,dgryColor,'v6_focus',focus)
+                        draw_Vbar(0,1,7,dgryColor,'v6_focus',focus)
                     v3_focus = focus
                     restart = 1
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
@@ -3875,9 +3878,9 @@ while True:
                         focus += 10
                         focus = min(focus,pmax)
                     if Pi_Cam == 5:
-                        draw_Vbar(1,7,dgryColor,'v5_focus',focus)
+                        draw_Vbar(0,1,7,dgryColor,'v5_focus',focus)
                     elif Pi_Cam == 6 or Pi_Cam == 8:
-                        draw_Vbar(1,7,dgryColor,'v6_focus',focus)
+                        draw_Vbar(0,1,7,dgryColor,'v6_focus',focus)
                     v3_focus = focus
                     restart = 1
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
@@ -3885,9 +3888,9 @@ while True:
                 elif (mousey > pre_height + (bh*2) and mousey < pre_height + (bh*2) + (bh/3)) and ((Pi_Cam == 5 and v5_af == 1) or Pi_Cam == 6 or Pi_Cam == 8) and foc_man == 1:
                     focus = int(((mousex-((button_row - 8)*bw)) / bw)* pmax)
                     if Pi_Cam == 5:
-                        draw_Vbar(1,7,dgryColor,'v5_focus',focus)
+                        draw_Vbar(0,1,7,dgryColor,'v5_focus',focus)
                     if Pi_Cam == 6 or Pi_Cam == 8:
-                        draw_Vbar(1,7,dgryColor,'v6_focus',focus)
+                        draw_Vbar(0,1,7,dgryColor,'v6_focus',focus)
                     v3_focus = focus
                     restart = 1
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
@@ -3898,16 +3901,16 @@ while True:
                     elif button_pos == 1:
                         focus += 10
                     if Pi_Cam == 5:
-                        draw_Vbar(1,7,dgryColor,'v5_focus',focus)
+                        draw_Vbar(0,1,7,dgryColor,'v5_focus',focus)
                     if Pi_Cam == 6 or Pi_Cam == 8:
-                        draw_Vbar(1,7,dgryColor,'v6_focus',focus)
+                        draw_Vbar(0,1,7,dgryColor,'v6_focus',focus)
                     v3_focus = focus
                     restart = 1
                     text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                 # Pi v3 manual focus slider
                 elif (mousex > pre_width + bw and mousey < ((button_row-1)*bh) + (bh/3)) and (Pi_Cam == 3 and v3_af == 1) and foc_man == 1:
                     v3_focus = int(((mousex-pre_width-bw) / bw) * (pmax+1-pmin)) + pmin
-                    draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
+                    draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus-pmin)
                     fd = 1/(v3_focus/100)
                     text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
@@ -3919,21 +3922,21 @@ while True:
                     elif button_pos == 3:
                         v3_focus += 1
                         v3_focus = min(v3_focus,pmax)
-                    draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
+                    draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus-pmin)
                     fd = 1/(v3_focus/100)
                     text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
                 # Pi v3 manual focus slider SQUARE FORMAT, alt_dis == 1
                 elif (mousey > pre_height + (bh*2) and mousey < pre_height + (bh*2) + (bh/3)) and (Pi_Cam == 3 and v3_af == 1) and foc_man == 1 and alt_dis == 1:
                     v3_focus = int(((mousex-((button_row - 1)*bw)) / bw)* pmax)
-                    draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
+                    draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus-pmin)
                     fd = 1/(v3_focus/100)
                     text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
                 # Pi v3 manual focus slider SQUARE FORMAT, alt_dis == 2
                 elif (mousey > pre_height *.75 + (bh*2) and mousey < pre_height * .75 + (bh*2) + (bh/3)) and (Pi_Cam == 3 and v3_af == 1) and foc_man == 1 and alt_dis == 2:
                     v3_focus = int(((mousex-((button_row - 1)*bw)) / bw)* pmax)
-                    draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
+                    draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus-pmin)
                     fd = 1/(v3_focus/100)
                     text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
@@ -3944,7 +3947,7 @@ while True:
                         v3_focus = max(v3_focus,0.0)
                     elif button_pos == 1:
                         v3_focus += 1
-                    draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
+                    draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus-pmin)
                     fd = 1/(v3_focus/100)
                     text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
@@ -3955,7 +3958,7 @@ while True:
                         v3_focus = max(v3_focus,0.0)
                     elif button_pos == 1:
                         v3_focus += 1
-                    draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
+                    draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus-pmin)
                     fd = 1/(v3_focus/100)
                     text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                     restart = 1
@@ -3984,7 +3987,7 @@ while True:
                         button(1,8,1,9)
                         text(1,8,2,0,1,"ZOOMED",ft,0)
                         text(1,8,3,1,1,str(zoom),fv,0)
-                        draw_Vbar(1,8,dgryColor,'zoom',zoom)
+                        draw_Vbar(0,1,8,dgryColor,'zoom',zoom)
                         time.sleep(0.25)
                         restart = 1
                     # CANCEL FOCUS NON AF camera
@@ -4001,7 +4004,7 @@ while True:
                         button(1,8,0,9)
                         text(1,8,5,0,1,"Zoom",ft,7)
                         text(1,8,3,1,1,"",fv,7)
-                        draw_Vbar(1,8,greyColor,'zoom',zoom)
+                        draw_Vbar(0,1,8,greyColor,'zoom',zoom)
                         restart = 1
                     # Pi V3 manual focus    
                     elif (Pi_Cam == 3 and v3_af == 1) and v3_f_mode == 0:
@@ -4011,7 +4014,7 @@ while True:
                         button(1,7,1,9)
                         restart = 1
                         time.sleep(0.25)
-                        draw_Vbar(1,7,dgryColor,'v3_focus',v3_focus-pmin)
+                        draw_Vbar(0,1,7,dgryColor,'v3_focus',v3_focus-pmin)
                         fd = 1/(v3_focus/100)
                         text(1,7,3,0,1,'<<< ' + str(fd)[0:5] + "m" + ' >>>',fv,0)
                         text(1,7,3,1,1,str(v3_f_modes[v3_f_mode]),fv,0)
@@ -4024,9 +4027,9 @@ while True:
                         button(1,7,1,9)
                         text(1,7,3,0,1,'<<< ' + str(focus) + ' >>>',fv,0)
                         if Pi_Cam == 5:
-                            draw_Vbar(1,7,dgryColor,'v5_focus',focus)
+                            draw_Vbar(0,1,7,dgryColor,'v5_focus',focus)
                         if Pi_Cam == 6 or Pi_Cam == 8:
-                            draw_Vbar(1,7,dgryColor,'v6_focus',focus)
+                            draw_Vbar(0,1,7,dgryColor,'v6_focus',focus)
                         text(1,7,3,1,1,"manual",fv,0)
                         time.sleep(0.25)
                         restart = 1
@@ -4133,12 +4136,12 @@ while True:
                         button(1,8,0,9)
                         text(1,8,5,0,1,"Zoom",ft,7)
                         text(1,8,3,1,1,"",fv,7)
-                        draw_Vbar(1,8,greyColor,'zoom',zoom)
+                        draw_Vbar(0,1,8,greyColor,'zoom',zoom)
                     else:
                         button(1,8,1,9)
                         text(1,8,2,0,1,"ZOOMED",ft,0)
                         text(1,8,3,1,1,str(zoom),fv,0)
-                        draw_Vbar(1,8,dgryColor,'zoom',zoom)
+                        draw_Vbar(0,1,8,dgryColor,'zoom',zoom)
                         
                     if foc_man == 0:
                         button(1,7,0,9)
@@ -4173,8 +4176,8 @@ while True:
                         text(1,3,3,1,1,str(pre_width) + "x" + str(int(pre_height * .75)),fv,11)
                     else:
                         text(1,3,3,1,1,str(pre_width) + "x" + str(pre_height),fv,11)
-                    draw_Vbar(1,8,dgryColor,'zoom',zoom)
-                    draw_Vbar(1,3,lpurColor,'vformat',vformat)
+                    draw_Vbar(0,1,8,dgryColor,'zoom',zoom)
+                    draw_Vbar(0,1,3,lpurColor,'vformat',vformat)
                 if zoom > 0:
                     fxx = 0
                     fxy = 0
@@ -4192,8 +4195,9 @@ while True:
                         pmin = video_limits[f+1]
                         pmax = video_limits[f+2]
                 if (mousex > pre_width and mousey < ((button_row-1)*bh) + int(bh/3)):
-                    bpos = pow(((mousex-pre_width-bw) / bw),3)
-                    tduration = int(bpos * (pmax+1-pmin)) + 1
+                    bpos1 = (mousex-pre_width-bw) / bw
+                    bpos4 = pow(bpos1,3)
+                    tduration = int(bpos4 * (pmax+1-pmin)) + 1
                 elif (mousey > pre_height + (bh*3)  and mousey < pre_height + (bh*3) + int(bh/3)) and alt_dis == 1:
                     tduration = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
                 elif (mousey > pre_height * .75 + (bh*3)  and mousey < pre_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
@@ -4221,13 +4225,13 @@ while True:
                         tduration = min(tduration,pmax)
                 td = timedelta(seconds=tduration)
                 text(1,10,3,1,1,str(td),fv,12)
-                draw_Vbar(1,10,lyelColor,'tduration',tduration)
+                draw_Vbar(bpos1,1,10,lyelColor,'tduration',tduration)
                 if tinterval > 0:
                     tshots = int(tduration / tinterval)
                     text(1,12,3,1,1,str(tshots),fv,12)
                 else:
                     text(1,12,3,1,1," ",fv,12)
-                draw_Vbar(1,12,lyelColor,'tshots',tshots)
+                draw_Vbar(0,1,12,lyelColor,'tshots',tshots)
                 time.sleep(.25)
 
             elif button_row == 12:
@@ -4237,8 +4241,9 @@ while True:
                         pmin = video_limits[f+1]
                         pmax = video_limits[f+2]
                 if (mousex > pre_width and mousey < ((button_row-1)*bh) + int(bh/3)):
-                    bpos = pow(((mousex-pre_width-bw) / bw),3)
-                    tinterval = int(bpos * (pmax+1-pmin))
+                    bpos2 = (mousex-pre_width-bw) / bw
+                    bpos4 = pow(bpos2,3)
+                    tinterval = int(bpos4 * (pmax+1-pmin))
                 elif (mousey > pre_height + (bh*3)  and mousey < pre_height + (bh*3) + int(bh/3)) and alt_dis == 1:
                     tinterval = int(((mousex-((button_row - 9)*bw)) / bw) * (pmax+1-pmin))
                 elif (mousey > pre_height * .75 + (bh*3)  and mousey < pre_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
@@ -4267,12 +4272,12 @@ while True:
                 text(1,9,1,0,1,"CAP T/LPSE",ft,7)
                 td = timedelta(seconds=tinterval)
                 text(1,11,3,1,1,str(td),fv,12)
-                draw_Vbar(1,11,lyelColor,'tinterval',tinterval)
+                draw_Vbar(bpos2,1,11,lyelColor,'tinterval',tinterval)
                 if tinterval != 0:
                     tduration = tinterval * tshots
                     td = timedelta(seconds=tduration)
                     text(1,10,3,1,1,str(td),fv,12)
-                    draw_Vbar(1,10,lyelColor,'tduration',tduration)
+                    draw_Vbar(0,1,10,lyelColor,'tduration',tduration)
                 if tinterval == 0:
                     text(1,12,3,1,1," ",fv,12)
                     if mode == 0:
@@ -4300,8 +4305,9 @@ while True:
                         pmin = video_limits[f+1]
                         pmax = video_limits[f+2]
                 if (mousex > pre_width and mousey < ((button_row-1)*bh) + int(bh/3)):
-                    bpos = pow(((mousex-pre_width-bw) / bw),3)
-                    tshots = int(bpos * (pmax+1-pmin)) + 1
+                    bpos3 = (mousex-pre_width-bw) / bw
+                    bpos4 = pow(bpos3,3)
+                    tshots = int(bpos4 * (pmax+1-pmin)) + 1
                 elif (mousey > pre_height + (bh*3)  and mousey < pre_height + (bh*3) + int(bh/3)) and alt_dis == 1:
                     tshots = int(((mousex-((button_row -9)*bw)) / bw) * (pmax+1-pmin))
                 elif (mousey > pre_height * .75 + (bh*3)  and mousey < pre_height * .75 + (bh*3) + int(bh/3)) and alt_dis == 2:
@@ -4329,14 +4335,14 @@ while True:
                         tshots = min(tshots,pmax)
                     
                 text(1,12,3,1,1,str(tshots),fv,12)
-                draw_Vbar(1,12,lyelColor,'tshots',tshots)
+                draw_Vbar(bpos3,1,12,lyelColor,'tshots',tshots)
                 if tduration > 0:
                     tduration = tinterval * tshots
                 if tduration == 0:
                     tduration = 1
                 td = timedelta(seconds=tduration)
                 text(1,10,3,1,1,str(td),fv,12)
-                draw_Vbar(1,10,lyelColor,'tduration',tduration)
+                draw_Vbar(0,1,10,lyelColor,'tduration',tduration)
                 time.sleep(.25)
 
             elif button_row == 15:
@@ -4368,7 +4374,7 @@ while True:
                 if (Pi_Cam == 3 and v3_af == 1) and (xy + histarea > pre_height * 0.75 or xx + histarea > pre_width):
                     histarea = old_histarea
                 text(1,14,3,1,1,str(histarea),fv,7)
-                draw_Vbar(1,14,greyColor,'histarea',histarea)
+                draw_Vbar(0,1,14,greyColor,'histarea',histarea)
                 old_histarea = histarea
                 time.sleep(.25)
 
@@ -4392,7 +4398,7 @@ while True:
                         v3_f_range +=1
                         v3_f_range = min(v3_f_range,pmax)
                 text(1,15,3,1,1,v3_f_ranges[v3_f_range],fv,7)
-                draw_Vbar(1,15,greyColor,'v3_f_range',v3_f_range)
+                draw_Vbar(0,1,15,greyColor,'v3_f_range',v3_f_range)
                 restart = 1
                 time.sleep(.25)
 
@@ -4416,7 +4422,7 @@ while True:
                         str_cap +=1
                         str_cap = min(str_cap,pmax)
                 text(1,15,3,1,1,strs[str_cap],fv,7)
-                draw_Vbar(1,15,greyColor,'str_cap',str_cap)
+                draw_Vbar(0,1,15,greyColor,'str_cap',str_cap)
                 restart = 1
                 time.sleep(.25)
 
