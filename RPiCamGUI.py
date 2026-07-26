@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version      = 5.94
+version      = 5.95
 
 PiHQ_ON      = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -75,7 +75,7 @@ extn        = 0    # still file type  (0 = jpg), see extns below
 vlen        = 10   # video length in seconds
 fps         = 25   # video fps
 vformat     = 10   # set video format (10 = 1920x1080), see vwidths & vheights below
-codec       = 0    # set video codec  (0 = h264), see codecs below
+codec       = 4    # set video codec  (0 = h264, 4 = mp4), see codecs below
 tinterval   = 60   # time between timelapse shots in seconds
 tshots      = 10   # number of timelapse shots
 saturation  = 10   # picture colour saturation
@@ -96,25 +96,27 @@ v3_f_speed  = 0    # v3 focus speed, see v3_f_speeds below
 IRF         = 0    # Waveshare imx290-83 IR filter, 1 = ON
 str_cap     = 0    # 0 = STILL, see strs below
 v3_hdr      = 0    # HDR (v3 camera or Pi5 ONLY), see v3_hdrs below
-timet       = 5000 # -t setting when capturing STILLS
+timet       = 2000 # -t setting when capturing STILLS
 rotate      = 0    # rotate preview & stills ONLY, 0 = none, 1 = 90, 2 = 180, 3 = 270
 vflip       = 0    # set to 1 to vertically flip images
 hflip       = 0    # set tp 1 tp horizontally flip images
 vpreview    = 1    # show video preview during recording
 save2ram    = 0    # save videos to RAM, and then copy to SD card /Pictures
-# NOTE if you change any of the above defaults you need to delete the con_file and restart.
+st_scale    = 1    # sets scaling of stills, choose 1,2 or 4
+
+# NOTE if you change any of the above defaults you need to delete the con_file(s) and restart.
 
 # default directories and files
 pic         = "Pictures"
 vid         = "Videos"
-con_file    = "PiLCConfig0.txt"
+con_file    = "PiCamGUIConfig_00_"
 
 # setup directories
 Home_Files  = []
 Home_Files.append(os.getlogin())
 pic_dir     = "/home/" + Home_Files[0]+ "/" + pic + "/"
 vid_dir     = "/home/" + Home_Files[0]+ "/" + vid + "/"
-config_file = "/home/" + Home_Files[0]+ "/" + con_file
+config_file = "/home/" + Home_Files[0]+ "/" + con_file 
 
 # inital parameters
 prev_fps    = 20 
@@ -150,7 +152,6 @@ ravs        = [0] * sam
 gavs        = [0] * sam
 bavs        = [0] * sam
 bits        = bitrate * 1000000
-st_scale    = 1
 
 if tinterval > 0:
     tduration  = tshots * tinterval
@@ -246,22 +247,21 @@ video_limits = ['vlen',0,3600,'fps',1,40,'v5_focus',10,2500,'vformat',0,20,'0',0
 
 # check config_file exists, if not then write default values
 titles = ['mode','speed','gain','brightness','contrast','frame','red','blue','ev','vlen','fps','vformat','codec','tinterval','tshots','extn','zx','zy','zoom','saturation',
-          'meter','awb','sharpness','denoise','quality','profile','level','histogram','histarea','v3_f_speed','v3_f_range','rotate','IRF','str_cap','v3_hdr','timet','vflip','hflip','bitrate']
+          'meter','awb','sharpness','denoise','quality','profile','level','histogram','histarea','v3_f_speed','v3_f_range','rotate','IRF','str_cap','v3_hdr','timet','vflip','hflip','bitrate','st_scale']
 points = [mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation,
-          meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip,bitrate]
-if not os.path.exists(config_file):
-    with open(config_file, 'w') as f:
+          meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip,bitrate,st_scale]
+if not os.path.exists(config_file + str(camera) + ".txt"):
+    with open(config_file + str(camera) + ".txt", 'w') as f:
         for item in range(0,len(titles)):
             f.write( titles[item] + " : " + str(points[item]) + "\n")
 
 def read_config(): 
     global config_file,config,mode,camera,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation
-    global meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip,bitrate 
+    global meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip,bitrate,st_scale,Pi_Cam
     # read config_file
-    config_file = "PiLCConfig" + str(camera) + ".txt"
-    if os.path.exists(config_file):
+    if os.path.exists(config_file + str(camera) + ".txt"):
         config = []
-        with open(config_file, "r") as file:
+        with open(config_file + str(camera) + ".txt", "r") as file:
             line = file.readline()
             while line:
                 line = line.strip()
@@ -308,11 +308,7 @@ def read_config():
         vflip       = config[36]
         hflip       = config[37]
         bitrate     = config[38]
-
-read_config()
-
-if codec > len(codecs)-1:
-    codec = 0
+        st_scale    = config[39]
 
 def setmaxvformat():
     # set max video format
@@ -591,6 +587,11 @@ else:
         windowSurfaceObj = pygame.display.set_mode((dis_width,dis_height), pygame.NOFRAME,24)
 
 Camera_Version()
+read_config()
+if Pi_Cam != 4 and Pi_Cam != 6 and Pi_Cam != 8 and st_scale == 8:
+	st_scale = 4
+if codec > len(codecs)-1:
+    codec = 0
 
 global greyColor, redColor, greenColor, blueColor, dgryColor, lgrnColor, blackColor, whiteColor, purpleColor, yellowColor,lpurColor,lyelColor
 bredColor =   pygame.Color(255,   0,   0)
@@ -687,7 +688,7 @@ def text(col,row,fColor,top,upd,msg,fsize,bkgnd_Color):
         fontObj = pygame.font.Font(None, int(fsize))
     msgSurfaceObj = fontObj.render(msg, False, Color)
     msgRectobj = msgSurfaceObj.get_rect()
-    if msg == "Save      EXIT" or msg == "Load      EXIT" or msg == "CAPTURE STILL" or msg == "CAPTURE/Stream" or msg == "CAP T/LPSE" :
+    if msg == "Save      EXIT" or msg == "Load      EXIT" or msg == "CAPTURE STILL" or msg == "CAPTURE/Stream" or msg == "CAP T/LPSE" or msg == "CAPTURING" :
         pygame.draw.rect(windowSurfaceObj,bColor,Rect(bx+2,by+int(bh/3)-3,bw-4,int(bh/3)))
         msgRectobj.topleft = (bx+5,  by + int(bh/3) - 6)
     elif top == 0:
@@ -4536,8 +4537,8 @@ while True:
                    config[36] = vflip
                    config[37] = hflip
                    config[38] = bitrate
-                   config_file = "PiLCConfig" + str(camera) + ".txt"
-                   with open(config_file, 'w') as f:
+                   config[39] = st_scale
+                   with open(config_file + str(camera) + ".txt", 'w') as f:
                       for item in range(0,len(titles)):
                           f.write(titles[item] + " : " + str(config[item]) + "\n")
                    time.sleep(1)
@@ -4547,10 +4548,9 @@ while True:
                 elif ((alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0)) and event.button == 3:
                     text(1,13,3,0,1,"Load      EXIT",fv +2,7)
                     text(1,13,3,1,1,"Config",fv,7)
-                    config_file = "PiLCConfig" + str(camera) + ".txt"
-                    if os.path.exists(config_file):
+                    if os.path.exists(config_file + str(camera) + ".txt"):
                         config = []
-                        with open(config_file, "r") as file:
+                        with open(config_file + str(camera) + ".txt", "r") as file:
                            line = file.readline()
                            while line:
                                line = line.strip()
@@ -4597,6 +4597,9 @@ while True:
                         vflip       = config[36]
                         hflip       = config[37]
                         bitrate     = config[38]
+                        st_scale    = config[39]
+                        if Pi_Cam != 4 and Pi_Cam != 6 and Pi_Cam != 8 and st_scale == 8:
+                            st_scale = 4
                         bits        = bitrate * 1000000
                         time.sleep(1)
                         text(1,13,2,0,1,"Save      EXIT",fv +2,7)
