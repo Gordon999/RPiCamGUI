@@ -36,20 +36,20 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version = 5.92
+version      = 5.94
 
-PiHQ_ON     = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
+PiHQ_ON      = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
 # streaming parameters
-stream_type = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
-stream_port = 5000          # set video streaming port number
-udp_ip_addr = "10.42.0.52"  # IP address of the client for UDP streaming
+stream_type  = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
+stream_port  = 5000          # set video streaming port number
+udp_ip_addr  = "10.42.0.52"  # IP address of the client for UDP streaming
 
 # Set displayed preview image size (must be less than screen size to allow for the menu!!)
 # Recommended 640x480 (Pi 7" or other 800x480 screen), 720x540 (FOR SQUARE HYPERPIXEL DISPLAY),
 # 800x600, 1280x960 or 1440x1080
 # For a FULL HD screen (1920x1080) and FULLSCREEN ON set pre_width = 1440, pre_height = 1080
-pre_width   = 1280 
+pre_width   = 1280
 pre_height  = 960 
 fullscreen  = 0   # set to 1 for FULLSCREEN
 frame       = 1   # set to 0 for NO frame (i.e. if using Pi 7" touchscreen)
@@ -141,7 +141,7 @@ led_sw_ir   = LED(sw_ir)
 str_btn     = 0
 lo_res      = 1
 lver        = ""
-show_cmds   = 1
+show_cmds   = 0
 v3_af       = 1
 v5_af       = 1
 sam         = 50
@@ -1859,7 +1859,7 @@ while True:
                                 datastr = "libcamera-still"
                             else:
                                 datastr = "rpicam-still"
-                            if Pi == 5:
+                            if Pi == 5 and extns[extn] == "jpg":
                                 datastr += " --zsl"
                             datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -n "
                             datastr += "-t " + str(timet) + " -o " + fname
@@ -1914,11 +1914,6 @@ while True:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if Pi_Cam == 3 or Pi == 5:
                             datastr += " --hdr " + v3_hdrs[v3_hdr]
-                        if Pi_Cam == 4 and zoom > 1:  # HQ cropped
-                            vformat = crop4_f[zoom]
-                            vwidth  = vwidths[vformat]
-                            vheight = vheights[vformat]
-                            datastr += " --mode 4056:2160:10  --width " + str(vwidth) + " --height " + str(vheight)
                         if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and st_scale == 8:
                             datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
                         elif Pi_Cam == 6 or Pi_Cam == 8:
@@ -1928,6 +1923,11 @@ while True:
                                 datastr += " --width 9152 --height 6944"
                             elif Pi_Cam == 8:
                                 datastr += " --width 9248 --height 6944"
+                        elif Pi_Cam == 4 and zoom > 1:  # HQ cropped
+                            vformat = crop4_f[zoom]
+                            vwidth  = vwidths[vformat]
+                            vheight = vheights[vformat]
+                            datastr += " --mode 4056:2160:10  --width " + str(vwidth) + " --height " + str(vheight)
                         elif Pi_Cam == 4 and st_scale == 8: # HQ 2x2 binning
                             datastr += " --mode 2028:1520:10  --width 2028 --height 1520"
                         elif st_scale > 1: # image reduced by st_scale
@@ -3037,7 +3037,7 @@ while True:
                                 datastr = "libcamera-still"
                             else:
                                 datastr = "rpicam-still"
-                            if Pi == 5:
+                            if Pi == 5 and extns[extn] == "jpg":
                                 datastr += " --zsl"
                             if extns[extn] != 'raw':
                                 datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -s -t 0 -o " + fname
@@ -3262,7 +3262,7 @@ while True:
                                         datastr = "libcamera-still"
                                     else:
                                         datastr = "rpicam-still"
-                                    if Pi == 5:
+                                    if Pi == 5 and extns[extn] == "jpg":
                                         datastr += " --zsl"
                                     if extns[extn] != 'raw':
                                         datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -t " + str(timet) + " -o " + fname + " -p 0,0,640,480 "
@@ -3508,14 +3508,12 @@ while True:
                                 zhs = (igh * zfs[zoom])
                                 zxo = ((igw-int(zws))/2)/igw
                                 zyo = ((igh-int(zhs))/2)/igh
-                                #print(zws/igw,zhs/igh)
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                             elif zoom > 1 and Pi_Cam == 4:
                                 zws = vwidths[vformat]
                                 zhs = vheights[vformat]
                                 zxo = ((igw-int(zws))/2)/igw
                                 zyo = ((igh-int(zhs))/2)/igh
-                                #print(zws/igw,zhs/igh)
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
 
                             if show_cmds == 1:
@@ -3548,7 +3546,7 @@ while True:
                         else:
                             text(1,9,3,1,1,"",ft,7)
                         restart = 2
-                else:
+                elif tinterval > 0:
                     st_scale = int(st_scale * 2)
                     if st_scale > 8:
                         st_scale = 1
@@ -3572,13 +3570,27 @@ while True:
                     vlen = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
                 elif (mousey > pre_height * .75  + (bh*2) and mousey < pre_height * .75 + (bh*2) + int(bh/3)) and alt_dis == 2:
                     vlen = int(((mousex-((button_row - 1)*bw)) / bw) * (pmax+1-pmin))
-                else:
+                elif event.button == 1:
                     if (alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
                         vlen -=1
                         vlen  = max(vlen ,pmin)
                     else:
                         vlen  +=1
                         vlen = min(vlen ,pmax)
+                elif event.button == 3:
+                    if (alt_dis == 0 and mousex < pre_width + bw + (bw/2)) or (alt_dis > 0 and button_pos == 0):
+                        vlen -=60
+                        vlen = max(vlen,pmin)
+                    else:
+                        vlen +=60
+                        vlen = min(vlen,pmax)
+                elif event.button == 4 or event.button == 5:
+                    if event.button == 5:
+                        vlen -=600
+                        vlen = max(vlen,pmin)
+                    else:
+                        vlen +=600
+                        vlen = min(vlen,pmax)
                 td = timedelta(seconds=vlen)
                 text(1,1,3,1,1,str(td),fv,11)
                 draw_Vbar(0,1,1,lpurColor,'vlen',vlen)
@@ -4233,11 +4245,14 @@ while True:
                     text(1,12,3,1,1,str(tshots),fv,12)
                 else:
                     text(1,12,3,1,1," ",fv,12)
-                for f in range(0,len(video_limits)-1,3):
-                    if video_limits[f] == 'tshots':
-                        pmin = video_limits[f+1]
-                        pmax = video_limits[f+2]
-                bpos3 = pow(tshots/(pmax-pmin),.333)
+                if alt_dis == 0:
+                    for f in range(0,len(video_limits)-1,3):
+                        if video_limits[f] == 'tshots':
+                            pmin = video_limits[f+1]
+                            pmax = video_limits[f+2]
+                    bpos3 = pow(tshots/(pmax-pmin),.333)
+                else:
+                    bpos3 = 0
                 draw_Vbar(bpos3,1,12,lyelColor,'tshots',tshots)
 
             elif button_row == 12:
@@ -4291,11 +4306,14 @@ while True:
                     tduration = tinterval * tshots
                     td = timedelta(seconds=tduration)
                     text(1,10,3,1,1,str(td),fv,12)
-                    for f in range(0,len(video_limits)-1,3):
-                        if video_limits[f] == 'tduration':
-                            pmin = video_limits[f+1]
-                            pmax = video_limits[f+2]
-                    bpos1 = pow(tduration/(pmax-pmin),.333)
+                    if alt_dis == 0:
+                        for f in range(0,len(video_limits)-1,3):
+                            if video_limits[f] == 'tduration':
+                                pmin = video_limits[f+1]
+                                pmax = video_limits[f+2]
+                        bpos1 = pow(tduration/(pmax-pmin),.333)
+                    else:
+                        bpos1 = 0
                     draw_Vbar(bpos1,1,10,lyelColor,'tduration',tduration)
                 if tinterval == 0:
                     text(1,12,3,1,1," ",fv,12)
@@ -4363,11 +4381,14 @@ while True:
                     tduration = 1
                 td = timedelta(seconds=tduration)
                 text(1,10,3,1,1,str(td),fv,12)
-                for f in range(0,len(video_limits)-1,3):
-                    if video_limits[f] == 'tduration':
-                        pmin = video_limits[f+1]
-                        pmax = video_limits[f+2]
-                bpos1 = pow(tduration/(pmax-pmin),.333)
+                if alt_dis == 0:
+                    for f in range(0,len(video_limits)-1,3):
+                        if video_limits[f] == 'tduration':
+                            pmin = video_limits[f+1]
+                            pmax = video_limits[f+2]
+                    bpos1 = pow(tduration/(pmax-pmin),.333)
+                else:
+                    bpos1 = 0
                 draw_Vbar(bpos1,1,10,lyelColor,'tduration',tduration)
 
 
