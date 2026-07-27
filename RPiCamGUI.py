@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version      = 5.96
+version      = 5.97
 
 PiHQ_ON      = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -1933,7 +1933,13 @@ while True:
                             datastr += " --mode 2028:1520:10  --width 2028 --height 1520"
                         elif st_scale > 1: # image reduced by st_scale
                             datastr += " --mode " + str(x_sens[Pi_Cam]) + ":" + str(y_sens[Pi_Cam]) + ":10" + " --width " + str(int(x_sens[Pi_Cam]/int(st_scale))) + " --height " + str(int(y_sens[Pi_Cam]/int(st_scale)))
-                        if zoom > 1:
+                        if zoom > 1 and Pi_Cam == 4:
+                            zws = vwidths[vformat]
+                            zhs = vheights[vformat]
+                            zxo = ((igw-zws)/2)/igw
+                            zyo = ((igh-zhs)/2)/igh
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
+                        elif zoom > 1:
                             zws = int(igw * zfs[zoom])
                             zhs = int(igh * zfs[zoom])
                             zxo = ((igw-zws)/2)/igw
@@ -1951,9 +1957,9 @@ while True:
                             if rotate != 0:
                                 image = pygame.transform.rotate(image, int(rotate * 90))
                                 pygame.image.save(image,fname[:-4]+"r." + extns2[extn])
-                            if igw/igh > 1.5:
+                            if image.get_width()/image.get_height() > 1.333:
                                 if rotate == 0:
-                                    image = pygame.transform.scale(image, (pre_width,int(pre_height * 0.75)))
+                                    image = pygame.transform.scale(image,(pre_width,int(pre_width * (image.get_height()/image.get_width()))))
                                 else:
                                     if rotate != 2:
                                         igwr = image.get_width()
