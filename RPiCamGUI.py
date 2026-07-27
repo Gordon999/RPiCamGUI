@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version      = 5.95
+version      = 5.96
 
 PiHQ_ON      = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -925,7 +925,7 @@ def preview():
         zhs = vheights[vformat]
         zxo = ((igw-zws)/2)/igw
         zyo = ((igh-zhs)/2)/igh
-        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
+        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
     p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
     if show_cmds == 1:
         print(datastr)
@@ -2776,7 +2776,7 @@ while True:
                             zhs = vheights[vformat]
                             zxo = ((igw-int(zws))/2)/igw
                             zyo = ((igh-int(zhs))/2)/igh
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
                         elif zoom > 1:
                             zws = (igw * zfs[zoom])
                             zhs = (igh * zfs[zoom])
@@ -2948,7 +2948,7 @@ while True:
                             zhs = vheights[vformat]
                             zxo = ((igw-int(zws))/2)/igw
                             zyo = ((igh-int(zhs))/2)/igh
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
                         elif zoom > 1:
                             zws = (igw * zfs[zoom])
                             zhs = (igh * zfs[zoom])
@@ -3515,7 +3515,7 @@ while True:
                                 zhs = vheights[vformat]
                                 zxo = ((igw-int(zws))/2)/igw
                                 zyo = ((igh-int(zhs))/2)/igh
-                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
 
                             if show_cmds == 1:
                                 print (datastr)
