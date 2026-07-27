@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version      = 5.98
+version      = 6.00
 
 PiHQ_ON      = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -3050,14 +3050,11 @@ while True:
                                 datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -s -t 0 -o " + fname
                                 if fullscreen != 1:
                                     datastr += " -p 0,0,640,480 "
-                                else:
-                                    datastr += " -n"
                             else:
                                 datastr += " --camera " + str(camera) + " -r -s -t 0 -o " + fname 
                                 if fullscreen != 1:
                                     datastr += " -p 0,0,640,480 "
-                                else:
-                                    datastr += " -n"
+                            datastr += " -n"
                             datastr += " --brightness " + str(brightness/100) + " --contrast " + str(contrast/100)
                             if mode == 0:
                                 datastr += " --shutter " + str(sspeed)
@@ -3111,27 +3108,27 @@ while True:
                                     datastr += " --width 9152 --height 6944"
                                 elif Pi_Cam == 8:
                                     datastr += " --width 9248 --height 6944"
+                            elif Pi_Cam == 4 and zoom > 1:  # HQ cropped
+                                vformat = crop4_f[zoom]
+                                vwidth  = vwidths[vformat]
+                                vheight = vheights[vformat]
+                                datastr += " --mode 4056:2160:10  --width " + str(int(vwidth/st_scale)) + " --height " + str(int(vheight/st_scale))
                             elif Pi_Cam == 4 and st_scale == 8: # HQ 2x2 binning
                                 datastr += " --mode 2028:1520:10  --width 2028 --height 1520"
                             elif st_scale > 1: # image reduced by st_scale
-                                print("scaled")
                                 datastr += " --mode " + str(x_sens[Pi_Cam]) + ":" + str(y_sens[Pi_Cam]) + ":10" + " --width " + str(int(x_sens[Pi_Cam]/int(st_scale))) + " --height " + str(int(y_sens[Pi_Cam]/int(st_scale)))
-                            if zoom > 0 and zoom < 6:
+                            if zoom > 1 and Pi_Cam == 4:
+                                zws = vwidths[vformat]
+                                zhs = vheights[vformat]
+                                zxo = ((igw-zws)/2)/igw
+                                zyo = ((igh-zhs)/2)/igh
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
+                            elif zoom > 1:
                                 zws = int(igw * zfs[zoom])
                                 zhs = int(igh * zfs[zoom])
                                 zxo = ((igw-zws)/2)/igw
                                 zyo = ((igh-zhs)/2)/igh
                                 datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
-                            elif zoom == 5:
-                                zxo = ((igw/2)-(pre_width/2))/igw
-                                if igw/igh > 1.5:
-                                    zyo = ((igh/2)-((pre_height * .75)/2))/igh
-                                else:
-                                    zyo = ((igh/2)-(pre_height/2))/igh
-                                if igw/igh > 1.5:
-                                    datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(int(pre_width)/igw) + "," + str(int(pre_height * .75)/igh)
-                                else:
-                                    datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(pre_width/igw) + "," + str(pre_height/igh)
                             p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
                             if show_cmds == 1:
                                 print (datastr)
@@ -3287,6 +3284,7 @@ while True:
                                             datastr += " --awbgains " + str(red/10) + "," + str(blue/10)
                                         else:
                                             datastr += " --awb " + awbs[awb]
+                                    datastr += " -n"
                                     datastr += " --metering " + meters[meter]
                                     datastr += " --saturation " + str(saturation/10)
                                     datastr += " --sharpness " + str(sharpness/10)
@@ -3325,26 +3323,27 @@ while True:
                                             datastr += " --width 9152 --height 6944"
                                         elif Pi_Cam == 8:
                                             datastr += " --width 9248 --height 6944"
+                                    elif Pi_Cam == 4 and zoom > 1:  # HQ cropped
+                                        vformat = crop4_f[zoom]
+                                        vwidth  = vwidths[vformat]
+                                        vheight = vheights[vformat]
+                                        datastr += " --mode 4056:2160:10  --width " + str(int(vwidth/st_scale)) + " --height " + str(int(vheight/st_scale))
                                     elif Pi_Cam == 4 and st_scale == 8: # HQ 2x2 binning
                                         datastr += " --mode 2028:1520:10  --width 2028 --height 1520"
                                     elif st_scale > 1: # image reduced by st_scale
                                         datastr += " --mode " + str(x_sens[Pi_Cam]) + ":" + str(y_sens[Pi_Cam]) + ":10" + " --width " + str(int(x_sens[Pi_Cam]/int(st_scale))) + " --height " + str(int(y_sens[Pi_Cam]/int(st_scale)))
-                                    if zoom > 0 and zoom < 6:
+                                    if zoom > 1 and Pi_Cam == 4:
+                                        zws = vwidths[vformat]
+                                        zhs = vheights[vformat]
+                                        zxo = ((igw-zws)/2)/igw
+                                        zyo = ((igh-zhs)/2)/igh
+                                        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
+                                    elif zoom > 1:
                                         zws = int(igw * zfs[zoom])
                                         zhs = int(igh * zfs[zoom])
                                         zxo = ((igw-zws)/2)/igw
                                         zyo = ((igh-zhs)/2)/igh
                                         datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
-                                    elif zoom == 5:
-                                        zxo = ((igw/2)-(pre_width/2))/igw
-                                        if igw/igh > 1.5:
-                                            zyo = ((igh/2)-((pre_height * .75)/2))/igh
-                                        else:
-                                            zyo = ((igh/2)-(pre_height/2))/igh
-                                        if igw/igh > 1.5:
-                                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(int(pre_width)/igw) + "," + str(int(pre_height * .75)/igh)
-                                        else:
-                                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(pre_width/igw) + "," + str(pre_height/igh)
                                     if show_cmds == 1:
                                         print (datastr)
                                     p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
@@ -3362,10 +3361,10 @@ while True:
                                         counts.sort()
                                         if (extns2[extn] == 'jpg' or extns2[extn] == 'bmp' or extns2[extn] == 'png') and count > 0 and show == 0:
                                             image = pygame.image.load(counts[count-1])
-                                            if (Pi_Cam != 3 and Pi_Cam != 10 and Pi_Cam != 15) or (igw/igh > 1.5 and zoom == 5):
-                                                catSurfacesmall = pygame.transform.scale(image, (pre_width,pre_height))
+                                            if image.get_width()/image.get_height() > 1.333:
+                                                catSurfacesmall = pygame.transform.scale(image,(pre_width,int(pre_width * (image.get_height()/image.get_width()))))
                                             else:
-                                                catSurfacesmall = pygame.transform.scale(image, (pre_width,int(pre_height * 0.75)))
+                                                catSurfacesmall = pygame.transform.scale(image, (pre_width,pre_height))
                                             windowSurfaceObj.blit(catSurfacesmall, (0, 0))
                                             text(0,0,6,2,1,counts[count-1],int(fv*1.5),1)
                                             pygame.display.update()
