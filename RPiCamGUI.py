@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version      = 6.00
+version      = 6.01
 
 PiHQ_ON      = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -588,6 +588,10 @@ else:
 
 Camera_Version()
 read_config()
+if tinterval > 0:
+    tduration = tinterval * tshots
+else:
+    tduration = 5
 if Pi_Cam != 4 and Pi_Cam != 6 and Pi_Cam != 8 and st_scale == 8:
 	st_scale = 4
 if codec > len(codecs)-1:
@@ -829,7 +833,7 @@ def preview():
         vformat = crop4_f[zoom]
         vwidth  = vwidths[vformat]
         vheight = vheights[vformat]
-        datastr += " --mode 4056:2160:8  --width " + str(vwidth) + " --height " + str(vheight) + " -o /run/shm/test%04d.jpg "
+        datastr += " --mode 4056:3040:8  --width " + str(vwidth) + " --height " + str(vheight) + " -o /run/shm/test%04d.jpg "
     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and (focus_mode == 1 or zoom > 0):
         datastr += " --width 3280 --height 2464 -o /run/shm/test%04d.jpg "
     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) or focus_mode == 1 :
@@ -925,7 +929,7 @@ def preview():
         zhs = vheights[vformat]
         zxo = ((igw-zws)/2)/igw
         zyo = ((igh-zhs)/2)/igh
-        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
+        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh))
     p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
     if show_cmds == 1:
         print(datastr)
@@ -1069,7 +1073,7 @@ def Menu():
 	  text(1,17,3,1,1,"ON",fv,7)
 
 def Menu2():
-    global mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation
+    global mode,speed,gain,brightness,contrast,frame,red,blue,ev,vlen,fps,vformat,codec,tinterval,tshots,extn,zx,zy,zoom,saturation,tduration
     global meter,awb,sharpness,denoise,quality,profile,level,histogram,histarea,v3_f_speed,v3_f_range,rotate,IRF,str_cap,v3_hdr,timet,vflip,hflip
     # write button texts
     text(0,0,1,0,1,"CAPTURE STILL",ft,7)
@@ -1160,6 +1164,10 @@ def Menu2():
     text(1,6,5,0,1,"V_Bitrate",ft,11)
     text(1,6,3,1,1,str(bitrate),fv,11)
     text(1,9,1,0,1,"CAP T/LPSE",ft,7)
+    if tinterval > 0:
+        tduration = tinterval * tshots
+    else:
+        tduration = 5
     td = timedelta(seconds=tduration)
     text(1,10,5,0,1,"Duration",ft,12)
     text(1,10,3,1,1,str(td),fv,12)
@@ -4606,6 +4614,10 @@ while True:
                         if Pi_Cam != 4 and Pi_Cam != 6 and Pi_Cam != 8 and st_scale == 8:
                             st_scale = 4
                         bits        = bitrate * 1000000
+                        if tinterval > 0:
+                            tduration = tinterval * tshots
+                        else:
+                            tduration = 5
                         time.sleep(1)
                         text(1,13,2,0,1,"Save      EXIT",fv +2,7)
                         text(1,13,2,1,1,"Config",fv,7)
