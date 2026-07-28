@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version      = 6.01
+version      = 6.02
 
 PiHQ_ON      = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -833,7 +833,7 @@ def preview():
         vformat = crop4_f[zoom]
         vwidth  = vwidths[vformat]
         vheight = vheights[vformat]
-        datastr += " --mode 4056:3040:8  --width " + str(vwidth) + " --height " + str(vheight) + " -o /run/shm/test%04d.jpg "
+        datastr += " --mode 4056:2160:8  --width " + str(vwidth) + " --height " + str(vheight) + " -o /run/shm/test%04d.jpg "
     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) and (focus_mode == 1 or zoom > 0):
         datastr += " --width 3280 --height 2464 -o /run/shm/test%04d.jpg "
     elif (Pi_Cam == 5 or Pi_Cam == 6 or Pi_Cam == 8) or focus_mode == 1 :
@@ -929,13 +929,13 @@ def preview():
         zhs = vheights[vformat]
         zxo = ((igw-zws)/2)/igw
         zyo = ((igh-zhs)/2)/igh
-        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh))
+        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) *1.4)
     p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
     if show_cmds == 1:
         print(datastr)
     restart = 0
     time.sleep(0.2)
-    if igw/igh > 1.5 and rotate == 0 and zoom != 5 and alt_dis == 1:
+    if igw/igh > 1.5 and rotate == 0 and alt_dis == 1:
         pygame.draw.rect(windowSurfaceObj,(0,0,0),Rect(0,int(pre_height * .75),pre_width,int(pre_height *.24) ))
 
 # draw buttons
