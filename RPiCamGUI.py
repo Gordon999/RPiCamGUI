@@ -36,9 +36,9 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version      = 6.02
+version      = 6.03
 
-PiHQ_ON      = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi4 when Zoomed, eg 4k,2k etc, may require Pi5.
+PiHQ_ON      = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi HQ camera when Zoomed, eg 4k,2k etc, may require Pi5.
 
 # streaming parameters
 stream_type  = 2             # 0 = TCP, 1 = UDP, 2 = RTSP
@@ -918,18 +918,18 @@ def preview():
             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/vc4/imx477_scientific.json"
         if os.path.exists('/usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json') and Pi == 5:
             datastr += " --tuning-file /usr/share/libcamera/ipa/rpi/pisp/imx477_scientific.json"
-    if zoom > 1 and Pi_Cam != 4:
+    if zoom > 1 and (Pi_Cam != 4 or PiHQ_ON == 0):
         zws = int(igw * zfs[zoom])
         zhs = int(igh * zfs[zoom])
         zxo = ((igw-zws)/2)/igw
         zyo = ((igh-zhs)/2)/igh
         datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
-    if zoom > 1 and Pi_Cam == 4:
+    if zoom > 1 and Pi_Cam == 4 and PiHQ_ON == 1:
         zws = vwidths[vformat]
         zhs = vheights[vformat]
         zxo = ((igw-zws)/2)/igw
-        zyo = ((igh-zhs)/2)/igh
-        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) *1.4)
+        zyo = ((2160-zhs)/2)/2160
+        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/2160))
     p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
     if show_cmds == 1:
         print(datastr)
@@ -1344,8 +1344,8 @@ while True:
             pass
             
         if Pi_Cam == 4 and zoom > 1 and zoom < 6:
-            image = pygame.transform.scale(image, (pre_width,int(pre_height * 0.75)))
             pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,int(pre_height * 0.75),int(pre_width),int(pre_height/4)),0)
+            image = pygame.transform.scale(image,(pre_width,int(pre_width * (image.get_height()/image.get_width()))))
         elif igw/igh > 1.5:
             if rotate == 0:
                 image = pygame.transform.scale(image, (pre_width,int(pre_height * 0.75)))
@@ -1596,7 +1596,7 @@ while True:
                 elif Pi_Cam == 7 and ((vwidth == 1920 and vheight == 1080) or (vwidth == 1280 and vheight == 720)):
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(0,int(pre_height * 0.12),int(pre_width),int(pre_height * 0.75)),gw)
                 elif Pi_Cam == 4  and ((vwidth == 1920 and vheight == 1080) or (vwidth == 1536 and vheight == 864) or (vwidth == 1280 and vheight == 720)):
-                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(0,int(pre_height * 0.15),int(pre_width),int(pre_height * 0.75)),gw)
+                    pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(0,int(pre_height * 0.15),int(pre_width),int(pre_height * 0.705)),gw)
                 elif Pi_Cam == 4  and ((vwidth == 640 and vheight == 480) or (vwidth == 1332 and vheight == 990) or (vwidth == 2028 and vheight == 1080)) and fps > 40:
                     pygame.draw.rect(windowSurfaceObj,(155,0,150),Rect(int(pre_width * 0.18),int(pre_height * 0.17),int(pre_width * 0.65),int(pre_height * 0.66)),gw)
             elif rotate == 1 or rotate == 3:
@@ -1932,7 +1932,7 @@ while True:
                                 datastr += " --width 9152 --height 6944"
                             elif Pi_Cam == 8:
                                 datastr += " --width 9248 --height 6944"
-                        elif Pi_Cam == 4 and zoom > 1:  # HQ cropped
+                        elif Pi_Cam == 4 and zoom > 1 and PiHQ_ON == 1:  # HQ cropped
                             vformat = crop4_f[zoom]
                             vwidth  = vwidths[vformat]
                             vheight = vheights[vformat]
@@ -1941,12 +1941,12 @@ while True:
                             datastr += " --mode 2028:1520:10  --width 2028 --height 1520"
                         elif st_scale > 1: # image reduced by st_scale
                             datastr += " --mode " + str(x_sens[Pi_Cam]) + ":" + str(y_sens[Pi_Cam]) + ":10" + " --width " + str(int(x_sens[Pi_Cam]/int(st_scale))) + " --height " + str(int(y_sens[Pi_Cam]/int(st_scale)))
-                        if zoom > 1 and Pi_Cam == 4:
+                        if zoom > 1 and Pi_Cam == 4 and PiHQ_ON == 1:
                             zws = vwidths[vformat]
                             zhs = vheights[vformat]
                             zxo = ((igw-zws)/2)/igw
-                            zyo = ((igh-zhs)/2)/igh
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
+                            zyo = ((2160-zhs)/2)/2160
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/2160))
                         elif zoom > 1:
                             zws = int(igw * zfs[zoom])
                             zhs = int(igh * zfs[zoom])
@@ -2015,12 +2015,12 @@ while True:
                                 if check[0] == "ExposureTime":
                                     etime = check[1][:-1]
                           if alt_dis < 2:
-                              text(0,22,6,2,1,"Ana Gain: " + str(again) + " Dig Gain: " + str(dgain) + " Exp Time: " + str(etime) +"uS",int(fv*1.5),1)
+                              text(0,26,6,2,1,"Ana Gain: " + str(again) + " Dig Gain: " + str(dgain) + " Exp Time: " + str(etime) +"uS",int(fv*1.5),1)
                           else:
                               text(0,19,6,2,1,"Ana Gain: " + str(again) + " Dig Gain: " + str(dgain) + " Exp Time: " + str(etime) +"uS",int(fv*1.5),1)
                         text(0,0,6,2,1,fname,int(fv*1.5),1)
                         pygame.display.update()
-                        time.sleep(2)
+                        time.sleep(3)
                         if rotate != 0 and alt_dis < 2:
                             pygame.draw.rect(windowSurfaceObj,blackColor,Rect(0,0,pre_width,pre_height),0)
                         if rotate == 0 and alt_dis < 2:
@@ -2724,7 +2724,7 @@ while True:
                             else:
                                 datastr += " --width " + str(pre_width) + " --height " + str(pre_height)
                         elif Pi_Cam == 4 and vwidth == 2028 and vheight == 1520:
-                            datastr += " --mode 4056:3040:12"
+                            datastr += " --mode 4056:2160:12"
                         elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
                             datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
                         elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
@@ -2788,9 +2788,9 @@ while True:
                         if zoom > 1 and Pi_Cam == 4 and PiHQ_ON == 1:
                             zws = vwidths[vformat]
                             zhs = vheights[vformat]
-                            zxo = ((igw-int(zws))/2)/igw
-                            zyo = ((igh-int(zhs))/2)/igh
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
+                            zxo = ((igw-zws)/2)/igw
+                            zyo = ((2160-zhs)/2)/2160
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/2160))
                         elif zoom > 1:
                             zws = (igw * zfs[zoom])
                             zhs = (igh * zfs[zoom])
@@ -2799,9 +2799,6 @@ while True:
                             datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
                         if show_cmds == 1:
                             print (datastr)
-                        #if codecs[codec] == 'mp4':
-                        #    os.system(datastr)
-                        #else:
                         p = subprocess.Popen(datastr, shell=True, preexec_fn=os.setsid)
                         start_video = time.monotonic()
                         stop = 0
@@ -2907,7 +2904,7 @@ while True:
                             vheight = vheights[vformat]
                             datastr += " --mode 4056:2160:10  --width " + str(vwidth) + " --height " + str(vheight)
                         elif Pi_Cam == 4 and vwidth == 2028:
-                            datastr += " --mode 4056:3040:12"
+                            datastr += " --mode 4056:2160:12"
                         elif Pi_Cam == 3 and vwidth == 2304 and codec == 0:
                             datastr += " --mode 2304:1296:10 --width 2304 --height 1296"
                         elif Pi_Cam == 3 and vwidth == 2028 and codec == 0:
@@ -2960,9 +2957,9 @@ while True:
                         if zoom > 1 and Pi_Cam == 4 and PiHQ_ON == 1:
                             zws = vwidths[vformat]
                             zhs = vheights[vformat]
-                            zxo = ((igw-int(zws))/2)/igw
-                            zyo = ((igh-int(zhs))/2)/igh
-                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
+                            zxo = ((igw-zws)/2)/igw
+                            zyo = ((2160-zhs)/2)/2160
+                            datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/2160))
                         elif zoom > 1:
                             zws = (igw * zfs[zoom])
                             zhs = (igh * zfs[zoom])
@@ -3125,12 +3122,12 @@ while True:
                                 datastr += " --mode 2028:1520:10  --width 2028 --height 1520"
                             elif st_scale > 1: # image reduced by st_scale
                                 datastr += " --mode " + str(x_sens[Pi_Cam]) + ":" + str(y_sens[Pi_Cam]) + ":10" + " --width " + str(int(x_sens[Pi_Cam]/int(st_scale))) + " --height " + str(int(y_sens[Pi_Cam]/int(st_scale)))
-                            if zoom > 1 and Pi_Cam == 4:
+                            if zoom > 1 and Pi_Cam == 4 and PiHQ_ON == 1:
                                 zws = vwidths[vformat]
                                 zhs = vheights[vformat]
                                 zxo = ((igw-zws)/2)/igw
-                                zyo = ((igh-zhs)/2)/igh
-                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
+                                zyo = ((2160-zhs)/2)/2160
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/2160))
                             elif zoom > 1:
                                 zws = int(igw * zfs[zoom])
                                 zhs = int(igh * zfs[zoom])
@@ -3340,12 +3337,12 @@ while True:
                                         datastr += " --mode 2028:1520:10  --width 2028 --height 1520"
                                     elif st_scale > 1: # image reduced by st_scale
                                         datastr += " --mode " + str(x_sens[Pi_Cam]) + ":" + str(y_sens[Pi_Cam]) + ":10" + " --width " + str(int(x_sens[Pi_Cam]/int(st_scale))) + " --height " + str(int(y_sens[Pi_Cam]/int(st_scale)))
-                                    if zoom > 1 and Pi_Cam == 4:
+                                    if zoom > 1 and Pi_Cam == 4 and PiHQ_ON == 1:
                                         zws = vwidths[vformat]
                                         zhs = vheights[vformat]
                                         zxo = ((igw-zws)/2)/igw
-                                        zyo = ((igh-zhs)/2)/igh
-                                        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
+                                        zyo = ((2160-zhs)/2)/2160
+                                        datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/2160))
                                     elif zoom > 1:
                                         zws = int(igw * zfs[zoom])
                                         zhs = int(igh * zfs[zoom])
@@ -3517,18 +3514,18 @@ while True:
                                 datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                             if Pi_Cam == 3 or Pi == 5:
                                 datastr += " --hdr " + v3_hdrs[v3_hdr]
-                            if zoom > 1 and Pi_Cam != 4:
-                                zws = (igw * zfs[zoom])
-                                zhs = (igh * zfs[zoom])
-                                zxo = ((igw-int(zws))/2)/igw
-                                zyo = ((igh-int(zhs))/2)/igh
-                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
+                            if zoom > 1 and Pi_Cam == 4 and PiHQ_ON == 1:
+                                zws = vwidths[vformat]
+                                zhs = vheights[vformat]
+                                zxo = ((igw-zws)/2)/igw
+                                zyo = ((2160-zhs)/2)/2160
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/2160))
                             elif zoom > 1 and Pi_Cam == 4:
                                 zws = vwidths[vformat]
                                 zhs = vheights[vformat]
                                 zxo = ((igw-int(zws))/2)/igw
                                 zyo = ((igh-int(zhs))/2)/igh
-                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str((zhs/igh) * 1.4)
+                                datastr += " --roi " + str(zxo) + "," + str(zyo) + "," + str(zws/igw) + "," + str(zhs/igh)
 
                             if show_cmds == 1:
                                 print (datastr)
@@ -4191,7 +4188,7 @@ while True:
                     button(1,8,1,9)
                     text(1,8,2,0,1,"ZOOMED",ft,0)
                     text(1,8,3,1,1,str(zoom),fv,0)
-                    if Pi_Cam == 4 and zoom > 1:
+                    if Pi_Cam == 4 and zoom > 1 and PiHQ_ON == 1:
                          vformat = crop4_f[zoom]
                          vwidth  = vwidths[vformat]
                          vheight = vheights[vformat]
