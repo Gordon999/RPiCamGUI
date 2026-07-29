@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version      = 6.03
+version      = 6.04
 
 PiHQ_ON      = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi HQ camera when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -143,7 +143,7 @@ led_sw_ir   = LED(sw_ir)
 str_btn     = 0
 lo_res      = 1
 lver        = ""
-show_cmds   = 0
+show_cmds   = 1
 v3_af       = 1
 v5_af       = 1
 sam         = 50
@@ -2718,6 +2718,8 @@ while True:
                             vwidth  = vwidths[vformat]
                             vheight = vheights[vformat]
                             datastr += " --mode 4056:2160:10  --width " + str(vwidth) + " --height " + str(vheight)
+                        elif Pi_Cam == 4 and zoom > 1:
+                            datastr += " --mode 2028:1520:10  --width " + str(pre_width) + " --height " + str(pre_height)
                         elif zoom > 1:
                             if igw/igh > 1.5:
                                 datastr += " --width " + str(pre_width) + " --height " + str(int(pre_height * .75))
