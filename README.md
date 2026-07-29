@@ -85,7 +85,7 @@ When a still is captured will show Analogue Gain, Digital Gain and Exposure time
 
 When using Zoom it will show a focus value, and an option of a histogram showing RGB and/or L, all based on the area shown, the area can be moved by clicking on the image, and changed using the Hist Area button. It will also show a figure for Noise, this is from a small area in the centre of the Histogram area.
 
-2x2 binning option for 64MP camera, Click on right hand side of the Capture Still or Capture Timelapse buttons. 
+2x2 binning option for Pi4 or Arducam 64MP cameras, right mouse click on the Capture Still or Capture Timelapse buttons. 
 
 For use with Hyperpixel square display set preview_width  = 720, preview_height = 540, sq_dis = 1 
 
@@ -93,7 +93,7 @@ If you want a fullscreen display set fullscreen = 1 in the script. if using a fu
 
 lf you want to use HQ imx477_scientific.json the file needs to be in /usr/share/libcamera/ipa/raspberrypi/imx477_scientific.json, except for a pi5 where it needs to be in usr/share/libcamera/ipa/rpi/pisp/ . see https://forums.raspberrypi.com/viewtopic.php?t=343449#p2068315. available here... https://github.com/raspberrypi/libcamera/blob/main/src/ipa/rpi/pisp/data/imx477_scientific.json
 
-Shows a reduced preview but saves stills at camera full resolution, and videos at user set resolution.
+Shows a reduced preview but saves stills at camera full / half / quarter resolution, and videos at user set resolution.
 
 Can also save timelapses. If you want to capture high resolution images as fast as possible using Timelapse set Interval to 0, set Duration to required seconds, set V_FPS to max, set V_Coder to mjpeg or raw , set V_Format to maximum value, click on CAPTURE Timelapse to start. The images will be in /home/.username./Pictures. If using Arducam 16MP or 64MP AF camera you will need more memory allocated to achieve full resolution if using Timelapse. In /boot/config.txt set dtoverlay=vc4-kms-v3d,cma-512 and then reboot. Note for fastest timelapse it uses libcamera-vid so not the highest quality images or libcamera-raw if v_codec set to raw.
 
