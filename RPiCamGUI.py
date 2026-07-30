@@ -36,7 +36,7 @@ import math
 from gpiozero import Button
 from gpiozero import LED
 
-version      = 6.04
+version      = 6.05
 
 PiHQ_ON      = 1 # set to 1 to enable Higher Quality Cropped Videos with Pi HQ camera when Zoomed, eg 4k,2k etc, may require Pi5.
 
@@ -143,7 +143,7 @@ led_sw_ir   = LED(sw_ir)
 str_btn     = 0
 lo_res      = 1
 lver        = ""
-show_cmds   = 1
+show_cmds   = 0
 v3_af       = 1
 v5_af       = 1
 sam         = 50
@@ -224,7 +224,7 @@ for w in range(0,len(lva)):
     title = lva[w].split("=")
     if title[0] == "VERSION_ID":
         lver = int(title[1][1:3])
-print(lver)
+print("Linux:",lver)
 
 #check Pi model.
 Pi = -1
@@ -534,7 +534,6 @@ def Camera_Version():
         vfps = v16_max_fps[vformat]
     else:
         vfps = v_max_fps[vformat]
-    print(Pi_Cam,vfps)
     video_limits[5] = vfps
     if tinterval > 0:
         tduration = tinterval * tshots
@@ -1868,7 +1867,7 @@ while True:
                                 datastr = "libcamera-still"
                             else:
                                 datastr = "rpicam-still"
-                            if Pi == 5 and extns[extn] == "jpg":
+                            if Pi == 5 and extns[extn] == "jpg" and Pi_Cam != 8:
                                 datastr += " --zsl"
                             datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -n "
                             datastr += "-t " + str(timet) + " -o " + fname
@@ -1923,15 +1922,8 @@ while True:
                             datastr += " --autofocus-window " + str(fxx) + "," + str(fxy) + "," + str(fxz) + "," + str(fxz)
                         if Pi_Cam == 3 or Pi == 5:
                             datastr += " --hdr " + v3_hdrs[v3_hdr]
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and st_scale == 8:
+                        if (Pi_Cam == 6 or Pi_Cam == 8) and st_scale == 8:
                             datastr += " --width 4624 --height 3472 " # 16MP superpixel mode for higher light sensitivity
-                        elif Pi_Cam == 6 or Pi_Cam == 8:
-                            if Pi != 5 and lo_res == 1:
-                                datastr += " --width 4624 --height 3472"
-                            elif Pi_Cam == 6:
-                                datastr += " --width 9152 --height 6944"
-                            elif Pi_Cam == 8:
-                                datastr += " --width 9248 --height 6944"
                         elif Pi_Cam == 4 and zoom > 1 and PiHQ_ON == 1:  # HQ cropped
                             vformat = crop4_f[zoom]
                             vwidth  = vwidths[vformat]
@@ -1941,6 +1933,13 @@ while True:
                             datastr += " --mode 2028:1520:10  --width 2028 --height 1520"
                         elif st_scale > 1: # image reduced by st_scale
                             datastr += " --mode " + str(x_sens[Pi_Cam]) + ":" + str(y_sens[Pi_Cam]) + ":10" + " --width " + str(int(x_sens[Pi_Cam]/int(st_scale))) + " --height " + str(int(y_sens[Pi_Cam]/int(st_scale)))
+                        elif Pi_Cam == 6 or Pi_Cam == 8:
+                            if Pi != 5 and lo_res == 1:
+                                datastr += " --width 4624 --height 3472"
+                            elif Pi_Cam == 6:
+                                datastr += " --width 9152 --height 6944"
+                            elif Pi_Cam == 8:
+                                datastr += " --width 9248 --height 6944"
                         if zoom > 1 and Pi_Cam == 4 and PiHQ_ON == 1:
                             zws = vwidths[vformat]
                             zhs = vheights[vformat]
@@ -2090,14 +2089,6 @@ while True:
                     text(0,3,5,0,1,"Gain ",ft,10)
                     text(0,3,3,1,1,"Auto",fv,10)
                     draw_bar(0,3,lgrnColor,'gain',gain)
-                if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
-                    text(0,0,1,1,1,"STILL    2x2",ft,7)
-                else:
-                    text(0,0,1,1,1,"Still ",ft,7)
-                if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
-                    text(1,9,1,1,1,"T'lapse  2x2",ft,7)
-                else:
-                    text(1,9,1,1,1,"Timelapse",ft,7)
                 text(0,1,3,1,1,modes[mode],fv,10)
                 draw_bar(0,1,lgrnColor,'mode',mode)
                 td = timedelta(seconds=tinterval)
@@ -2673,10 +2664,6 @@ while True:
                         text(1,0,3,1,1,"Recording",ft,0)
                         text(0,0,0,0,1,"CAPTURE STILL",ft,7)
                         text(1,9,0,0,1,"CAP T/LPSE",ft,7)
-                        if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0 and tinterval > 0:
-                            text(1,9,0,1,1,"T'lapse  2x2",ft,7)
-                        else:
-                            text(1,9,0,1,1,"Timelapse",ft,7)
                         text(0,0,6,2,1,"Please Wait, taking video ...",int(fv*1.7),1)
                         now = datetime.datetime.now()
                         timestamp = now.strftime("%y%m%d%H%M%S")
@@ -3051,7 +3038,7 @@ while True:
                                 datastr = "libcamera-still"
                             else:
                                 datastr = "rpicam-still"
-                            if Pi == 5 and extns[extn] == "jpg":
+                            if Pi == 5 and extns[extn] == "jpg" and Pi_Cam != 8:
                                 datastr += " --zsl"
                             if extns[extn] != 'raw':
                                 datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -s -t 0 -o " + fname
@@ -3189,7 +3176,6 @@ while True:
                                                     text(1,12,3,1,1,str(tshots),fv,12)
                                                     stop = 1
                                                     count = tshots
-                                                                                        
                                     old_count = count
                                     text(1,12,1,1,1,str(tshots - count),fv,12)
                                     tdur = tinterval * (tshots - count)
@@ -3234,16 +3220,8 @@ while True:
                                             else:
                                                 os.system('pkill -SIGUSR1 rpicam-still')
                                             text(0,0,3,0,1,"CAPTURE",ft,7)
-                                            if Pi_Cam == 6 or Pi_Cam == 8 or Pi_Cam == 4:
-                                                text(0,0,3,1,1,"STILL    2x2",ft,7)
-                                            else:
-                                                text(0,0,3,1,1,"Still ",ft,7)
                                             time.sleep(0.25)
                                             text(0,0,1,0,1,"CAPTURE",ft,7)
-                                            if (Pi_Cam == 6 or Pi_Cam == 8) and mode == 0:
-                                                text(0,0,1,1,1,"STILL    2x2",ft,7)
-                                            else:
-                                                text(0,0,1,1,1,"Still ",ft,7)
                             if lver < 12:
                                 os.system('pkill -SIGUSR2 libcamera-still')
                             else:
@@ -3273,7 +3251,7 @@ while True:
                                         datastr = "libcamera-still"
                                     else:
                                         datastr = "rpicam-still"
-                                    if Pi == 5 and extns[extn] == "jpg":
+                                    if Pi == 5 and extns[extn] == "jpg" and Pi_Cam != 8:
                                         datastr += " --zsl"
                                     if extns[extn] != 'raw':
                                         datastr += " --camera " + str(camera) + " -e " + extns[extn] + " -t " + str(timet) + " -o " + fname + " -p 0,0,640,480 "
